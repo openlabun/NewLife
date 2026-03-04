@@ -307,6 +307,78 @@ e) Un **módulo de progreso estructurado alrededor de los 12 pasos** con *check-
 
 ## 7. Propuesta de solución (alto nivel)
 
+Esta sección describe la **arquitectura técnica**, los **componentes del sistema** y las **decisiones de diseño** que conforman la propuesta de implementación de NewLife. La propuesta parte del prototipo validado en Figma por el proyecto precedente y lo materializa en un sistema *funcional, desplegado y mantenible*, diseñado para operar en el contexto real de jóvenes barranquilleros en proceso de rehabilitación por
+
+### 7.1 Visión general del sistema 
+NewLife es un sistema de acompañamiento digital compuesto por tres componentes principales que operan de manera integrada bajo una arquitectura cliente–servidor: (1) una aplicación móvil multiplataforma (iOS y Android) desarrollada en React Native, que constituye el punto de contacto directo con el usuario final; (2) un backend implementado en NestJS bajo el patrón de monolito modular, encargado de centralizar la lógica de negocio, la persistencia de datos y la integración con servicios externos mediante una API REST versionada; y (3) un panel de administración web junto con una landing page informativa desarrollados en NextJS, que permiten a los gestores de comunidades (fundaciones y grupos de apoyo) administrar el sistema sin requerir intervención técnica del equipo de desarrollo. 
+
+Los tres componentes se articulan a través del backend, que actúa como único punto de entrada al sistema. La base de datos relacional es gestionada exclusivamente por el backend, garantizando la separación entre la capa de presentación y la capa de persistencia. Toda la comunicación se realiza mediante conexiones seguras (HTTPS). La autenticación de usuarios se delega a la API institucional Roble de la Universidad del Norte, lo que permite validar la identidad a través del proveedor institucional y mantener trazabilidad y control sobre los accesos dentro del contexto universitario. 
+
+### 7.2 Arquitectura del sistema
+
+#### Patrón arquitectónico: monolito modular 
+
+El backend de NewLife sigue el patrón de monolito modular, en el que cada dominio funcional del sistema esta encapsulado en un módulo independiente con su propia capa de controladores, servicios y repositorios, pero todos conviven en una única aplicación desplegable. Los módulos definidos son: Autenticación, Usuarios, Progreso, Cuidado, Motivación, Comunidad y Administración. Cada módulo expone sus funcionalidades a través de endpoints REST versionados y puede evolucionar de forma relativamente independiente sin afectar a los demás, lo que facilita el mantenimiento y la extensión futura del sistema. 
+
+#### Diagrama de componentes 
+
+El sistema se organiza en cuatro capas principales: (1) capa de presentación, conformada por la aplicación movil React Native y el panel web NextJS; (2) capa de integración, conformada por la API REST de NestJS que actúa como único punto de entrada al sistema; (3) capa de dominio, conformada por los módulos de negocio del backend; y (4) capa de infraestructura, conformada por la base de datos relacional, el servicio de notificaciones push y la API externa Roble. Esta separación garantiza que los cambios en la presentación no afecten la lógica de negocio y viceversa. 
+
+#### Modos de acceso al sistema 
+
+Una de las decisiones de diseño centrales de NewLife es la implementación de tres modos de acceso diferenciados, orientados a reducir la barrera de entrada según el momento del proceso de recuperación del usuario. El modo invitado permite utilizar la aplicación sin registro, almacenando la información exclusivamente en el dispositivo. En este modo están disponibles los módulos Inicio, Cuidado y Motivación, junto con una versión limitada de Mi Progreso. 
+
+El modo registrado habilita la sincronización de datos en la nube y el acceso completo a los módulos funcionales, con excepción del módulo Social. Finalmente, el modo con comunidad, activado mediante invitación de un administrador, permite el acceso al módulo Social y a las comunidades privadas correspondientes. 
+
+La transición entre modos está diseñada para preservar la continuidad de la información: cuando un usuario se registra, los datos generados en modo invitado se migran automáticamente a la cuenta en la nube, garantizando consistencia y continuidad en el seguimiento del progreso. 
+
+### Componentes del sistema 
+
+#### 7.3 Aplicación móvil (React Native) 
+
+La aplicación móvil es el componente central de NewLife. Está estructurada en seis módulos funcionales, cada uno con su propia navegación interna y conjunto de pantallas, siguiendo fielmente el prototipo de alta fidelidad validado en Figma. La navegación principal utiliza un tab bar inferior con acceso a los módulos Inicio, Mi Progreso, Cuidado, Motivación y Social, complementado con un menú de perfil y configuración accesible desde el encabezado. 
+
+El módulo Inicio actúa como dashboard central del usuario y es el primer punto de contacto tras el login. Muestra el contador de días sobrio, el dinero ahorrado estimado, el estado emocional del día, accesos directos a los demás módulos y el estado actual de la mascota evolutiva. El Botón SOS, elemento crítico para situaciones de crisis, está siempre visible en este módulo y despliega un modo de emergencia con respiraciones guiadas, frases motivadoras, ejercicios de distracción y acceso rápido a contactos de emergencia registrados por el usuario. 
+
+El módulo Mi Progreso es el módulo más denso funcionalmente. Incluye un check-in diario con registro del estado emocional (mediante un selector visual de emociones), un calendario de sobriedad que marca los días de cumplimiento, graficas de evolución emocional y de racha de sobriedad, un historial de gratitud donde el usuario registra reflexiones diarias, y un tracker de los 12 pasos de Alcohólicos Anónimos donde puede registrar su avance e hitos en cada paso. 
+
+El módulo Cuidado agrupa los recursos de apoyo al bienestar. Incluye una sección de contenido educativo (artículos, videos e infografías gestionados desde el panel web), un sistema de recordatorios y rutinas personalizables con notificaciones push, un directorio de profesionales de salud y fundaciones de apoyo locales, un mapa referencial de zonas seguras e inseguras, y una sección de contactos de emergencia. El módulo motivación ofrece una frase motivacional diaria (Solo por hoy), retos individuales con seguimiento de progreso, un sistema de logros con medallas e insignias desbloqueables, y la mascota evolutiva con expresiones animadas que reflejan el estado de sobriedad del usuario. 
+
+El módulo Social implementa comunidades cerradas con acceso por invitación. Dentro de una comunidad, el usuario puede publicar reflexiones, comentar y reaccionar a publicaciones de otros miembros, participar en foros temáticos de reflexión diaria, y acceder a chats grupales. El contenido es moderado por el administrador de la comunidad. El perfil de usuario muestra el tiempo de sobriedad, los logros obtenidos y los contactos dentro de la comunidad. 
+
+#### Backend (NestJS - monolito modular) 
+
+El backend es el núcleo del sistema y esta implementado en NestJS siguiendo el patrón de monolito modular. Cada módulo de dominio (Autenticación, Usuarios, Progreso, Cuidado, Motivación, Comunidad y Administración) contiene su propia capa de controladores REST, servicios de lógica de negocio y repositorios de acceso a datos. La comunicación entre módulos se realiza a través de inyección de dependencias, evitando el acoplamiento directo entre dominios. 
+
+El módulo de Autenticación integra la API Roble de la Universidad del Norte, gestionando el ciclo completo de autenticación: obtención de tokens, validación de sesiones, refresco de tokens y cierre de sesión. Para el modo invitado, el módulo genera identificadores anónimos locales que se asocian a una cuenta real cuando el usuario decide registrarse. El esquema de base de datos relacional esta diseñado para soportar los tres modos de acceso, con una separación clara entre datos locales (sincronizados bajo demanda) y datos de nube (sincronizados en tiempo real). 
+
+El sistema de notificaciones push esta implementado a través de Firebase Cloud Messaging (FCM), con soporte para notificaciones programadas (recordatorios de rutinas, alertas de check-in diario) y notificaciones por evento (nuevos mensajes en comunidad, logros desbloqueados, alertas en fechas de riesgo como aniversarios o periodos de alta exposición como el Carnaval). 
+
+#### Panel de administración web y landing page (NextJS) 
+
+El panel de administración web está desarrollado en NextJS y está orientado a la gestión operativa del sistema por parte de fundaciones y grupos de apoyo. Permite a los gestores de comunidades realizar, sin intervención del equipo de desarrollo, las siguientes operaciones: crear, editar y eliminar comunidades; generar y administrar invitaciones para nuevos miembros; asignar y revocar roles administrativos dentro de cada comunidad; moderar contenido generado por los usuarios (publicaciones y comentarios), incluyendo la eliminación de contenido y la suspensión de cuentas; gestionar el contenido educativo del módulo Cuidado (creación, edición y publicación de artículos, videos e infografías); y consultar métricas agregadas de uso por comunidad, tales como número de usuarios activos, volumen de publicaciones y frecuencia de check-ins diarios, sin acceso a información individual sensible. 
+
+La landing page corresponde a una página pública de carácter informativo que presenta el propósito del proyecto, sus módulos funcionales, el equipo desarrollador y los objetivos de la aplicación, incluyendo acceso directo a su descarga en Google Play. Esta página se genera mediante renderizado estático con NextJS, lo que permite optimizar tiempos de carga, mejorar el posicionamiento básico en buscadores y reducir la carga operativa del servidor. 
+
+### 7.4 Estrategia de pruebas 
+
+La estrategia de aseguramiento de calidad del sistema NewLife se estructura en tres niveles complementarios: pruebas unitarias, pruebas de integración y pruebas de usabilidad. 
+
+Las pruebas unitarias se implementan por módulo en el backend utilizando Jest y por componente en el frontend móvil mediante React Native Testing Library. Estas pruebas cubren la lógica de negocio crítica del sistema, incluyendo el cálculo de rachas de sobriedad, la gestión de los modos de acceso (invitado, registrado y con comunidad), los flujos de autenticación y los mecanismos de moderación de contenido. Su propósito es validar el comportamiento aislado de servicios y funciones, reduciendo la probabilidad de regresiones ante cambios evolutivos. 
+
+Las pruebas de integración validan el funcionamiento conjunto entre la aplicación móvil y el backend, verificando los flujos completos de interacción. Entre los escenarios evaluados se incluyen el proceso de inicio de sesión mediante la API institucional Roble, la sincronización de datos entre almacenamiento local y nube, la publicación y moderación de contenido en comunidades, y el envío y recepción de notificaciones push. Estas pruebas permiten identificar inconsistencias en el intercambio de datos y asegurar la correcta interoperabilidad entre componentes. 
+
+Las pruebas de usabilidad se desarrollan en dos rondas con usuarios reales (n ≥ 5 por ronda), en coordinación con la Fundación Shalom. Este tamaño muestral se adopta como mínimo viable para la identificación de problemas recurrentes de interacción en estudios exploratorios. La primera ronda se ejecuta en la semana 9 con una versión funcional de los módulos Inicio, Mi Progreso y Cuidado, y se orienta a detectar dificultades de navegación, claridad del lenguaje y percepción emocional de la interfaz. La segunda ronda, realizada en la semana 12 con el sistema completo, evalúa la experiencia integral del usuario, incluyendo el módulo Social y el flujo de incorporación a comunidades. Los hallazgos obtenidos en cada ronda se documentan formalmente y se incorporan como iteraciones de mejora antes del despliegue en producción. 
+
+### 7.5 Estrategia de despliegue 
+
+El despliegue del sistema se estructura en tres frentes paralelos correspondientes a cada componente de la arquitectura. La aplicación móvil se publica en Google Play (Android), siguiendo el proceso de revisión y validación establecido por la plataforma. Para la generación de builds de producción se utiliza EAS Build (Expo Application Services), con un perfil de distribución configurado específicamente para el entorno productivo. 
+
+El backend desarrollado en NestJS se despliega en un servidor con soporte para Node.js, utilizando variables de entorno gestionadas de forma segura para la configuración de credenciales y parámetros sensibles. El proceso de despliegue se automatiza mediante un flujo básico de integración y entrega continua (CI/CD), lo que permite compilar, validar y actualizar el servicio de manera controlada ante nuevas versiones del sistema. 
+
+El panel de administración web y la landing page se despliegan en MyOpenLab, aprovechando la compatibilidad de NextJS con despliegues automatizados. Esta configuración permite compilación automática ante cambios en el repositorio, distribución mediante red de entrega de contenidos (CDN) y optimización de tiempos de carga para los usuarios finales. 
+
+Durante las semanas 13 a 15 se realiza un periodo de monitoreo activo en entorno de producción. Este seguimiento incluye la detección y registro de errores mediante Sentry, la revisión periódica de métricas agregadas de uso y la atención a reportes provenientes de usuarios de prueba. Los errores clasificados como críticos se corrigen mediante actualizaciones priorizadas (hotfixes), mientras que los incidentes de menor severidad se documentan para su inclusión en iteraciones posteriores. 
 
 ## 8. Requerimientos preliminares
 
