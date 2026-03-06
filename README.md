@@ -365,9 +365,6 @@ El sistema NewLife implementa un modelo de control de acceso basado en roles (RB
   - Participar en foros de reflexión diaria
   - Usar el chat grupal
 
-> No tiene acceso al panel de administración web.
-
-
 - **Usuario Solo Comentar y Chatear:** Este rol permite una incorporación gradual a la comunidad para usuarios que aún no se sienten listos para compartir públicamente. Tiene acceso completo a las funcionalidades individuales de la app (Inicio, Mi Progreso, Cuidado, Motivación), pero dentro del módulo Social su participación está restringida:
 
   - ✅ Comentar publicaciones de otros miembros
