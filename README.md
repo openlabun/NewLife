@@ -38,11 +38,11 @@ El **consumo problemático de alcohol en jóvenes colombianos** representa una d
 
 A nivel nacional, la *Encuesta Nacional de Salud Mental* reporta que los adultos entre 18 y 44 años presentan las proporciones más altas de consumo perjudicial de alcohol en Colombia *(Ministerio de Salud y Protección Social, 2015)*, lo que evidencia la urgencia de desarrollar **herramientas de acompañamiento accesibles, sostenidas y culturalmente pertinentes**.
 
-A pesar de los esfuerzos institucionales, el acceso a servicios especializados de rehabilitación continúa siendo limitado y, en muchos casos, estigmatizado. Colombia cuenta con entre **1,6 y 3 psiquiatras por cada 100.000 habitantes** *(El País, 2022)*, y entre el **84 % y el 92 % de las personas con trastornos mentales no reciben atención adecuada** *(Ministerio de Salud, 2015)*. En este contexto, las tecnologías móviles emergen como una oportunidad estratégica. El concepto de *mHealth (mobile health)* ha demostrado ser eficaz como complemento a procesos terapéuticos, al facilitar el registro de hábitos, el seguimiento emocional y el acceso a redes de apoyo *(WHO, 2021)*. Sin embargo, la mayoría de las aplicaciones disponibles en el mercado —como *I Am Sober*, *Sober Grid* o *Quit Genius*— no consideran las particularidades culturales y sociales del contexto latinoamericano, especialmente en ciudades donde el consumo forma parte de dinámicas festivas y sociales específicas *(Nahum-Shani et al., 2018)*.
+A pesar de los esfuerzos institucionales, el acceso a servicios especializados de rehabilitación continúa siendo limitado y, en muchos casos, estigmatizado. Colombia cuenta con entre **1,6 y 3 psiquiatras por cada 100.000 habitantes** *(El País, 2022)*, y entre el **84 % y el 92 % de las personas con trastornos mentales no reciben atención adecuada** *(Ministerio de Salud, 2015)*. En este contexto, las tecnologías móviles emergen como una oportunidad estratégica. El concepto de *mHealth (mobile health)* ha demostrado ser eficaz como complemento a procesos terapéuticos, al facilitar el registro de hábitos, el seguimiento emocional y el acceso a redes de apoyo *(WHO, 2021)*. Sin embargo, la mayoría de las aplicaciones disponibles en el mercado —como *I Am Sober*, *Sober Grid* o *Reframe*— presentan limitaciones en la forma en que abordan el proceso de recuperación. En muchos casos, estas herramientas se centran principalmente en funciones básicas como contadores de sobriedad o espacios de interacción abierta entre usuarios, dejando en segundo plano elementos como el **acompañamiento estructurado**, el **seguimiento del progreso personal** o la existencia de **entornos moderados** que brinden mayor seguridad durante las primeras etapas de recuperación *(Nahum-Shani et al., 2018)*.
 
 El presente proyecto de grado parte del trabajo desarrollado en el semestre anterior por **Andrea Díaz De La Hoz**, cuyo resultado fue el diseño **UX/UI de alta fidelidad** de la aplicación *NewLife*: un sistema de acompañamiento para jóvenes barranquilleros entre 18 y 24 años en proceso de rehabilitación y post-rehabilitación por adicción al alcohol, tomando como caso de estudio la **Fundación Terapéutica Shalom de Puerto Colombia, Atlántico**. Dicho trabajo produjo un prototipo interactivo validado en *Figma*, una identidad gráfica unificada y material de comunicación visual.
 
-Esta investigación asume la continuación natural de ese proceso: la **implementación técnica completa del sistema**, con el objetivo de transformar un diseño validado en un producto funcional y desplegado en producción.
+Este proyecto asume la continuación natural de ese proceso: la **implementación técnica completa del sistema**, con el objetivo de transformar un diseño validado en un producto funcional y desplegado en producción.
 
 La solución contempla **tres niveles de acceso**: un modo invitado con almacenamiento local, un usuario registrado con sincronización en la nube y un usuario con acceso a comunidades por invitación, administradas a través del panel web por líderes de fundaciones o grupos de apoyo como *Alcohólicos Anónimos*. Funcionalmente, la aplicación se organiza en **seis módulos principales** que abarcan acompañamiento emocional, seguimiento del progreso, contenido educativo, motivación y espacios comunitarios seguros, además de un panel de administración web para la gestión de comunidades y contenidos, y una *landing page* informativa.
 
@@ -57,7 +57,7 @@ Una vez finalizado un programa de rehabilitación, el **riesgo de recaída se ma
 
 El sistema de salud colombiano presenta **limitaciones estructurales** que agravan esta situación: el país cuenta con entre **1,6 y 3 psiquiatras por cada 100.000 habitantes** *(El País, 2022)*, y se estima que entre el **84 % y el 92 % de las personas con trastornos mentales no reciben atención adecuada** *(Ministerio de Salud, 2015)*. Las consultas breves en EPS, los altos costos de la atención privada y el estigma social asociado al alcoholismo reducen significativamente la adherencia a los tratamientos y la búsqueda de ayuda profesional. Frente a este panorama, las aplicaciones móviles de salud (*mHealth*) emergen como una **alternativa viable, escalable y de bajo costo** para complementar los procesos terapéuticos existentes.
 
-Si bien existen aplicaciones internacionales orientadas a la sobriedad —como *I Am Sober*, *Sober Grid* o *Sunflower Sober*—, estas plataformas no contemplan las **particularidades culturales, lingüísticas y socioeconómicas del contexto barranquillero**, ni integran mecanismos de control comunitario adaptados a la dinámica de fundaciones y grupos de apoyo locales como *Alcohólicos Anónimos*. Tampoco ofrecen **modos de acceso diferenciado** que permitan a un usuario explorar la herramienta de forma anónima antes de comprometerse con un proceso de registro, lo que puede ser una barrera para poblaciones altamente estigmatizadas.
+Si bien existen aplicaciones internacionales orientadas a la sobriedad —como *I Am Sober*, *Sober Grid* o *Sunflower Sober*—, estas plataformas suelen centrarse en funciones generales como contadores de sobriedad o comunidades abiertas entre usuarios, sin integrar procesos de acompañamiento estructurado, seguimiento del progreso personal ni herramientas diseñadas para entornos de recuperación guiados. Tampoco integran mecanismos de control comunitario adaptados a la dinámica de fundaciones y grupos de apoyo locales como *Alcohólicos Anónimos*. Además, no ofrecen **modos de acceso diferenciado** que permitan a un usuario explorar la herramienta de forma anónima antes de comprometerse con un proceso de registro, lo que puede ser una barrera para poblaciones altamente estigmatizadas.
 
 ### 2.2 Pregunta problema
 
@@ -176,7 +176,7 @@ La siguiente tabla resume los entregables principales del proyecto y su estado e
 
 | Entregable | Tecnología / Medio | Estado esperado |
 |------------|-------------------|-----------------|
-| Aplicacion movil *NewLife* (6 modulos) | React Native | Desplegada en stores |
+| Aplicacion movil *NewLife* (6 modulos) | React Native | Desplegada en Google Play |
 | Panel de administracion web | NextJS | Desplegado en produccion |
 | Landing page informativa | NextJS | Desplegada en produccion |
 | API REST backend | NestJS | Desplegada en produccion |
@@ -190,13 +190,13 @@ La siguiente tabla resume los entregables principales del proyecto y su estado e
 
 ### 5.1 Objetivo General
 
-**Desarrollar e implementar la aplicación móvil *NewLife*, junto con su panel de administración web y landing page, como un sistema funcional y desplegado en producción que brinde acompañamiento continuo a jóvenes de Barranquilla entre 18 y 24 años en proceso de rehabilitación y post-rehabilitación por adicción al alcohol**, partiendo del diseño validado en Figma e implementando una **arquitectura de monolito modular** con React Native, NestJS y NextJS, integrada con la **API institucional Roble de la Universidad del Norte**.
+**Desarrollar e implementar la aplicación móvil *NewLife*, junto con su panel de administración web y landing page, como un sistema funcional y desplegado en producción que brinde acompañamiento continuo a jóvenes de Barranquilla entre 18 y 24 años en proceso de rehabilitación y post-rehabilitación por adicción al alcohol**, partiendo del diseño validado en Figma e implementando una **arquitectura de monolito modular**.
 
 ### 5.2 Objetivos Especificos
 
-- **OE1.** Diseñar e implementar la **arquitectura técnica del sistema** bajo el patrón de monolito modular con NestJS, definiendo los módulos de dominio (autenticación, usuarios, progreso, cuidado, motivación, comunidad y administración), el esquema de base de datos relacional para los **tres modos de acceso**, y la integración con la API Roble de la Universidad del Norte.
+- **OE1.** Diseñar e implementar la **arquitectura técnica del sistema** bajo el patrón de monolito modular, definiendo los módulos de dominio (autenticación, usuarios, progreso, cuidado, motivación, comunidad y administración), y el esquema de base de datos relacional para los **tres modos de acceso**.
 
-- **OE2.** Desarrollar los módulos frontend de la aplicación móvil en React Native (Bienvenida y Onboarding, Registro y Login, Inicio, Mi Progreso, Cuidado, Motivación y Social) siguiendo el **prototipo de alta fidelidad en Figma**, garantizando coherencia visual con la identidad grafica de *NewLife* y una **experiencia fluida en iOS y Android**.
+- **OE2.** Desarrollar los módulos frontend de la aplicación móvil (Bienvenida y Onboarding, Registro y Login, Inicio, Mi Progreso, Cuidado, Motivación y Social) siguiendo el **prototipo de alta fidelidad en Figma**, garantizando coherencia visual con la identidad grafica de *NewLife* y una **experiencia fluida en iOS y Android**.
 
 - **OE3.** Implementar el modulo Social con un sistema de **comunidades cerradas por invitación**, incluyendo el panel de administración web en NextJS que permita a gestores de fundaciones y grupos de apoyo crear comunidades, gestionar miembros, moderar contenido y administrar recursos educativos, sin requerir intervención técnica del equipo de desarrollo.
 
@@ -298,9 +298,8 @@ La revisión del estado del arte permite identificar que ninguna solución exist
 
 a) **Comunidades moderadas con acceso controlado por administrador**, adaptadas a la estructura de grupos de apoyo como Alcohólicos Anónimos.  
 b) **Tres modos de acceso diferenciado** que reducen la barrera de entrada para usuarios estigmatizados.  
-c) **Integración con un sistema de autenticación institucional universitario**.  
-d) **Adaptación cultural, lingüística y de contenido** al contexto de Barranquilla, Colombia.  
-e) Un **módulo de progreso estructurado alrededor de los 12 pasos** con *check-ins emocionales diarios*.
+c) **Adaptación cultural, lingüística y de contenido** al contexto de Barranquilla, Colombia.  
+d) Un **módulo de progreso estructurado alrededor de los 12 pasos** con *check-ins emocionales diarios*.
 
 *NewLife* no pretende competir con soluciones internacionales consolidadas, sino cubrir una **necesidad específica y documentada en el contexto local**, donde la combinación de **alta prevalencia de consumo**, **estigma social**, **limitaciones del sistema de salud** y **ausencia de herramientas culturalmente adaptadas** crea una brecha que una aplicación móvil bien diseñada puede contribuir a cerrar.
 
