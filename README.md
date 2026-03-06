@@ -331,9 +331,63 @@ El modo registrado habilita la sincronización de datos en la nube y el acceso c
 
 La transición entre modos está diseñada para preservar la continuidad de la información: cuando un usuario se registra, los datos generados en modo invitado se migran automáticamente a la cuenta en la nube, garantizando consistencia y continuidad en el seguimiento del progreso. 
 
-### Componentes del sistema 
+#### Niveles de Acceso y Roles de Usuario
 
-#### 7.3 Aplicación móvil (React Native) 
+El sistema NewLife implementa un modelo de control de acceso basado en roles (RBAC, Role-Based Access Control) que define cinco niveles jerárquicos de permisos. Este modelo garantiza que cada actor del sistema tenga acceso exclusivamente a las funcionalidades que le corresponden según su nivel de responsabilidad, protegiendo la privacidad de los usuarios y la integridad de las comunidades.
+
+- **Superadmin:** El superadmin es el rol de máximo nivel del sistema. Tiene acceso completo a todos los módulos de la aplicación móvil, al panel de administración web y a las funciones de configuración global del sistema. Es responsable de:
+
+  - Creación y gestión de comunidades
+  - Creación y gestión de usuarios
+  - Creación y gestión de moderadores de comunidad
+  - Gestionar el contenido educativo del módulo Cuidado
+  - Acceso a **todos** los modulos del sistema
+
+> En el contexto del proyecto, este rol será ejercido por el equipo de desarrollo durante la fase de despliegue y monitoreo.
+
+- **Moderador de Comunidad:** El moderador de comunidad es el rol asignado a gestores de fundaciones, líderes de grupos de apoyo u otras figuras de confianza dentro de una comunidad. Tiene acceso completo a todas las funcionalidades de la app como usuario regular, y además accede al **panel de administración** para gestionar su comunidad:
+
+  - Editar y configurar la comunidad
+  - Generar y gestionar invitaciones para nuevos miembros
+  - Asignar y revocar roles de usuario dentro de la comunidad
+  - Moderar contenido: eliminar publicaciones, comentarios y mensajes; suspender miembros
+
+> Un moderador **no puede** acceder a las comunidades de otros moderadores ni a la configuración global del sistema.
+
+
+- **Usuario Regular:** El usuario regular es el rol base para cualquier persona registrada que haya sido invitada a una comunidad. Tiene acceso completo a todos los módulos de la aplicación móvil:
+
+  - Realizar check-ins diarios y registrar progreso
+  - Acceder al contenido educativo y guardar favoritos
+  - Activar el Botón SOS con modo crisis
+  - **Publicar** en el feed de la comunidad
+  - Comentar y reaccionar a publicaciones de otros miembros
+  - Participar en foros de reflexión diaria
+  - Usar el chat grupal
+
+> No tiene acceso al panel de administración web.
+
+
+- **Usuario Solo Comentar y Chatear:** Este rol permite una incorporación gradual a la comunidad para usuarios que aún no se sienten listos para compartir públicamente. Tiene acceso completo a las funcionalidades individuales de la app (Inicio, Mi Progreso, Cuidado, Motivación), pero dentro del módulo Social su participación está restringida:
+
+  - ✅ Comentar publicaciones de otros miembros
+  - ✅ Reaccionar a contenido del feed
+  - ✅ Participar en chats individuales y grupales
+  - ❌ **No puede** crear publicaciones propias en el feed
+  - ❌ **No puede** iniciar temas en los foros
+
+
+- **Usuario Solo Lectura:** Diseñado para usuarios en etapas muy tempranas de recuperación que se benefician de la presencia comunitaria sin la presión de la interacción activa. Tiene acceso completo a todas las funcionalidades individuales de la app, pero dentro del módulo Social únicamente puede visualizar:
+
+  - ✅ Ver el feed de publicaciones de la comunidad
+  - ✅ Ver los foros y perfiles de otros miembros
+  - ❌ **No puede** publicar, comentar ni reaccionar
+  - ❌ **No puede** participar en chats
+  - ❌ **No puede** guardar favoritos de contenido
+
+### 7.3 Componentes del sistema 
+
+#### Aplicación móvil (React Native) 
 
 La aplicación móvil es el componente central de NewLife. Está estructurada en seis módulos funcionales, cada uno con su propia navegación interna y conjunto de pantallas, siguiendo fielmente el prototipo de alta fidelidad validado en Figma. La navegación principal utiliza un tab bar inferior con acceso a los módulos Inicio, Mi Progreso, Cuidado, Motivación y Social, complementado con un menú de perfil y configuración accesible desde el encabezado. 
 
