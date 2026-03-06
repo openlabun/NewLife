@@ -233,11 +233,25 @@ En síntesis, el panorama actual evidencia **tres brechas que *NewLife* busca cu
 (2) **falta de adaptación cultural al contexto barranquillero**, y  
 (3) **carencia de modos de acceso diferenciado que reduzcan la barrera de entrada para usuarios estigmatizados**.
 
-### 6.2 Arquitecturas de software en sistemas de salud digital móvil
+### 6.2 Antecedentes del proyecto
+
+El presente proyecto tiene como antecedente el trabajo desarrollado por Andrea Díaz De La Hoz, estudiante del programa de Diseño Gráfico de la Universidad del Norte, quien realizó, durante el segundo semestre de 2025, el diseño UX/UI de alta fidelidad de la aplicación *NewLife* como parte de su proyecto de grado.
+
+Este trabajo se llevó a cabo con el acompañamiento y asesoría de docentes de la Universidad del Norte, quienes guiaron las diferentes etapas del proceso de investigación, diseño y validación de la propuesta. A lo largo del desarrollo se adoptó un enfoque de diseño centrado en el usuario, apoyado en la metodología de *Design Thinking*, la cual estructura el proceso en fases de empatía, definición del problema, ideación, prototipado y evaluación.
+
+Durante la fase de investigación y empatía se realizaron actividades de trabajo de campo con la Fundación Terapéutica Shalom, incluyendo visitas a la institución y acercamientos con el contexto real de jóvenes en procesos de rehabilitación. En este proceso también se realizaron conversaciones y validaciones con profesionales del área de la salud, particularmente psicólogos vinculados a procesos terapéuticos, con el fin de asegurar que la propuesta respondiera a necesidades reales del proceso de recuperación.
+
+Posteriormente se desarrollaron las fases de ideación y diseño, en las cuales se definieron la arquitectura de información, los flujos de interacción y la identidad visual de la aplicación. Como resultado de este proceso se construyó un prototipo interactivo de alta fidelidad en la herramienta *Figma*, el cual representa de forma detallada la estructura, navegación y comportamiento esperado de la aplicación.
+
+El diseño fue sometido a pruebas de usabilidad y procesos de validación, con el objetivo de evaluar la claridad de la interfaz, la facilidad de navegación y la pertinencia de las funcionalidades propuestas. Estas pruebas permitieron realizar ajustes iterativos al diseño y consolidar una propuesta validada desde la perspectiva de experiencia de usuario.
+
+A partir de este antecedente, el presente proyecto retoma el prototipo UX/UI validado como base conceptual y funcional, y se enfoca en su implementación tecnológica, desarrollando la arquitectura del sistema, los componentes de software y la integración entre la aplicación móvil, el backend y el panel de administración, con el objetivo de transformar el diseño propuesto en una aplicación completamente funcional.
+
+### 6.3 Arquitecturas de software en sistemas de salud digital móvil
 
 El diseño arquitectónico de sistemas de salud digital móvil ha evolucionado desde arquitecturas **monolíticas tradicionales** hacia **microservicios** y, más recientemente, hacia *monolitos modulares* como punto de equilibrio entre **simplicidad operativa** y **separación de responsabilidades** (Richardson, 2018).
 
-#### 6.2.1 Monolito modular vs. microservicios
+#### 6.3.1 Monolito modular vs. microservicios
 
 Los **microservicios** ofrecen **alta escalabilidad** y **despliegue independiente**, pero introducen **complejidad operativa significativa** para equipos pequeños: gestión de múltiples repositorios, comunicación entre servicios y mayor curva de aprendizaje (Fowler y Lewis, 2014).
 
@@ -245,7 +259,7 @@ Para proyectos con equipos reducidos y plazos acotados como *NewLife* (tres desa
 
 **NestJS** está diseñado nativamente para implementar este patrón mediante su sistema de módulos.
 
-#### 6.2.2 React Native para desarrollo móvil multiplataforma
+#### 6.3.2 React Native para desarrollo móvil multiplataforma
 
 **React Native** es uno de los frameworks líderes para aplicaciones móviles multiplataforma. Su modelo de **componentes reutilizables** y la capacidad de compartir lógica entre **iOS y Android** lo hacen eficiente para equipos con recursos limitados (Meta, 2023).
 
@@ -259,11 +273,11 @@ En *NewLife*, donde el equipo posee conocimientos previos en *React*, esta elecc
 
 Para la *landing page* informativa, el **renderizado estático** garantiza **tiempos de respuesta óptimos**.
 
-### 6.3 Diseño centrado en el usuario en aplicaciones de salud mental
+### 6.4 Diseño centrado en el usuario en aplicaciones de salud mental
 
 El diseño de aplicaciones para poblaciones en situación de vulnerabilidad exige principios de **diseño centrado en el usuario** que van más allá de la usabilidad convencional. La literatura especializada destaca tres dimensiones críticas: **accesibilidad emocional**, **reducción de barreras de entrada** y **privacidad como valor de diseño** (Torous et al., 2019).
 
-#### 6.3.1 Accesibilidad emocional y diseño no estigmatizante
+#### 6.4.1 Accesibilidad emocional y diseño no estigmatizante
 
 Norman (2013) señala que el **diseño emocional** opera en tres niveles: *visceral* (impresión estética), *conductual* (facilidad de uso) y *reflexivo* (el significado e identidad que el producto genera en el usuario).  
 
@@ -271,7 +285,7 @@ Para aplicaciones de **salud mental**, el nivel *reflexivo* es especialmente cr�
 
 El proyecto precedente incorporó estos principios en la **paleta de colores** (tonos cálidos y naturales), **tipografía accesible** (*Inter*), **lenguaje inclusivo** y una **mascota evolutiva** que personaliza el progreso sin imponer metas externas.
 
-#### 6.3.2 Design Thinking como metodología de validación
+#### 6.4.2 Design Thinking como metodología de validación
 
 El proyecto precedente aplicó **Design Thinking** en cinco etapas:  
 - *Empatizar* (entrevistas con usuarios en rehabilitación y psicólogos de la Fundación Shalom)  
@@ -284,7 +298,7 @@ Este proceso garantizó que el diseño de *NewLife* responda a **necesidades doc
 
 El presente proyecto hereda esta base validada y la extiende con **dos rondas adicionales de pruebas de usabilidad** durante el desarrollo.
 
-#### 6.3.3 Gamificación en aplicaciones de salud
+#### 6.4.3 Gamificación en aplicaciones de salud
 
 La incorporación de **gamificación** en aplicaciones de salud ha demostrado aumentar la **adherencia** y **motivación**. Según Cugelman (2013), las técnicas más efectivas incluyen el **progreso visible**, los **logros desbloqueables** y la **narrativa de avance personal**.
 
@@ -292,7 +306,7 @@ La incorporación de **gamificación** en aplicaciones de salud ha demostrado au
 
 La literatura señala que estos elementos deben alinearse con **metas intrínsecas del usuario** y no con competición externa, para ser efectivos en contextos de recuperación (Deterding et al., 2011).
 
-### 6.4 Brecha identificada y aporte de NewLife
+### 6.5 Brecha identificada y aporte de NewLife
 
 La revisión del estado del arte permite identificar que ninguna solución existente combina los siguientes atributos de forma integrada:
 
