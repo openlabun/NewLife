@@ -5,8 +5,8 @@ import { LoginDto } from '../dtos/login.dto';
 import { RegisterDto } from '../dtos/register.dto';
 import { ForgotPasswordDto, ResetPasswordDto, RefreshTokenDto } from '../dtos/account-recovery.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { InitialRegisterDto } from '../dtos/initial-register.dto';
-import { CompleteProfileUseCase } from '../../application/use-cases/complete-profile.use-case';
+import { InitialRegisterDto } from '../../../users/presentation/dtos/initial-register.dto';
+import { CompleteProfileUseCase } from '../../../users/application/use-cases/complete-profile.use-case';
 
 @ApiTags('Perfil de Usuario')
 @Controller('user')
@@ -27,7 +27,7 @@ export class UserController {
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  @ApiOperation({ summary: 'Login universal (App y Web)' })
+  @ApiOperation({ summary: 'Login App' })
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../../database/infrastructure/database.service';
-import { SystemAuthService } from '../../infrastructure/services/system-auth.service';
+import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 import { CreateContactDto, UpdateContactDto } from '../../presentation/dtos/contact.dto';
 import { randomUUID } from 'crypto';
 

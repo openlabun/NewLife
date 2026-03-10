@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../auth/presentation/guards/jwt-auth.guard';
 import { ContactsUseCase } from '../../application/use-cases/contacts.use-case';
 import { CreateContactDto, UpdateContactDto } from '../dtos/contact.dto';
 

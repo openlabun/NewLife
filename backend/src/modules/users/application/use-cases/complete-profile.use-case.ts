@@ -1,6 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { DatabaseService } from '../../../database/infrastructure/database.service';
-import { SystemAuthService } from '../../infrastructure/services/system-auth.service';
+import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 import { InitialRegisterDto } from '../../presentation/dtos/initial-register.dto';
 import { randomUUID } from 'crypto';
 

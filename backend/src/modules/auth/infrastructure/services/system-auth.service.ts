@@ -1,4 +1,5 @@
 import { Injectable, Inject, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IAuthProviderPort } from '../../domain/ports/auth-provider.port';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class SystemAuthService implements OnModuleInit {
   constructor(
     @Inject('IAuthProviderPort')
     private readonly authProvider: IAuthProviderPort,
+    private readonly configService: ConfigService,
   ) {}
 
   async onModuleInit() {
@@ -20,10 +22,14 @@ export class SystemAuthService implements OnModuleInit {
 
   async refreshMasterToken(): Promise<string> {
     try {
-      const auth = await this.authProvider.login(
-        process.env.ROBLE_SYSTEM_EMAIL,
-        process.env.ROBLE_SYSTEM_PASSWORD
-      );
+      const email = this.configService.get<string>('ROBLE_SYSTEM_EMAIL');
+      const password = this.configService.get<string>('ROBLE_SYSTEM_PASSWORD');
+
+      if (!email || !password) {
+        throw new Error('Credenciales del sistema no encontradas en el entorno');
+      }
+
+      const auth = await this.authProvider.login(email, password);
       this.masterToken = auth.accessToken;
       return this.masterToken;
     } catch (error) {
