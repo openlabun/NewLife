@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet, StatusBar } from 'react-native';
-import { colors, fontSizes, spacing } from '../../../constants/theme';
+import { View, Image, StyleSheet, StatusBar } from 'react-native';
+import { colors, spacing } from '../../../constants/theme';
 
 export default function SplashScreen2({ navigation }: any) {
   useEffect(() => {
@@ -15,12 +15,14 @@ export default function SplashScreen2({ navigation }: any) {
       <StatusBar backgroundColor={colors.background} barStyle="dark-content" />
       <Image
         source={require('../../../assets/images/logo.png')}
+        style={styles.character}
+        resizeMode="contain"
+      />
+      <Image
+        source={require('../../../assets/images/logosplash2.png')}
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.text}>
-        New <Text style={styles.bold}>life</Text>
-      </Text>
     </View>
   );
 }
@@ -31,18 +33,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.md,
   },
-  logo: {
+  character: {
     width: 130,
     height: 130,
-    marginBottom: spacing.md,
   },
-  text: {
-    color: colors.text,
-    fontSize: fontSizes.xl,
-    fontWeight: '300',
-  },
-  bold: {
-    fontWeight: '700',
+  logo: {
+    width: 120,
+    height: 45,
   },
 });

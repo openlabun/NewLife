@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View, Text, Image, StyleSheet, TouchableWithoutFeedback,
-    TouchableOpacity, Dimensions, FlatList,
+    TouchableOpacity, Dimensions, FlatList, Animated,
 } from 'react-native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 
@@ -75,14 +75,33 @@ const renderText = (slide: any) => {
 
 export default function StoryScreen({ navigation }: any) {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const flatListRef = React.useRef<FlatList>(null);
-    const currentSlide = slides[currentIndex];
+    const [displayIndex, setDisplayIndex] = useState(0);
+    const flatListRef = useRef<FlatList>(null);
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const currentSlide = slides[displayIndex];
+
+    const animateTransition = (nextIndex: number) => {
+        Animated.timing(fadeAnim, {
+            toValue: 0.3,
+            duration: 250,
+            useNativeDriver: true,
+        }).start(() => {
+            setDisplayIndex(nextIndex);
+            flatListRef.current?.scrollToIndex({ index: nextIndex, animated: false });
+
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        });
+    };
 
     const goNext = () => {
+        const nextIndex = currentIndex + 1;
         if (currentIndex < slides.length - 1) {
-            const nextIndex = currentIndex + 1;
-            flatListRef.current?.scrollToIndex({ index: nextIndex });
             setCurrentIndex(nextIndex);
+            animateTransition(nextIndex);
         } else {
             navigation.navigate('Step1');
         }
@@ -96,36 +115,41 @@ export default function StoryScreen({ navigation }: any) {
         <TouchableWithoutFeedback onPress={handleScreenPress}>
             <View style={styles.container}>
 
-                {/* Imagen de fondo completa abajo */}
-                <FlatList
-                    ref={flatListRef}
-                    data={slides}
-                    horizontal
-                    pagingEnabled
-                    scrollEnabled={false}
-                    showsHorizontalScrollIndicator={false}
-                    keyExtractor={(item) => item.id}
-                    style={styles.flatList}
-                    renderItem={({ item }) => (
-                        <Image source={item.image} style={styles.image} resizeMode="contain" />
-                    )}
-                />
+                {/* Imagen animada */}
+                <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
+                    <FlatList
+                        ref={flatListRef}
+                        data={slides}
+                        horizontal
+                        pagingEnabled
+                        scrollEnabled={false}
+                        showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item.id}
+                        style={styles.flatList}
+                        renderItem={({ item }) => (
+                            <Image source={item.image} style={styles.image} resizeMode="contain" />
+                        )}
+                    />
+                </Animated.View>
 
                 {/* Dots */}
                 <View style={styles.dotsContainer}>
                     {slides.map((_, index) => (
-                        <View key={index} style={[styles.dot, currentIndex === index && styles.dotActive]} />
+                        <View
+                            key={index}
+                            style={[styles.dot, displayIndex === index && styles.dotActive]}
+                        />
                     ))}
                 </View>
 
-                {/* Burbuja de texto */}
+                {/* Burbuja sin animación */}
                 <View style={styles.bubbleContainer}>
                     <View style={styles.bubble}>
                         {renderText(currentSlide)}
                     </View>
                 </View>
 
-                {/* Botón si aplica */}
+                {/* Botón */}
                 {currentSlide.button && (
                     <TouchableOpacity style={styles.button} onPress={goNext}>
                         <Text style={styles.buttonText}>{currentSlide.button}</Text>
@@ -173,7 +197,7 @@ const styles = StyleSheet.create({
     },
     bubbleContainer: {
         position: 'absolute',
-        top: 130,        // un poco más abajo
+        top: 130,
         width: '100%',
         paddingHorizontal: spacing.xl,
         zIndex: 10,
@@ -182,7 +206,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         borderRadius: borderRadius.md,
         padding: spacing.lg,
-        borderWidth: 1.5,          // borde más grueso
+        borderWidth: 1.5,
         borderColor: '#E0E0E0',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },

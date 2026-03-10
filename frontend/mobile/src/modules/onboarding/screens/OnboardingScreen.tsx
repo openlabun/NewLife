@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import {
   View, Text, Image, StyleSheet, Dimensions,
-  TouchableWithoutFeedback, FlatList,
+  TouchableWithoutFeedback, FlatList, Animated,
 } from 'react-native';
 import { useSharedValue, withRepeat, withTiming, Easing, useAnimatedStyle } from 'react-native-reanimated';
 import Reanimated from 'react-native-reanimated';
@@ -30,7 +30,7 @@ const slides = [
   },
 ];
 
-const FloatingLeaf = ({ style, size = 20 }: { style: any, size?: number }) => {
+const FloatingLeaf = ({ style, size = 20, source }: { style: any, size?: number, source: any }) => {
   const translateY = useSharedValue(0);
   const translateX = useSharedValue(0);
 
@@ -51,7 +51,7 @@ const FloatingLeaf = ({ style, size = 20 }: { style: any, size?: number }) => {
 
   return (
     <Reanimated.View style={[style, animatedStyle]}>
-      <Text style={{ fontSize: size }}>🍃</Text>
+      <Image source={source} style={{ width: size, height: size }} resizeMode="contain" />
     </Reanimated.View>
   );
 };
@@ -59,40 +59,60 @@ const FloatingLeaf = ({ style, size = 20 }: { style: any, size?: number }) => {
 export default function OnboardingScreen({ navigation }: any) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+
+  const animateTransition = (nextIndex: number) => {
+    Animated.timing(fadeAnim, {
+      toValue: 0.3,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setCurrentIndex(nextIndex);
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: false });
+      slideAnim.setValue(16);
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 70,
+        friction: 10,
+      }).start();
+    });
+  };
 
   const handlePress = () => {
     if (currentIndex < slides.length - 1) {
       const nextIndex = currentIndex + 1;
-      flatListRef.current?.scrollToIndex({ index: nextIndex });
-      setCurrentIndex(nextIndex);
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: false });
+      animateTransition(nextIndex);
     } else {
       navigation.replace('Welcome');
     }
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) setCurrentIndex(viewableItems[0].index);
+    if (viewableItems.length > 0) {
+      const newIndex = viewableItems[0].index;
+      if (newIndex !== currentIndex) {
+        animateTransition(newIndex);
+        flatListRef.current?.scrollToIndex({ index: newIndex, animated: true });
+      }
+    }
   }).current;
 
   return (
     <TouchableWithoutFeedback onPress={handlePress}>
       <View style={styles.container}>
-        <FloatingLeaf style={styles.leaf1} size={14} />
-        <FloatingLeaf style={styles.leaf2} size={24} />
-        <FloatingLeaf style={styles.leaf3} size={18} />
-        <FloatingLeaf style={styles.leaf4} size={28} />
 
-        <View style={styles.dotsContainer}>
-          {slides.map((_, index) => (
-            <View key={index} style={[styles.dot, currentIndex === index && styles.dotActive]} />
-          ))}
-        </View>
-
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{slides[currentIndex].title}</Text>
-          <Text style={styles.description}>{slides[currentIndex].description}</Text>
-        </View>
-
+        {/* Imagen de fondo */}
         <FlatList
           ref={flatListRef}
           data={slides}
@@ -103,11 +123,37 @@ export default function OnboardingScreen({ navigation }: any) {
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
           keyExtractor={(item) => item.id}
-          style={styles.flatList}
+          style={StyleSheet.absoluteFill}
           renderItem={({ item }) => (
-            <Image source={item.image} style={styles.backgroundImage} resizeMode="contain" />
+            <Image source={item.image} style={styles.backgroundImage} resizeMode="cover" />
           )}
         />
+
+        {/* Hojas flotantes */}
+        <FloatingLeaf style={styles.leaf1} size={40} source={require('../../../assets/images/leaf1.png')} />
+        <FloatingLeaf style={styles.leaf2} size={60} source={require('../../../assets/images/leaf4.png')} />
+        <FloatingLeaf style={styles.leaf3} size={50} source={require('../../../assets/images/leaf3.png')} />
+        <FloatingLeaf style={styles.leaf4} size={70} source={require('../../../assets/images/leaf2.png')} />
+
+        {/* Dots */}
+        <View style={styles.dotsContainer}>
+          {slides.map((_, index) => (
+            <View key={index} style={[styles.dot, currentIndex === index && styles.dotActive]} />
+          ))}
+        </View>
+
+        {/* Texto animado */}
+        <Animated.View style={[
+          styles.textContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}>
+          <Text style={styles.title}>{slides[currentIndex].title}</Text>
+          <Text style={styles.description}>{slides[currentIndex].description}</Text>
+        </Animated.View>
+
       </View>
     </TouchableWithoutFeedback>
   );
@@ -131,10 +177,23 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(64,64,64,0.3)',
   },
   dotActive: {
-    backgroundColor: colors.text,
+    backgroundColor: '#404040',
+    width: 20,
+  },
+  title: {
+    fontSize: fontSizes.xxl,
+    fontWeight: '700',
+    color: '#404040',
+    marginBottom: spacing.sm,
+  },
+  description: {
+    fontSize: fontSizes.md,
+    color: '#404040',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   textContainer: {
     position: 'absolute',
@@ -144,28 +203,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     zIndex: 10,
   },
-  title: {
-    fontSize: fontSizes.xxl,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  description: {
-    fontSize: fontSizes.md,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  flatList: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: height,
-  },
   backgroundImage: {
     width,
-    height: height,
+    height,
   },
   leaf1: { position: 'absolute', top: 80, left: 16, zIndex: 5 },
   leaf2: { position: 'absolute', top: 140, right: 24, zIndex: 5 },

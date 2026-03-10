@@ -26,6 +26,8 @@ import CrisisModeScreen from '../modules/home/screens/crisis/CrisisModeScreen';
 import BreathingScreen from '../modules/home/screens/crisis/BreathingScreen';
 import MotivationalPhrasesScreen from '../modules/home/screens/crisis/MotivationalPhrasesScreen';
 import GuidedMeditationScreen from '../modules/home/screens/crisis/GuidedMeditationScreen';
+import CongratulationsScreen from '../modules/auth/screens/AdditionalData/Congratulations';
+import AppTourScreen from '../modules/auth/screens/AppTourScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -58,6 +60,8 @@ export default function AppNavigator() {
         <Stack.Screen name="BreathingScreen" component={BreathingScreen} />
         <Stack.Screen name="MotivationalPhrasesScreen" component={MotivationalPhrasesScreen} />
         <Stack.Screen name="GuidedMeditationScreen" component={GuidedMeditationScreen} />
+        <Stack.Screen name="Congratulations" component={CongratulationsScreen} />
+        <Stack.Screen name="AppTour" component={AppTourScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

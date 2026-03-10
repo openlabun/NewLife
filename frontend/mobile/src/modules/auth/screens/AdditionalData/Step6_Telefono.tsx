@@ -20,6 +20,7 @@ export default function Step6_Telefono({ navigation }: any) {
   const [phone, setPhone] = useState('');
   const [prefix, setPrefix] = useState(PREFIXES[0]);
   const [showPicker, setShowPicker] = useState(false);
+  const [name, setName] = useState('');
 
   const handleChange = (text: string) => {
     const numbers = text.replace(/\D/g, '');
@@ -36,21 +37,35 @@ export default function Step6_Telefono({ navigation }: any) {
         onContinue={() => navigation.navigate('Step7')}
         showButton={true}
       >
-        <View style={styles.inputWrapper}>
-          <TouchableOpacity style={styles.prefixSelector} onPress={() => setShowPicker(true)}>
-            <Text style={styles.prefixText}>{prefix.code}</Text>
-            <Icon name="chevron-down" size={14} color={colors.textMuted} />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TextInput
-            style={styles.input}
-            placeholder="Número telefónico..."
-            placeholderTextColor={colors.border}
-            value={phone}
-            onChangeText={handleChange}
-            keyboardType="numeric"
-            maxLength={10}
-          />
+        <View style={styles.fieldsContainer}>
+          <View style={styles.inputWrapper}>
+            <Icon name="user" size={16} color={colors.textMuted} />
+            <View style={styles.divider} />
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre del contacto..."
+              placeholderTextColor={colors.border}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <TouchableOpacity style={styles.prefixSelector} onPress={() => setShowPicker(true)}>
+              <Text style={styles.prefixText}>{prefix.code}</Text>
+              <Icon name="chevron-down" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TextInput
+              style={styles.input}
+              placeholder="Número telefónico..."
+              placeholderTextColor={colors.border}
+              value={phone}
+              onChangeText={handleChange}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+          </View>
         </View>
       </StepLayout>
 
@@ -164,5 +179,8 @@ const styles = StyleSheet.create({
   },
   modalOptionTextSelected: {
     color: colors.white,
+  },
+  fieldsContainer: {
+    gap: spacing.md,
   },
 });

@@ -165,10 +165,9 @@ export default function GuidedMeditationScreen({ navigation }: any) {
                 </View>
 
                 {/* Salir */}
-                <TouchableOpacity style={styles.exitButton} onPress={() => navigation.goBack()}>
-                    <Text style={styles.exitText}>Salir de modo crisis</Text>
+                <TouchableOpacity style={styles.exitButton} onPress={() => navigation.navigate('BreathingScreen')}>
+                    <Text style={styles.exitText}>Ir al modo zen</Text>
                 </TouchableOpacity>
-
             </View>
         );
     }
@@ -202,8 +201,8 @@ export default function GuidedMeditationScreen({ navigation }: any) {
             />
 
             {/* Salir */}
-            <TouchableOpacity style={styles.exitButton} onPress={() => navigation.goBack()}>
-                <Text style={styles.exitText}>Salir de modo crisis</Text>
+            <TouchableOpacity style={styles.exitButton} onPress={() => navigation.navigate('BreathingScreen')}>
+                <Text style={styles.exitText}>Ir al modo zen</Text>
             </TouchableOpacity>
 
         </View>
