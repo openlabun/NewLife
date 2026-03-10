@@ -13,25 +13,30 @@ export class LoginUseCase {
     private readonly systemAuth: SystemAuthService,
   ) {}
 
-  async execute(dto: LoginDto) {
+  async execute(dto: LoginDto, allowedRoles?: string[]) {
     const now = new Date().toISOString();
-    
-    const masterToken = await this.systemAuth.getMasterToken();
+    let masterToken = await this.systemAuth.getMasterToken();
 
-    const searchResponse = await this.dbService.find(
-      'usuarios', 
-      { email: dto.email }, 
-      masterToken
-    );
+    let searchResponse;
+    try {
+      searchResponse = await this.dbService.find('usuarios', { email: dto.email }, masterToken);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        masterToken = await this.systemAuth.refreshMasterToken();
+        searchResponse = await this.dbService.find('usuarios', { email: dto.email }, masterToken);
+      } else {
+        throw error;
+      }
+    }
 
     const userInDb = Array.isArray(searchResponse) ? searchResponse[0] : (searchResponse.rows?.[0]);
 
-    if (userInDb) {
-      if (userInDb.estado === 'eliminado') {
-        throw new ForbiddenException('Tu cuenta ha sido eliminada y no puedes acceder a la aplicación.');
+    if (allowedRoles && userInDb) {
+      if (!allowedRoles.includes(userInDb.rol)) {
+        throw new ForbiddenException(`Acceso denegado: Tu rol de ${userInDb.rol} no tiene permiso aquí.`);
       }
     }
-    
+
     const authUser = await this.authProvider.login(dto.email, dto.password);
 
     let finalUserData;
@@ -40,23 +45,26 @@ export class LoginUseCase {
       const newRecord = {
         usuario_id: authUser.uid,
         email: authUser.email,
-        estado: 'activo',
         created_at: now,
         last_login: now,
         rol: 'paciente',
-        username: authUser.email.split('@')[0]
+        nombre: authUser.email.split('@')[0]
       };
-      await this.dbService.insert('usuarios', [newRecord], authUser.accessToken);
+      
+      await this.dbService.insert('usuarios', [newRecord], masterToken);
       finalUserData = newRecord;
     } else {
+      const updates: any = { last_login: now };
+      if (!userInDb.usuario_id) updates.usuario_id = authUser.uid;
+
       await this.dbService.update(
         'usuarios',
-        'usuario_id',
-        userInDb.usuario_id,
-        { last_login: now },
-        authUser.accessToken
+        'email', 
+        userInDb.email,
+        updates,
+        masterToken
       );
-      finalUserData = { ...userInDb, last_login: now };
+      finalUserData = { ...userInDb, ...updates };
     }
 
     return {
@@ -65,9 +73,8 @@ export class LoginUseCase {
       user: {
         uid: authUser.uid,
         email: authUser.email,
-        username: finalUserData.username,
+        nombre: finalUserData.nombre,
         role: finalUserData.rol,
-        estado: finalUserData.estado,
         last_login: finalUserData.last_login
       }
     };

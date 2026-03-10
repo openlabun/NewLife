@@ -15,3 +15,5 @@ dist/
 # Otros
 backend/dist/
 backend/node_modules/
+
+.vscode/

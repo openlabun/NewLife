@@ -7,13 +7,15 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
+    
     if (!requiredRoles) return true;
 
     const { user } = context.switchToHttp().getRequest();
 
-    if (!requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('No tienes permisos para acceder a este recurso');
+    if (!user || !requiredRoles.includes(user.role)) {
+      throw new ForbiddenException(`No tienes permisos. Tu rol es [${user?.role || 'Ninguno'}], pero se requiere uno de: ${requiredRoles.join(', ')}`);
     }
+
     return true;
   }
 }

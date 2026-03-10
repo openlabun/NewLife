@@ -14,7 +14,7 @@ export class RegisterUseCase {
       await this.authProvider.register({
         email: dto.email,
         password: dto.password,
-        name: dto.username
+        name: dto.nombre
       });
 
       return {
