@@ -956,9 +956,10 @@ Todo el proceso se realiza bajo la tutoría de **Augusto Salazar**.
 ## 11. Diagramas
 
 ### 11.1 Arquitectura del sistema
+<img width="1339" height="822" alt="image" src="https://github.com/user-attachments/assets/2400c84c-5dd8-4488-8352-53bf38225ea1" />
+
 ### 11.2 Interacción entre módulos
 <img width="1103" height="683" alt="image" src="https://github.com/user-attachments/assets/21227da9-6b28-4cd1-b304-444ac3e3193f" />
-
 
 ### 11.3 Secuencia
 
@@ -972,6 +973,7 @@ Todo el proceso se realiza bajo la tutoría de **Augusto Salazar**.
 <img width="1240" height="1434" alt="image" src="https://github.com/user-attachments/assets/146f84ca-b72a-4ff9-9bfc-5aa1fd5131c5" />
 
 ### 11.4 Despliegue
+<img width="752" height="789" alt="image" src="https://github.com/user-attachments/assets/07845c43-b146-4b96-900c-548bb787fd5d" />
 
 ## Referencias
 
