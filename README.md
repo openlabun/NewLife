@@ -957,6 +957,9 @@ Todo el proceso se realiza bajo la tutoría de **Augusto Salazar**.
 
 ### 11.1 Arquitectura del sistema
 ### 11.2 Interacción entre módulos
+<img width="1103" height="683" alt="image" src="https://github.com/user-attachments/assets/21227da9-6b28-4cd1-b304-444ac3e3193f" />
+
+
 ### 11.3 Secuencia
 
 #### Login con API Roble
