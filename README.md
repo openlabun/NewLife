@@ -953,8 +953,24 @@ Todo el proceso se realiza bajo la tutoría de **Augusto Salazar**.
   - Informe técnico de grado
 - Entrega del proyecto y sustentación ante el tutor y el comité evaluador
 
+## 11. Diagramas
 
-## 11. Referencias
+### 11.1 Arquitectura del sistema
+### 11.2 Interacción entre módulos
+### 11.3 Secuencia
+
+#### Login con API Roble
+<img width="918" height="1013" alt="image" src="https://github.com/user-attachments/assets/3c101898-f54e-4c15-801d-a30c3dff54b0" />
+
+#### Check-in Diario y Actualización de Progreso
+<img width="897" height="1294" alt="image" src="https://github.com/user-attachments/assets/97f09b5d-efb2-4616-9ec2-b7f1d153b4d1" />
+
+#### Invitación y Unión a Comunidad
+<img width="1240" height="1434" alt="image" src="https://github.com/user-attachments/assets/146f84ca-b72a-4ff9-9bfc-5aa1fd5131c5" />
+
+### 11.4 Despliegue
+
+## Referencias
 
 Las siguientes referencias bibliográficas están organizadas en orden alfabético por apellido del primer autor y siguen el formato de citación **APA (séptima edición)**. Se incluyen las fuentes citadas a lo largo del presente informe técnico, organizadas por categoría temática.
 
