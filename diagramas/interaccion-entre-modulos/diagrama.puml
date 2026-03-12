@@ -1,0 +1,58 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam roundcorner 8
+skinparam linetype ortho
+skinparam componentPadding 10
+skinparam boxPadding 15
+
+title Interacción entre Módulos
+
+actor "Usuario" as U
+actor "Administrador" as A
+
+rectangle "App Móvil" as APP {
+    component "Módulo Principal\n(home, agenda, finanzas,\nalcoholemia, media)" as MOD1
+    component "Módulo Red Social\n(comunidades, posts,\ncomentarios, moderación)" as MOD2
+}
+
+rectangle "Panel Admin (Web)" as WEBADMIN {
+    component "Gestión de usuarios,\nmedia, actividades\ny comunidades" as GADMIN
+}
+
+component "Roble Auth\n(autenticación compartida)" as ROBLEAUTH
+
+rectangle "Backend Usuarios\n(Monolito Modular)" as BACK {
+    component "Módulo Usuarios\ny Progreso" as MUSERS
+    component "Módulo Actividades" as MACT
+    component "Módulo Red Social\ny Moderación" as MSOCIAL
+    component "Módulo Media" as MMEDIA
+}
+
+rectangle "Backend Admin\n(Monolito Modular)" as BACKADMIN {
+    component "Módulo Gestión\nde Contenido" as AMS
+    component "Módulo Gestión\nde Usuarios" as AMUS
+}
+
+rectangle "Roble Database" as ROBLEDB {
+    component "Datos de usuarios\ny progreso" as DBUSR
+    component "Datos de media\ny actividades" as DBMEDIA
+    component "Datos de red social" as DBSOCIAL
+}
+
+U --> APP
+A --> WEBADMIN
+
+APP --> ROBLEAUTH
+WEBADMIN --> ROBLEAUTH
+
+ROBLEAUTH --> BACK
+ROBLEAUTH --> BACKADMIN
+
+BACK --> DBUSR
+BACK --> DBMEDIA
+BACK --> DBSOCIAL
+
+BACKADMIN --> DBMEDIA
+BACKADMIN --> DBUSR
+
+@enduml

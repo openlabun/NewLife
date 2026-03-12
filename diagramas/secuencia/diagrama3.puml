@@ -1,0 +1,63 @@
+@startuml Invitacion_Comunidad
+title Diagrama 3: Invitación y Unión a Comunidad
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam sequenceParticipantBorderColor #2E5090
+skinparam sequenceParticipantBackgroundColor #EEF3FB
+skinparam sequenceActorBorderColor #1F3864
+skinparam sequenceActorBackgroundColor #D6E4F7
+skinparam noteBorderColor #CCCCCC
+skinparam noteBackgroundColor #FFFDE7
+
+actor "Admin" as Mod
+participant "Panel Web\n(NextJS)" as PW
+participant "Backend\n(NestJS)" as BE
+database "Base de Datos\n(Roble)" as DB
+actor "Nuevo Miembro" as NM
+participant "App Móvil\n(React Native)" as App
+
+== Creación de comunidad ==
+
+Mod -> PW : Crear nueva comunidad
+PW -> BE : POST /comunidades\n{nombre, descripcion}
+BE -> DB : INSERT comunidad\n+ asigna moderador
+DB --> BE : comunidad_id
+BE --> PW : 201 Created\n{comunidad_id, nombre}
+
+== Generación de invitación ==
+
+Mod -> PW : Generar invitación
+PW -> BE : POST /comunidades/{id}/invitaciones
+BE -> DB : INSERT invitacion\n{token, comunidad_id, expira_en}
+DB --> BE : {token_invitacion, link}
+BE --> PW : 200 OK {link_invitacion}
+PW --> Mod : Muestra link / código de invitación
+
+note over Mod, NM : El moderador comparte el link\npor fuera del sistema
+
+== Unión del nuevo miembro ==
+
+NM -> App : Abre link de invitación
+App -> BE : GET /invitaciones/{token}/validar
+BE -> DB : SELECT invitacion\nWHERE token AND no_expirada
+DB --> BE : resultado de validación
+
+alt Token válido
+    BE --> App : 200 OK\n{comunidad, valida: true}
+    App --> NM : Pantalla de confirmación\nde unión
+    NM -> App : Confirma unión a la comunidad
+    App -> BE : POST /comunidades/{id}/unirse\n{userId}
+    BE -> DB : INSERT miembro_comunidad\n{userId, comunidad_id,\nrol: "solo_lectura"}
+    BE -> DB : UPDATE invitacion\nSET usada = true
+    DB --> BE : OK
+    BE --> App : 200 OK\n{membresia, rol_asignado}
+    App --> NM : Acceso habilitado\nal módulo Social
+
+else Token inválido o expirado
+    BE --> App : 400\n{error: "Invitación inválida\no expirada"}
+    App --> NM : Muestra mensaje de error
+
+end
+
+@enduml

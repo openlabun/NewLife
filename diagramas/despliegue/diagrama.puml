@@ -1,0 +1,108 @@
+@startuml NewLife - Diagrama de Despliegue
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 12
+skinparam ArrowColor #555555
+skinparam ArrowFontSize 10
+
+skinparam node {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontStyle bold
+}
+
+skinparam artifact {
+  BackgroundColor #DDEEFF
+  BorderColor #3A5A8C
+}
+
+skinparam database {
+  BackgroundColor #FFF8E1
+  BorderColor #F9A825
+}
+
+skinparam cloud {
+  BackgroundColor #E8F5E9
+  BorderColor #43A047
+}
+
+title <b>NewLife — Diagrama de Despliegue</b>
+
+' ══════════════════════════════════════
+' DISPOSITIVOS CLIENTE
+' ══════════════════════════════════════
+node "Dispositivo Android" as android {
+  artifact "NewLife App\n(React Native / Expo)" as apk
+  database "Almacenamiento Local\n(modo invitado)" as localStorage
+}
+
+node "Navegador Web\n(Moderador / Admin / Superadmin)" as browser {
+  artifact "Next.js App\n(Panel Admin + Landing)" as webapp
+}
+
+' ══════════════════════════════════════
+' SERVIDOR — MyOpenLab
+' ══════════════════════════════════════
+node "MyOpenLab  (Servidor UniNorte)" as myopenlab {
+
+  node "Contenedor Docker — Backend" as backendNode {
+    artifact "NestJS API\n(Node.js)" as nestjs
+  }
+
+  node "Contenedor Docker — Frontend Web" as frontendNode {
+    artifact "Next.js\n(SSR / SSG)" as nextjs
+  }
+
+}
+
+' ══════════════════════════════════════
+' ROBLE — Servicios externos UniNorte
+' ══════════════════════════════════════
+cloud "ROBLE  (OpenLab — UniNorte)" as roble {
+  artifact "ROBLE Auth\n(JWT / Tokens)" as robleAuth
+  database "ROBLE DB\n(Base de datos administrada)" as robleDB
+}
+
+' ══════════════════════════════════════
+' SERVICIOS EXTERNOS
+' ══════════════════════════════════════
+cloud "Google Play Store" as playstore {
+  artifact "APK / AAB\n(EAS Build)" as apkStore
+}
+
+cloud "Sentry" as sentry {
+  artifact "Monitoreo\nde errores" as sentryArt
+}
+
+' ══════════════════════════════════════
+' COMUNICACIONES
+' ══════════════════════════════════════
+
+' Distribución de la app
+apkStore --> apk       : Descarga / instalacion\n(HTTPS)
+
+' Clientes -> Servidor
+apk     --> nestjs     : API REST\n(HTTPS)
+webapp  --> nextjs     : Renderizado web\n(HTTPS)
+nextjs  --> nestjs     : Llamadas internas\na la API REST
+
+' Backend -> ROBLE
+nestjs  --> robleAuth  : Autenticacion\ny validacion de tokens
+nestjs  --> robleDB    : CRUD datos\n(todos los modulos)
+
+' Backend -> Servicios externos
+nestjs  --> sentryArt  : Log de errores\nen produccion
+
+' Modo invitado - local
+apk     --> localStorage : Datos locales\n(sin cuenta)
+
+' CI/CD
+note top of myopenlab
+  CI/CD: push a rama main
+  dispara build y deploy
+  automatico en MyOpenLab
+end note
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml Login_API_Roble
+title Diagrama 1: Login con API Roble
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam sequenceParticipantBorderColor #2E5090
+skinparam sequenceParticipantBackgroundColor #EEF3FB
+skinparam sequenceActorBorderColor #1F3864
+skinparam sequenceActorBackgroundColor #D6E4F7
+skinparam noteBorderColor #CCCCCC
+skinparam noteBackgroundColor #FFFDE7
+
+actor "Usuario" as U
+participant "App Movil\n(React Native)" as App
+participant "Backend\n(NestJS)" as BE
+participant "API Roble\n" as Roble
+database "Base de Datos\n" as DB
+
+== Flujo principal: Login ==
+
+U -> App : Ingresa credenciales
+App -> BE : POST /auth/login\n{username, password}
+BE -> Roble : POST /oauth/token\n{credentials}
+
+alt Credenciales válidas
+    Roble --> BE : 200 OK\n{access_token, user_info}
+    BE -> DB : UPSERT usuario\n(crear o actualizar perfil)
+    DB --> BE : usuario_id
+    BE -> BE : Genera JWT propio\n{userId, role, exp}
+    BE --> App : 200 OK\n{jwt, perfil_usuario, modo_acceso}
+    App -> App : Guarda JWT en\nalmacenamiento seguro
+    App --> U : Redirige al\ndashboard de Inicio
+
+else Credenciales inválidas
+    Roble --> BE : 401 Unauthorized
+    BE --> App : 401\n{error: "Credenciales incorrectas"}
+    App --> U : Muestra mensaje de error
+
+end
+
+== Flujo alternativo: Modo invitado ==
+
+U -> App : Continuar sin registrarse
+App -> App : Genera sesión local (UUID anónimo)
+App --> U : Redirige al dashboard\n(datos almacenados localmente)
+
+@enduml

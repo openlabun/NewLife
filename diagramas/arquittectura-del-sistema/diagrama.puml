@@ -1,0 +1,126 @@
+@startuml NewLife - Diagrama de Arquitectura
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 12
+skinparam ArrowColor #555555
+skinparam ArrowFontSize 10
+
+skinparam package {
+  BackgroundColor #F0F4FF
+  BorderColor #4A6FA5
+  FontStyle bold
+  FontSize 13
+}
+
+skinparam component {
+  BackgroundColor #DDEEFF
+  BorderColor #3A5A8C
+}
+
+skinparam database {
+  BackgroundColor #FFF8E1
+  BorderColor #F9A825
+}
+
+skinparam cloud {
+  BackgroundColor #E8F5E9
+  BorderColor #43A047
+}
+
+skinparam actor {
+  BackgroundColor #F3E5F5
+  BorderColor #8E24AA
+}
+
+title <b>NewLife - Diagrama de Arquitectura</b>
+
+' ══════════════════════════════════════
+' ACTORES
+' ══════════════════════════════════════
+actor "Invitado" as guest
+actor "Paciente" as patient
+actor "Moderador" as mod
+actor "Admin" as admin
+actor "Superadmin" as superadmin
+
+' ══════════════════════════════════════
+' PRESENTACIÓN
+' ══════════════════════════════════════
+package "App Móvil  (React Native)" as mobile {
+  component "[Inicio · SOS · Progreso\nCuidado · Motivación · Mascota]" as appCore
+  component "[Red Social\n(Comunidades cerradas)]" as appSocial
+  database "Almacenamiento\nLocal" as localDB
+}
+
+package "Web  (Next.js)" as web {
+  component "[Panel Admin\n& Moderación]" as adminWeb
+  component "[Landing Page]" as landing
+}
+
+' ══════════════════════════════════════
+' BACKEND
+' ══════════════════════════════════════
+package "Backend  (NestJS — Monolito Modular)" as backend {
+  component "[API REST · RBAC · JWT]" as api
+}
+
+' ══════════════════════════════════════
+' INFRAESTRUCTURA
+' ══════════════════════════════════════
+package "ROBLE  (OpenLab — UniNorte)" as roble {
+  database "Base de Datos\n(ROBLE DB Service)" as robleDB
+  cloud "Autenticación\n(ROBLE Auth · JWT)" as robleAuth
+}
+
+cloud "Firebase FCM\n(Notificaciones Push)" as fcm
+
+' ══════════════════════════════════════
+' ACCESO POR ROL
+' ══════════════════════════════════════
+
+' Invitado — sin cuenta, solo local
+guest   --> appCore   : Solo funciones personales\n(sin Red Social)
+guest   --> localDB   : Datos guardados\nlocalmente
+
+' Paciente — cuenta + comunidad activa habilita red social
+patient --> appCore   : App completa
+patient --> appSocial : Solo si tiene\ncomunidad activa
+
+' Moderador — app solo red social + panel web limitado
+mod     --> appSocial : Solo su comunidad
+mod     --> adminWeb  : Panel moderador\n(permisos limitados)
+
+' Admin — app solo red social + panel web con gestión de contenido
+admin   --> appSocial : Solo su comunidad
+admin   --> adminWeb  : Panel admin\n(moderación + gestión\nde contenido/media)
+
+' Superadmin — todo
+superadmin --> appSocial : Todas las comunidades
+superadmin --> adminWeb  : Acceso total
+
+' ══════════════════════════════════════
+' FLUJOS PRINCIPALES
+' ══════════════════════════════════════
+mobile --> api      : HTTPS / REST\n(usuarios autenticados)
+web    --> api      : HTTPS / REST
+
+api --> robleAuth   : Login · Tokens\n· Validación sesión
+api --> robleDB     : CRUD datos\nde todos los módulos
+api --> fcm         : Notificaciones push\n(logros, crisis, comunidad)
+
+' ══════════════════════════════════════
+' LEYENDA DE ROLES
+' ══════════════════════════════════════
+legend bottom
+  <b>Roles y accesos</b>
+  |= Rol |= App — Personal |= App — Red Social |= Panel Web |
+  | Invitado | SI (datos locales) | NO | NO |
+  | Paciente | SI | SI si tiene comunidad activa | NO |
+  | Moderador | NO | SI - Solo su comunidad | SI - Permisos limitados |
+  | Admin | NO | SI - Solo su comunidad | SI - Moderacion + gestion de contenido |
+  | Superadmin | NO | SI - Todas las comunidades | SI - Acceso total |
+endlegend
+
+@enduml

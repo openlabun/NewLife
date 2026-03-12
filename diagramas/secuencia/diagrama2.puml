@@ -1,0 +1,59 @@
+@startuml Checkin_Diario
+title Diagrama 2: Check-in Diario y Actualización de Progreso
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 8
+skinparam sequenceParticipantBorderColor #2E5090
+skinparam sequenceParticipantBackgroundColor #EEF3FB
+skinparam sequenceActorBorderColor #1F3864
+skinparam sequenceActorBackgroundColor #D6E4F7
+skinparam noteBorderColor #CCCCCC
+skinparam noteBackgroundColor #FFFDE7
+
+actor "Usuario" as U
+participant "App Móvil\n(React Native)" as App
+participant "Backend\n(NestJS)" as BE
+database "Base de Datos\n(Roble)" as DB
+participant "Firebase FCM" as FCM
+
+== Verificación previa ==
+
+U -> App : Abre módulo Mi Progreso
+App -> App : Verifica si ya hizo\ncheck-in hoy
+
+alt Check-in pendiente
+
+    App --> U : Muestra selector visual\nde emociones
+    U -> App : Selecciona emoción del día
+    App -> BE : POST /progreso/checkin\n{userId, emocion, fecha}
+    BE -> DB : INSERT check_in\n{userId, emocion, fecha, hora}
+    DB --> BE : check_in_id
+    BE -> BE : Calcula nueva racha\nde sobriedad
+    BE -> DB : UPDATE usuario\nSET racha_actual, dias_sobrio
+    DB --> BE : OK
+
+    == Verificación de hitos ==
+
+    BE -> BE : Verifica hitos\n(7, 30, 90, 365 días)
+
+    alt Hito alcanzado
+        BE -> DB : INSERT logro\n{userId, tipo_hito, fecha}
+        BE -> FCM : Enviar notificación push\n{titulo, cuerpo, badge}
+        FCM --> U : Notificación en dispositivo
+        BE --> App : 200 OK\n{check_in, racha,\nlogro_desbloqueado: true}
+        App --> U : Animación de logro\ne insignia desbloqueada
+
+    else Sin hito
+        BE --> App : 200 OK\n{check_in, racha,\nlogro_desbloqueado: false}
+        App --> U : Mascota celebrando\n+ racha actualizada
+
+    end
+
+    App -> App : Actualiza calendario\ny gráficas localmente
+
+else Check-in ya realizado hoy
+    App --> U : Muestra check-in del día\ny estado actual
+
+end
+
+@enduml
