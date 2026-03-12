@@ -771,7 +771,42 @@ Los tres integrantes participan conjuntamente en:
 Todo el proceso se realiza bajo la tutoría de **Augusto Salazar**.
 
 
-### 10.2 Fases y actividades por semana
+### 10.2 Cronograma de desarrollo
+
+> Las barras indican las semanas de desarrollo activo de cada módulo.
+
+| Módulo / Componente | S5 | S6 | S7 | S8 | S9 | S10 | S11 | S12 | S13 | S14 | S15 |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Bienvenida | ▓ | ▓ | | | | | | | | | |
+| Onboarding / Historieta | ▓ | ▓ | | | | | | | | | |
+| Registro / Login | ▓ | ▓ | ▓ | | | | | | | | |
+| Inicio (Home + SOS) | | ▓ | ▓ | ▓ | | | | | | | |
+| Mi Progreso | | | ▓ | ▓ | ▓ | | | | | | |
+| Cuidado | | | ▓ | ▓ | ▓ | | | | | | |
+| Motivación | | | | ▓ | ▓ | ▓ | | | | | |
+| Social (Comunidades) | | | | | ▓ | ▓ | ▓ | | | | |
+| Panel Web – Admin | | ▓ | ▓ | ▓ | ▓ | ▓ | | | | | |
+| Landing Page | | | | | | ▓ | ▓ | ▓ | | | |
+| Integración Frontend–Backend | | ▓ | ▓ | ▓ | ▓ | ▓ | ▓ | ▓ | | | |
+| Pruebas de Usabilidad | | | | ▓ | ▓ | | ▓ | ▓ | | | |
+| Pruebas de Calidad | | | | | | | ▓ | ▓ | ▓ | | |
+| Despliegue | | | | | | | | ▓ | ▓ | ▓ | |
+| Monitoreo y ajustes | | | | | | | | | ▓ | ▓ | ▓ |
+
+▓ = semana de desarrollo activo.
+
+#### Fases del proyecto
+
+| Fase | Semanas | Descripción |
+|---|:---:|---|
+| 🟢 Fundación técnica | S5 – S6 | Configuración del repositorio, arquitectura base del backend, autenticación e inicio del frontend |
+| 🟣 Desarrollo de módulos | S7 – S10 | Implementación de módulos principales de la aplicación |
+| 🔵 Integración del sistema | S6 – S12 | Integración entre frontend, backend y panel web |
+| 🟡 Pruebas y calidad | S8 – S13 | Pruebas de usabilidad, pruebas de integración y corrección de errores |
+| 🟠 Despliegue y cierre | S13 – S15 | Despliegue en producción, monitoreo y documentación final |
+
+
+### 10.3 Fases y actividades por semana
 
 #### **Semana 5 – Fundación técnica**
 
