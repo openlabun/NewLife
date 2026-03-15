@@ -27,12 +27,17 @@ export class RobleAuthAdapter implements IAuthProviderPort {
 
   async register(data: { email: string; password: string; name: string }): Promise<UserAuthEntity> {
     try {
-      await axios.post(`${this.authBaseUrl}/signup-direct`, {
+      const res = await axios.post(`${this.authBaseUrl}/signup-direct`, {
         name: data.name,
         email: data.email,
         password: data.password
       });
-      return new UserAuthEntity('', data.email, '', '', 'paciente');
+
+      console.log('Roble register response:', JSON.stringify(res.data));
+
+      const uid = res.data?.user?.id || res.data?.id || res.data?.uid || '';
+
+      return new UserAuthEntity(uid, data.email, '', '', 'paciente');
     } catch (error: any) {
       throw error;
     }

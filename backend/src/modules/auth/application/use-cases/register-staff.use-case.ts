@@ -22,12 +22,12 @@ export class RegisterStaffUseCase {
       name: dto.nombre 
     });
 
+    const authUser = await this.authProvider.login(dto.email, dto.password);
+
     const masterToken = await this.systemAuth.getMasterToken();
 
-    const generateId = () => Math.random().toString(36).substring(2, 14).padEnd(12, '0');
-
     const newRecord = {
-      _id: generateId(),
+      usuario_id: authUser.uid,
       email: dto.email,
       rol: role,
       nombre: dto.nombre,
