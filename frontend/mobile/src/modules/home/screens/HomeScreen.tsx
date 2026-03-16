@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-
 import { Animated } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -43,9 +44,7 @@ function Ring({ value, label, max }: RingProps) {
   return (
     <View style={styles.ringWrapper}>
       <View style={{ width: size, height: size }}>
-        {/* Track */}
         <View style={[styles.ringTrack, { width: size, height: size, borderRadius: size / 2 }]} />
-        {/* Fill animado con rotación */}
         <Animated.View
           style={[
             styles.ringFill,
@@ -66,7 +65,6 @@ function Ring({ value, label, max }: RingProps) {
             },
           ]}
         />
-        {/* Valor centrado */}
         <View style={styles.ringCenter}>
           <Text style={styles.ringValue}>{value}</Text>
         </View>
@@ -82,7 +80,7 @@ export default function HomeScreen({ navigation }: any) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-      {/* Header: burbuja + personaje */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.bubbleWrapper}>
           <View style={styles.bubble}>
@@ -124,6 +122,23 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </View>
       </View>
+
+      {/* Botón de prueba temporal - ELIMINAR DESPUÉS */}
+      <TouchableOpacity
+        style={{ backgroundColor: '#333', padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}
+        onPress={async () => {
+          await AsyncStorage.removeItem('accessToken');
+          console.log('Token eliminado, probando refresh...');
+          try {
+            const response = await api.get('/auth/verify-token');
+            console.log('Petición exitosa después del refresh:', response.data);
+          } catch (e) {
+            console.log('Error:', e);
+          }
+        }}
+      >
+        <Text style={{ color: 'white' }}>Probar refresh token</Text>
+      </TouchableOpacity>
 
       {/* Ayuda rápida */}
       <Text style={styles.sectionTitle}>Ayuda rápida</Text>
@@ -286,8 +301,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     alignItems: 'center',
     elevation: 120,
-    shadowColor: '#FF9AA2', 
-    shadowOffset: { width: 0, height: 0 }, 
+    shadowColor: '#FF9AA2',
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 20,
   },
