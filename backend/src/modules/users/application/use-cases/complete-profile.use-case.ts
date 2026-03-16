@@ -2,7 +2,6 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { DatabaseService } from '../../../database/infrastructure/database.service';
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 import { InitialRegisterDto } from '../../presentation/dtos/initial-register.dto';
-import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CompleteProfileUseCase {
@@ -33,20 +32,6 @@ export class CompleteProfileUseCase {
       created_at: now
     };
 
-    const contactoRecord = {
-      _id: generateId(),
-      usuario_id: userId,
-      contacto_id: randomUUID(),
-      nombre: dto.apodo,
-      telefono: dto.telefono.toString(),
-      created_at: now,
-      updated_at: now
-    };
-
-    const userUpdate = {
-      nombre: dto.apodo
-    };
-
     const configRecord = {
       _id: generateId(),
       usuario_id: userId,
@@ -62,22 +47,18 @@ export class CompleteProfileUseCase {
       updated_at: now
     };
 
-    const [resInfo, resCont, resConf, resSobr, resUser] = await Promise.all([
+    const [resInfo, resConf, resSobr] = await Promise.all([
       this.dbService.insert('informacion_personal', [infoPersonalRecord], masterToken),
-      this.dbService.insert('contactos', [contactoRecord], masterToken),
       this.dbService.insert('config_usuarios', [configRecord], masterToken),
       this.dbService.insert('sobriedad', [sobriedadRecord], masterToken),
-      this.dbService.update('usuarios', 'usuario_id', userId, userUpdate, masterToken)
     ]);
-    
+
     return {
       message: 'Onboarding realizado con éxito',
       results: {
         informacion_personal: resInfo,
-        contactos: resCont,
         configuracion: resConf,
         sobriedad: resSobr,
-        usuario_nombre_actualizado: resUser
       }
     };
   }

@@ -48,7 +48,8 @@ export class LoginUseCase {
         created_at: now,
         last_login: now,
         rol: 'paciente',
-        nombre: authUser.email.split('@')[0]
+        nombre: authUser.nombre || dto.nombre || ''
+
       };
       
       await this.dbService.insert('usuarios', [newRecord], masterToken);

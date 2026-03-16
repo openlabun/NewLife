@@ -11,13 +11,15 @@ export class RobleAuthAdapter implements IAuthProviderPort {
     try {
       const res = await axios.post(`${this.authBaseUrl}/login`, { email, password });
       const { accessToken, refreshToken, user } = res.data;
+      console.log('Roble login response:', JSON.stringify(res.data));
 
       return new UserAuthEntity(
         user.id,
         email,
         accessToken,
         refreshToken,
-        user.role || 'paciente'
+        user.role || 'paciente',
+        user.name || ''
       );
     } catch (error: any) {
       const message = error.response?.data?.message || 'Error de acceso a Roble';
