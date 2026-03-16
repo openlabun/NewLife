@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const OPTIONS = [
-  { label: 'Sí', value: 'yes' },
-  { label: 'No por ahora', value: 'no' },
+  { label: 'Sí', value: true },
+  { label: 'No por ahora', value: false },
 ];
 
 export default function Step7_LugaresRiesgo({ navigation }: any) {
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState<boolean | null>(null);
+  const { setField } = useOnboarding();
 
   return (
     <StepLayout
@@ -22,12 +24,13 @@ export default function Step7_LugaresRiesgo({ navigation }: any) {
       <View style={styles.optionsContainer}>
         {OPTIONS.map((option) => (
           <TouchableOpacity
-            key={option.value}
+            key={String(option.value)}
             style={[styles.option, selected === option.value && styles.optionSelected]}
             onPress={() => {
               setSelected(option.value);
+              setField('reg_lugar_riesgo', option.value);
               setTimeout(() => {
-                if (option.value === 'yes') {
+                if (option.value) {
                   navigation.navigate('Step8');
                 } else {
                   navigation.navigate('Step9');

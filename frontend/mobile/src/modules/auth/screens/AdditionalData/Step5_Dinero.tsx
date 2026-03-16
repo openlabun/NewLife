@@ -5,6 +5,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const INPUT_HEIGHT = 52;
 
@@ -23,6 +24,7 @@ export default function Step5_Dinero({ navigation }: any) {
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(CURRENCIES[0]);
   const [showPicker, setShowPicker] = useState(false);
+  const { setField } = useOnboarding();
 
   const handleChange = (text: string) => {
     const formatted = formatAmount(text, currency.separator);
@@ -36,7 +38,11 @@ export default function Step5_Dinero({ navigation }: any) {
         question="¿Cuánto gastabas más o menos en alcohol a la semana?"
         characterImage={require('../../../../assets/images/character6.png')}
         onBack={() => navigation.goBack()}
-        onContinue={() => navigation.navigate('Step6')}
+        onContinue={() => {
+          const numeric = parseFloat(amount.replace(/\D/g, ''));
+          setField('gasto_semana', isNaN(numeric) ? 0 : numeric);
+          navigation.navigate('Step6');
+        }}
         showButton={true}
       >
         <View style={styles.inputWrapper}>

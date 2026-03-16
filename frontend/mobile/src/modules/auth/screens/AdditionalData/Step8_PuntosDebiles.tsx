@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/Feather';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 type Place = {
   id: string;
@@ -55,6 +56,7 @@ export default function Step8_PuntosDebiles({ navigation }: any) {
   const [results, setResults] = useState<Place[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<Place[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const { setField } = useOnboarding();
 
   const searchPlaces = async (query: string) => {
     setSearch(query);
@@ -104,7 +106,9 @@ export default function Step8_PuntosDebiles({ navigation }: any) {
       question="¿Dónde están tus puntos débiles?"
       characterImage={require('../../../../assets/images/character9.png')}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Step9')}
+      onContinue={() => {
+        navigation.navigate('Step9');
+      }}
       showButton={true}
     >
       <ScrollView showsVerticalScrollIndicator={false}>

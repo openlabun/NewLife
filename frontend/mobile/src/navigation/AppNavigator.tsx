@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { OnboardingProvider } from '../context/OnboardingContext';
 
 import SplashScreen1 from '../modules/onboarding/screens/SplashScreen1';
 import SplashScreen2 from '../modules/onboarding/screens/SplashScreen2';
@@ -29,40 +30,41 @@ import GuidedMeditationScreen from '../modules/home/screens/crisis/GuidedMeditat
 import CongratulationsScreen from '../modules/auth/screens/AdditionalData/Congratulations';
 import AppTourScreen from '../modules/auth/screens/AppTourScreen';
 
-
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash1" component={SplashScreen1} />
-        <Stack.Screen name="Splash2" component={SplashScreen2} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Story" component={StoryScreen} />
-        <Stack.Screen name="Step1" component={Step1_Apodo} />
-        <Stack.Screen name="Step2" component={Step2_Pronombres} />
-        <Stack.Screen name="Step3" component={Step3_UltimoConsumo} />
-        <Stack.Screen name="Step4" component={Step4_Motivo} />
-        <Stack.Screen name="Step5" component={Step5_Dinero} />
-        <Stack.Screen name="Step6" component={Step6_Telefono} />
-        <Stack.Screen name="Step7" component={Step7_LugaresRiesgo} />
-        <Stack.Screen name="Step9" component={Step9_Privacidad} />
-        <Stack.Screen name="Step10" component={Step10_Horario} />
-        <Stack.Screen name="Step8" component={Step8_PuntosDebiles} />
-        <Stack.Screen name="Home" component={MainScreen} />
-        <Stack.Screen name="SOS" component={SOSScreen} />
-        <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
-        <Stack.Screen name="CrisisMode" component={CrisisModeScreen} />
-        <Stack.Screen name="BreathingScreen" component={BreathingScreen} />
-        <Stack.Screen name="MotivationalPhrasesScreen" component={MotivationalPhrasesScreen} />
-        <Stack.Screen name="GuidedMeditationScreen" component={GuidedMeditationScreen} />
-        <Stack.Screen name="Congratulations" component={CongratulationsScreen} />
-        <Stack.Screen name="AppTour" component={AppTourScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <OnboardingProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Splash1" component={SplashScreen1} />
+          <Stack.Screen name="Splash2" component={SplashScreen2} />
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Story" component={StoryScreen} />
+          <Stack.Screen name="Step1" component={Step1_Apodo} />
+          <Stack.Screen name="Step2" component={Step2_Pronombres} />
+          <Stack.Screen name="Step3" component={Step3_UltimoConsumo} />
+          <Stack.Screen name="Step4" component={Step4_Motivo} />
+          <Stack.Screen name="Step5" component={Step5_Dinero} />
+          <Stack.Screen name="Step6" component={Step6_Telefono} />
+          <Stack.Screen name="Step7" component={Step7_LugaresRiesgo} />
+          <Stack.Screen name="Step8" component={Step8_PuntosDebiles} />
+          <Stack.Screen name="Step9" component={Step9_Privacidad} />
+          <Stack.Screen name="Step10" component={Step10_Horario} />
+          <Stack.Screen name="Home" component={MainScreen} />
+          <Stack.Screen name="SOS" component={SOSScreen} />
+          <Stack.Screen name="EmergencyContacts" component={EmergencyContactsScreen} />
+          <Stack.Screen name="CrisisMode" component={CrisisModeScreen} />
+          <Stack.Screen name="BreathingScreen" component={BreathingScreen} />
+          <Stack.Screen name="MotivationalPhrasesScreen" component={MotivationalPhrasesScreen} />
+          <Stack.Screen name="GuidedMeditationScreen" component={GuidedMeditationScreen} />
+          <Stack.Screen name="Congratulations" component={CongratulationsScreen} />
+          <Stack.Screen name="AppTour" component={AppTourScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </OnboardingProvider>
   );
 }

@@ -5,6 +5,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const INPUT_HEIGHT = 52;
 
@@ -21,6 +22,7 @@ export default function Step6_Telefono({ navigation }: any) {
   const [prefix, setPrefix] = useState(PREFIXES[0]);
   const [showPicker, setShowPicker] = useState(false);
   const [name, setName] = useState('');
+  const { setField } = useOnboarding();
 
   const handleChange = (text: string) => {
     const numbers = text.replace(/\D/g, '');
@@ -34,7 +36,11 @@ export default function Step6_Telefono({ navigation }: any) {
         question="En caso de crisis, ¿a quién podemos avisar?"
         characterImage={require('../../../../assets/images/character7.png')}
         onBack={() => navigation.goBack()}
-        onContinue={() => navigation.navigate('Step7')}
+        onContinue={() => {
+          setField('telefono', parseInt(phone));
+          setField('nombre_contacto', name);
+          navigation.navigate('Step7');
+        }}
         showButton={true}
       >
         <View style={styles.fieldsContainer}>

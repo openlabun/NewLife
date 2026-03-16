@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-import { loginUser } from '../../../services/authService';
+import { loginUser, getOnboardingStatus } from '../../../services/authService';
 
 const INPUT_HEIGHT = 52;
 
@@ -27,7 +27,12 @@ export default function LoginScreen({ navigation }: any) {
     try {
       setLoading(true);
       await loginUser(email, password);
-      navigation.navigate('Home');
+      const status = await getOnboardingStatus();
+      if (status.completed) {
+        navigation.navigate('Home');
+      } else {
+        navigation.navigate('Story');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Correo o contraseña incorrectos.');
     } finally {
@@ -89,8 +94,8 @@ export default function LoginScreen({ navigation }: any) {
 
       </View>
 
-      <TouchableOpacity 
-        style={[styles.buttonPrimary, loading && { opacity: 0.7 }]} 
+      <TouchableOpacity
+        style={[styles.buttonPrimary, loading && { opacity: 0.7 }]}
         onPress={handleLogin}
         disabled={loading}
       >

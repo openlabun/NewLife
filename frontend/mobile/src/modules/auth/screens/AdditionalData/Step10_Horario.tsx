@@ -4,6 +4,9 @@ import {
 } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
+import { completeProfile, createContact } from '../../../../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const CLOCK_SIZE = width * 0.7;
@@ -15,6 +18,8 @@ export default function Step10_Horario({ navigation }: any) {
     const [minute, setMinute] = useState(0);
     const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
     const [mode, setMode] = useState<'hour' | 'minute'>('hour');
+    const [loading, setLoading] = useState(false);
+    const { data } = useOnboarding();
 
     const hourNumbers = Array.from({ length: 12 }, (_, i) => i + 1);
     const minuteNumbers = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
@@ -41,13 +46,43 @@ export default function Step10_Horario({ navigation }: any) {
         setMinute(m);
     };
 
+
+    const handleFinish = async () => {
+        try {
+            setLoading(true);
+            const token = await AsyncStorage.getItem('accessToken');
+            console.log('Token actual:', token);
+            
+            const hourIn24 = period === 'PM' && hour !== 12
+                ? hour + 12
+                : period === 'AM' && hour === 12
+                    ? 0
+                    : hour;
+            const moment_motiv = `${hourIn24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+
+            const { nombre_contacto, ...profileData } = data;
+            await completeProfile({ ...profileData, moment_motiv });
+
+            if (nombre_contacto && profileData.telefono) {
+                await createContact(nombre_contacto, profileData.telefono.toString());
+            }
+
+            navigation.navigate('Congratulations');
+        } catch (err: any) {
+            console.log('Error completando perfil:', err.response?.data);
+        } finally {
+            setLoading(false);
+        }
+    };
+        
+
     return (
         <StepLayout
             currentStep={10}
             question="¿En qué momento prefieres que te motivemos?"
             characterImage={require('../../../../assets/images/character11.png')}
             onBack={() => navigation.goBack()}
-            onContinue={() => navigation.navigate('Congratulations')}
+            onContinue={handleFinish}
             showButton={true}
         >
             <View style={styles.container}>

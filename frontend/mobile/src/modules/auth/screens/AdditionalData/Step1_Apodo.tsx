@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { TextInput, StyleSheet } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const INPUT_HEIGHT = 52;
 
 export default function Step1_Apodo({ navigation }: any) {
   const [apodo, setApodo] = useState('');
+  const { setField } = useOnboarding();
 
   return (
     <StepLayout
@@ -14,7 +16,10 @@ export default function Step1_Apodo({ navigation }: any) {
       question="Dime cómo quieres que te llame"
       characterImage={require('../../../../assets/images/character1.png')}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Step2')}
+      onContinue={() => {
+        setField('apodo', apodo);
+        navigation.navigate('Step2');
+      }}
       showButton={true}
     >
       <TextInput

@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const OPTIONS = [
-  { label: 'Compartir (visible en muro)', value: 'public' },
-  { label: 'Privado (solo tú)', value: 'private' },
+  { label: 'Compartir (visible en muro)', value: true },
+  { label: 'Privado (solo tú)', value: false },
 ];
 
 export default function Step9_Privacidad({ navigation }: any) {
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState<boolean | null>(null);
+  const { setField } = useOnboarding();
 
   return (
     <StepLayout
@@ -22,10 +24,11 @@ export default function Step9_Privacidad({ navigation }: any) {
       <View style={styles.optionsContainer}>
         {OPTIONS.map((option) => (
           <TouchableOpacity
-            key={option.value}
+            key={String(option.value)}
             style={[styles.option, selected === option.value && styles.optionSelected]}
             onPress={() => {
               setSelected(option.value);
+              setField('comp_logros_comunid', option.value);
               setTimeout(() => navigation.navigate('Step10'), 300);
             }}
           >

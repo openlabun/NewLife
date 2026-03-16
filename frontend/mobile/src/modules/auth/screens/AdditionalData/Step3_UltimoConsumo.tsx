@@ -5,6 +5,7 @@ import {
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 import Icon from 'react-native-vector-icons/Feather';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const MONTHS = [
@@ -15,6 +16,7 @@ const MONTHS = [
 export default function Step3_UltimoConsumo({ navigation }: any) {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const { setField } = useOnboarding();
 
     const hasDate = selectedDate !== null;
 
@@ -102,7 +104,12 @@ export default function Step3_UltimoConsumo({ navigation }: any) {
                     : require('../../../../assets/images/character3.png')
             }
             onBack={() => navigation.goBack()}
-            onContinue={() => navigation.navigate('Step4')}
+            onContinue={() => {
+                if (selectedDate) {
+                    setField('ult_fecha_consumo', selectedDate.toISOString());
+                }
+                navigation.navigate('Step4');
+            }}
             showButton={hasDate}
         >
             <View style={styles.container}>

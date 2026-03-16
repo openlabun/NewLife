@@ -2,17 +2,22 @@ import React, { useState } from 'react';
 import { TextInput, StyleSheet } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 export default function Step4_Motivo({ navigation }: any) {
   const [motivo, setMotivo] = useState('');
+  const { setField } = useOnboarding();
 
   return (
     <StepLayout
       currentStep={4}
-      question="¿Cuál es tu mayor motivo para estar sobrio? ❤︎"
+      question="¿Cuál es tu mayor motivo para estar sobrio? ❤️"
       characterImage={require('../../../../assets/images/character5.png')}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate('Step5')}
+      onContinue={() => {
+        setField('motivo_sobrio', motivo);
+        navigation.navigate('Step5');
+      }}
       showButton={true}
     >
       <TextInput

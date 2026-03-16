@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useOnboarding } from '../../../../context/OnboardingContext';
 
 const OPTIONS = ['Él', 'Ella', 'Elle'];
 
 export default function Step2_Pronombres({ navigation }: any) {
   const [selected, setSelected] = useState('');
+  const { setField } = useOnboarding();
 
   return (
     <StepLayout
@@ -23,6 +25,7 @@ export default function Step2_Pronombres({ navigation }: any) {
             style={[styles.option, selected === option && styles.optionSelected]}
             onPress={() => {
               setSelected(option);
+              setField('pronombre', option);
               setTimeout(() => navigation.navigate('Step3'), 300);
             }}
           >
