@@ -1,11 +1,8 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { View, Image, StyleSheet, StatusBar } from 'react-native';
+import { colors } from '../../../constants/theme';
 
-type Props = {
-  navigation: any;
-};
-
-export default function SplashScreen1({ navigation }: Props) {
+export default function SplashScreen1({ navigation }: any) {
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.replace('Splash2');
@@ -15,10 +12,12 @@ export default function SplashScreen1({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#C8845A" barStyle="light-content" />
-      <Text style={styles.text}>
-        New <Text style={styles.bold}>life</Text>
-      </Text>
+      <StatusBar backgroundColor={colors.accent} barStyle="light-content" />
+      <Image
+        source={require('../../../assets/images/logosplash1.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -26,16 +25,12 @@ export default function SplashScreen1({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#C8845A',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  text: {
-    color: '#fff',
-    fontSize: 32,
-    fontWeight: '300',
-  },
-  bold: {
-    fontWeight: '700',
+  logo: {
+    width: 200,
+    height: 200,
   },
 });
