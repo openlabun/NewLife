@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
-  TouchableOpacity, KeyboardAvoidingView, Platform,
+  TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { loginUser } from '../../../services/authService';
 
 const INPUT_HEIGHT = 52;
 
@@ -12,10 +13,26 @@ export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: conectar con el backend
-    console.log('login', email, password);
+  const handleLogin = async () => {
+    setError('');
+
+    if (!email || !password) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await loginUser(email, password);
+      navigation.navigate('Home');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Correo o contraseña incorrectos.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,7 +48,6 @@ export default function LoginScreen({ navigation }: any) {
 
       <View style={styles.inputsContainer}>
 
-        {/* Email */}
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
@@ -44,7 +60,6 @@ export default function LoginScreen({ navigation }: any) {
           />
         </View>
 
-        {/* Contraseña */}
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
@@ -70,10 +85,19 @@ export default function LoginScreen({ navigation }: any) {
           <Text style={styles.forgotText}>¿Se te olvidó la contraseña?</Text>
         </TouchableOpacity>
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
       </View>
 
-      <TouchableOpacity style={styles.buttonPrimary} onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.buttonPrimaryText}>Entrar</Text>
+      <TouchableOpacity 
+        style={[styles.buttonPrimary, loading && { opacity: 0.7 }]} 
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        {loading
+          ? <ActivityIndicator color={colors.white} />
+          : <Text style={styles.buttonPrimaryText}>Entrar</Text>
+        }
       </TouchableOpacity>
 
       <View style={styles.registerContainer}>
@@ -131,6 +155,12 @@ const styles = StyleSheet.create({
   forgotText: {
     color: colors.textMuted,
     fontSize: fontSizes.xs,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
   buttonPrimary: {
     backgroundColor: colors.primary,

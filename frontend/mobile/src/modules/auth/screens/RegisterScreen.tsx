@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
-  TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView,
+  TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { registerUser } from '../../../services/authService';
 
 const INPUT_HEIGHT = 52;
 
 export default function RegisterScreen({ navigation }: any) {
-  const [username, setUsername] = useState('');
+  const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError('');
 
-    if (!username || !email || !password || !confirmPassword) {
+    if (!nombre || !email || !password || !confirmPassword) {
       setError('Por favor completa todos los campos.');
       return;
     }
@@ -29,11 +31,15 @@ export default function RegisterScreen({ navigation }: any) {
       return;
     }
 
-    // TODO: llamar endpoint de registro
-    console.log('register', { username, email, password });
-
-    // Navegar a la historieta
-    navigation.navigate('Story');
+    try {
+      setLoading(true);
+      await registerUser(nombre, email, password);
+      navigation.navigate('Story');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,11 +60,11 @@ export default function RegisterScreen({ navigation }: any) {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Usuario"
+              placeholder="Nombre completo"
               placeholderTextColor={colors.border}
-              autoCapitalize="none"
-              value={username}
-              onChangeText={setUsername}
+              autoCapitalize="words"
+              value={nombre}
+              onChangeText={setNombre}
             />
           </View>
 
@@ -106,8 +112,15 @@ export default function RegisterScreen({ navigation }: any) {
 
         </View>
 
-        <TouchableOpacity style={styles.buttonPrimary} onPress={handleRegister}>
-          <Text style={styles.buttonPrimaryText}>Registrarse</Text>
+        <TouchableOpacity 
+          style={[styles.buttonPrimary, loading && { opacity: 0.7 }]} 
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading 
+            ? <ActivityIndicator color={colors.white} />
+            : <Text style={styles.buttonPrimaryText}>Registrarse</Text>
+          }
         </TouchableOpacity>
 
         <View style={styles.loginContainer}>
