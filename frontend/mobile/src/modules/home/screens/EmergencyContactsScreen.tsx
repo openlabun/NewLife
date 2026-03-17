@@ -39,9 +39,12 @@ export default function EmergencyContactsScreen({ navigation }: any) {
 
   const openModal = (contact?: Contact) => {
     if (contact) {
+
+      console.log('CONTACTO:', contact); 
+
       setEditingContact(contact);
       setName(contact.nombre);
-      setPhone(contact.telefono);
+      setPhone(contact.telefono ? String(contact.telefono) : '');
     } else {
       setEditingContact(null);
       setName('');
@@ -159,7 +162,10 @@ export default function EmergencyContactsScreen({ navigation }: any) {
               placeholder="Número telefónico..."
               placeholderTextColor={colors.border}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(text) => {
+                const cleaned = text.replace(/[^0-9]/g, ''); // 👈 clave 
+                setPhone(cleaned);
+              }}
               keyboardType="phone-pad"
             />
             <View style={styles.modalButtons}>
