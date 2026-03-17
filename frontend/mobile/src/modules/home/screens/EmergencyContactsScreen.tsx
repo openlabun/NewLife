@@ -20,6 +20,7 @@ export default function EmergencyContactsScreen({ navigation }: any) {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     fetchContacts();
@@ -38,10 +39,9 @@ export default function EmergencyContactsScreen({ navigation }: any) {
   };
 
   const openModal = (contact?: Contact) => {
+    setErrorMessage(''); // 🔹 limpiar errores previos
+
     if (contact) {
-
-      console.log('CONTACTO:', contact); 
-
       setEditingContact(contact);
       setName(contact.nombre);
       setPhone(contact.telefono ? String(contact.telefono) : '');
@@ -54,17 +54,38 @@ export default function EmergencyContactsScreen({ navigation }: any) {
   };
 
   const saveContact = async () => {
-    if (!name.trim() || !phone.trim()) return;
+    // 🔹 Validar que nombre y teléfono no estén vacíos
+    if (!name.trim() || !phone.trim()) {
+      setErrorMessage('Nombre y teléfono son obligatorios');
+      return;
+    }
+
+    // 🔹 Validar longitud del teléfono
+    if (phone.length !== 10) {
+      setErrorMessage('Número inválido. Debe tener 10 dígitos.');
+      return;
+    }
+
     try {
       if (editingContact) {
         await updateContact(editingContact.contacto_id, name, phone);
       } else {
         await createContact(name, phone);
       }
+
+      // ✅ Resetear error y cerrar modal
+      setErrorMessage('');
       setShowModal(false);
       fetchContacts();
-    } catch (e) {
+    } catch (e: any) {
       console.log('Error guardando contacto:', e);
+      if (e.response?.data?.message) {
+        setErrorMessage(e.response.data.message);
+      } else if (e.message) {
+        setErrorMessage(e.message);
+      } else {
+        setErrorMessage('Error al guardar contacto');
+      }
     }
   };
 
@@ -168,6 +189,12 @@ export default function EmergencyContactsScreen({ navigation }: any) {
               }}
               keyboardType="phone-pad"
             />
+            {/* 👈 Aquí mostramos el error si existe */}
+            {errorMessage ? (
+              <Text style={{ color: 'red', marginTop: 4, textAlign: 'center' }}>
+                {errorMessage}
+              </Text>
+              ) : null}
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalCancel} onPress={() => setShowModal(false)}>
                 <Text style={styles.modalCancelText}>Cancelar</Text>
