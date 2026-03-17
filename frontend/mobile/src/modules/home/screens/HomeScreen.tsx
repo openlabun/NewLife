@@ -92,17 +92,37 @@ export default function HomeScreen({ navigation }: any) {
     fetchProfile();
   }, []);
 
+
   useEffect(() => {
-    const fetchSobriety = async () => {
-      try {
-        const data = await getSobrietyTime();
-        setSobriety(data.contador);
-      } catch (e) {
-        console.log('Error obteniendo sobriedad:', e);
+  const fetchSobriety = async () => {
+    try {
+      const data = await getSobrietyTime();
+      setSobriety(data.contador);
+    } catch (e) {
+      console.log('Error obteniendo sobriedad:', e);
+    }
+  };
+
+  fetchSobriety();
+
+  const interval = setInterval(() => {
+    setSobriety(prev => {
+      let { dias, horas, minutos } = prev;
+      minutos += 1;
+      if (minutos >= 60) {
+        minutos = 0;
+        horas += 1;
       }
-    };
-    fetchSobriety();
-  }, []);
+      if (horas >= 24) {
+        horas = 0;
+        dias += 1;
+      }
+      return { dias, horas, minutos };
+    });
+  }, 60000);
+
+  return () => clearInterval(interval);
+}, []);
 
 
   return (
