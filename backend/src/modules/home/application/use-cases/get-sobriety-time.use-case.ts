@@ -22,8 +22,9 @@ export class GetSobrietyTimeUseCase {
     const fechaUltimoConsumo = new Date(rows[0].fecha_ultimo_consumo);
     const updatedAt = new Date(rows[0].updated_at);
     const ahora = new Date();
+    const ahoraCol = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
     
-    const diffMs = Math.max(0, ahora.getTime() - fechaUltimoConsumo.getTime());
+    const diffMs = Math.max(0, ahoraCol.getTime() - fechaUltimoConsumo.getTime());
 
     const totalMinutos = Math.floor(diffMs / (1000 * 60));
     const totalHoras = Math.floor(totalMinutos / 60);
