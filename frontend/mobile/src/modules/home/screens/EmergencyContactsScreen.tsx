@@ -1,35 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Linking, Alert, Modal, TextInput,
+  Linking, Alert, Modal, TextInput, ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getContacts, createContact, updateContact, deleteContact } from '../../../services/authService';
 
 type Contact = {
-  id: string;
-  name: string;
-  phone: string;
+  contacto_id: string;
+  nombre: string;
+  telefono: string;
 };
 
-const INITIAL_CONTACTS: Contact[] = [
-  { id: '1', name: 'Padrino Rubén', phone: '+573001234567' },
-  { id: '2', name: 'Fundación Shalom', phone: '+573007654321' },
-  { id: '3', name: 'Psicólogo Juan', phone: '+573009876543' },
-];
-
 export default function EmergencyContactsScreen({ navigation }: any) {
-  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
 
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    try {
+      setLoading(true);
+      const data = await getContacts();
+      setContacts(Array.isArray(data) ? data : data.rows || []);
+    } catch (e) {
+      console.log('Error obteniendo contactos:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openModal = (contact?: Contact) => {
     if (contact) {
       setEditingContact(contact);
-      setName(contact.name);
-      setPhone(contact.phone);
+      setName(contact.nombre);
+      setPhone(contact.telefono);
     } else {
       setEditingContact(null);
       setName('');
@@ -38,20 +50,34 @@ export default function EmergencyContactsScreen({ navigation }: any) {
     setShowModal(true);
   };
 
-  const saveContact = () => {
+  const saveContact = async () => {
     if (!name.trim() || !phone.trim()) return;
-    if (editingContact) {
-      setContacts(contacts.map(c => c.id === editingContact.id ? { ...c, name, phone } : c));
-    } else {
-      setContacts([...contacts, { id: Date.now().toString(), name, phone }]);
+    try {
+      if (editingContact) {
+        await updateContact(editingContact.contacto_id, name, phone);
+      } else {
+        await createContact(name, phone);
+      }
+      setShowModal(false);
+      fetchContacts();
+    } catch (e) {
+      console.log('Error guardando contacto:', e);
     }
-    setShowModal(false);
   };
 
-  const deleteContact = (id: string) => {
+  const handleDelete = (id: string) => {
     Alert.alert('Eliminar contacto', '¿Estás seguro?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => setContacts(contacts.filter(c => c.id !== id)) },
+      {
+        text: 'Eliminar', style: 'destructive', onPress: async () => {
+          try {
+            await deleteContact(id);
+            fetchContacts();
+          } catch (e) {
+            console.log('Error eliminando contacto:', e);
+          }
+        }
+      },
     ]);
   };
 
@@ -81,30 +107,38 @@ export default function EmergencyContactsScreen({ navigation }: any) {
         Accede rápidamente a tus <Text style={styles.subtitleBold}>contactos clave.</Text>
       </Text>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {contacts.map((contact) => (
-          <View key={contact.id} style={styles.card}>
-            <View style={styles.cardInfo}>
-              <Text style={styles.contactName}>{contact.name}</Text>
-              <Text style={styles.contactPhone}>{contact.phone}</Text>
-            </View>
-            <View style={styles.cardActions}>
-              <TouchableOpacity style={styles.actionButton} onPress={() => callContact(contact.phone)}>
-                <Icon name="phone" size={18} color={'#FF6B6B'} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={() => smsContact(contact.phone)}>
-                <Icon name="message-circle" size={18} color={'#FF6B6B'} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => openModal(contact)}>
-                <Icon name="edit-2" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => deleteContact(contact.id)}>
-                <Icon name="trash-2" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {contacts.length === 0 ? (
+            <Text style={styles.emptyText}>No tienes contactos de emergencia aún.</Text>
+          ) : (
+            contacts.map((contact) => (
+              <View key={contact.contacto_id} style={styles.card}>
+                <View style={styles.cardInfo}>
+                  <Text style={styles.contactName}>{contact.nombre}</Text>
+                  <Text style={styles.contactPhone}>{contact.telefono}</Text>
+                </View>
+                <View style={styles.cardActions}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => callContact(contact.telefono)}>
+                    <Icon name="phone" size={18} color={'#FF6B6B'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => smsContact(contact.telefono)}>
+                    <Icon name="message-circle" size={18} color={'#FF6B6B'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => openModal(contact)}>
+                    <Icon name="edit-2" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => handleDelete(contact.contacto_id)}>
+                    <Icon name="trash-2" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      )}
 
       {/* Modal agregar/editar */}
       <Modal visible={showModal} transparent animationType="slide" statusBarTranslucent>
@@ -176,6 +210,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     gap: spacing.md,
     paddingBottom: spacing.xl,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: colors.textMuted,
+    fontSize: fontSizes.md,
+    marginTop: spacing.xl,
   },
   card: {
     backgroundColor: colors.white,

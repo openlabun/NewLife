@@ -43,3 +43,18 @@ export const getSobrietyTime = async () => {
   const response = await api.get('/home/sobriety-time');
   return response.data;
 };
+
+export const getContacts = async () => {
+  const response = await api.get('/contacts');
+  return response.data;
+};
+
+export const updateContact = async (id: string, nombre: string, telefono: string) => {
+  const response = await api.patch(`/contacts/${id}`, { nombre, telefono });
+  return response.data;
+};
+
+export const deleteContact = async (id: string) => {
+  const response = await api.delete(`/contacts/${id}`);
+  return response.data;
+};
