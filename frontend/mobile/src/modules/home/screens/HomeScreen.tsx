@@ -6,7 +6,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { Animated } from 'react-native';
-import { getProfile } from '../../../services/authService';
+import { getProfile, getSobrietyTime  } from '../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../services/api';
 
@@ -78,6 +78,7 @@ function Ring({ value, label, max }: RingProps) {
 export default function HomeScreen({ navigation }: any) {
   const [showSOS, setShowSOS] = useState(false);
   const [apodo, setApodo] = useState('');
+  const [sobriety, setSobriety] = useState({ dias: 0, horas: 0, minutos: 0 });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -90,6 +91,19 @@ export default function HomeScreen({ navigation }: any) {
     };
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchSobriety = async () => {
+      try {
+        const data = await getSobrietyTime();
+        setSobriety(data.contador);
+      } catch (e) {
+        console.log('Error obteniendo sobriedad:', e);
+      }
+    };
+    fetchSobriety();
+  }, []);
+
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -117,9 +131,9 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.card}>
         <Text style={styles.cardSubtitle}>Has estado sobrio:</Text>
         <View style={styles.ringsRow}>
-          <Ring value={2} label="Días" max={30} />
-          <Ring value={60} label="Horas" max={24} />
-          <Ring value={50} label="Mins" max={60} />
+          <Ring value={sobriety.dias} label="Días" max={30} />
+          <Ring value={sobriety.horas} label="Horas" max={24} />
+          <Ring value={sobriety.minutos} label="Mins" max={60} />
         </View>
       </View>
 

@@ -38,3 +38,8 @@ export const getProfile = async () => {
   const response = await api.get('/user/profile');
   return response.data;
 };
+
+export const getSobrietyTime = async () => {
+  const response = await api.get('/home/sobriety-time');
+  return response.data;
+};
