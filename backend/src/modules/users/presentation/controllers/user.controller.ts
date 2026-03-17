@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/presentation/guards/jwt-auth.guard';
 import { CompleteProfileUseCase } from '../../application/use-cases/complete-profile.use-case';
+import { GetProfileUseCase } from '../../application/use-cases/get-profile.use-case';
 import { InitialRegisterDto } from '../dtos/initial-register.dto';
 
 @ApiTags('Perfil de Usuario')
@@ -9,7 +10,8 @@ import { InitialRegisterDto } from '../dtos/initial-register.dto';
 @Controller('user')
 export class UserController {
   constructor(
-    private readonly completeProfileUseCase: CompleteProfileUseCase
+    private readonly completeProfileUseCase: CompleteProfileUseCase,
+    private readonly getProfileUseCase: GetProfileUseCase,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -26,4 +28,10 @@ export class UserController {
     return await this.completeProfileUseCase.checkStatus(req.user.uid);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
+  async getProfile(@Request() req: any) {
+    return await this.getProfileUseCase.execute(req.user.uid);
+  }
 }

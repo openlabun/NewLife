@@ -33,3 +33,8 @@ export const createContact = async (nombre: string, telefono: string) => {
   const response = await api.post('/contacts', { nombre, telefono });
   return response.data;
 };
+
+export const getProfile = async () => {
+  const response = await api.get('/user/profile');
+  return response.data;
+};

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  Image, Modal, Dimensions,
+  Image, Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { Animated } from 'react-native';
+import { getProfile } from '../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../services/api';
 
@@ -76,6 +77,19 @@ function Ring({ value, label, max }: RingProps) {
 
 export default function HomeScreen({ navigation }: any) {
   const [showSOS, setShowSOS] = useState(false);
+  const [apodo, setApodo] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await getProfile();
+        setApodo(profile.apodo);
+      } catch (e) {
+        console.log('Error obteniendo perfil:', e);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -84,7 +98,7 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={styles.bubbleWrapper}>
           <View style={styles.bubble}>
-            <Text style={styles.bubbleTitle}>¡Hola Juan!</Text>
+            <Text style={styles.bubbleTitle}>¡Hola {apodo ? apodo : '...'}!</Text>
             <Text style={styles.bubbleSubtitle}>¡Haz clic en mi!</Text>
           </View>
           <View style={styles.bubbleTail} />
