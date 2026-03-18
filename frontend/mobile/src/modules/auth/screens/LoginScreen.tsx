@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
   TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
+import { Switch } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { loginUser, getOnboardingStatus } from '../../../services/authService';
+import { sessionTokens } from '../../../services/api';
 
 const INPUT_HEIGHT = 52;
 
@@ -15,10 +18,31 @@ export default function LoginScreen({ navigation }: any) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Auto-login: solo si rememberMe estaba activo en la sesión anterior
+  useEffect(() => {
+    const checkTokens = async () => {
+      try {
+        const remembered = await AsyncStorage.getItem('rememberMe');
+        if (remembered !== 'true') return; // sin rememberMe → no auto-login
+
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+        if (accessToken && refreshToken) {
+          const status = await getOnboardingStatus();
+          navigation.navigate(status.completed ? 'Home' : 'Story');
+        }
+      } catch (e) {
+        console.log('No se pudo hacer autologin:', e);
+      }
+    };
+    checkTokens();
+  }, []);
 
   const handleLogin = async () => {
     setError('');
-
     if (!email || !password) {
       setError('Por favor completa todos los campos.');
       return;
@@ -26,13 +50,25 @@ export default function LoginScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      await loginUser(email, password);
-      const status = await getOnboardingStatus();
-      if (status.completed) {
-        navigation.navigate('Home');
+      const data = await loginUser(email, password);
+
+      if (rememberMe) {
+        // Recordarme ON → persistir en AsyncStorage
+        await AsyncStorage.multiSet([
+          ['accessToken', data.accessToken],
+          ['refreshToken', data.refreshToken],
+          ['rememberMe', 'true'],
+        ]);
       } else {
-        navigation.navigate('Story');
+        // Recordarme OFF → solo en memoria, se pierden al cerrar la app
+        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'rememberMe']);
+        sessionTokens.accessToken = data.accessToken;
+        sessionTokens.refreshToken = data.refreshToken;
       }
+
+      const status = await getOnboardingStatus();
+      navigation.navigate(status.completed ? 'Home' : 'Story');
+
     } catch (err: any) {
       setError(err.response?.data?.message || 'Correo o contraseña incorrectos.');
     } finally {
@@ -84,6 +120,17 @@ export default function LoginScreen({ navigation }: any) {
               color={colors.textMuted}
             />
           </TouchableOpacity>
+        </View>
+
+        {/* Switch Recordarme */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}>
+          <Switch
+            value={rememberMe}
+            onValueChange={setRememberMe}
+            trackColor={{ false: '#ccc', true: '#FF6B6B' }}
+            thumbColor="#fff"
+          />
+          <Text style={{ marginLeft: 8, color: colors.text }}>Recordarme</Text>
         </View>
 
         <TouchableOpacity style={styles.forgotContainer}>

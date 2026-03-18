@@ -1,22 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
 
-export const registerUser = async (nombre: string, email: string, password: string) => {
-  await api.post('/auth/register', { nombre, email, password });
-  await loginUser(email, password, nombre);
+// Login: solo llama al backend, NO guarda tokens
+// El guardado lo maneja LoginScreen según rememberMe
+export const loginUser = async (email: string, password: string) => {
+  const response = await api.post('/auth/login', { email, password });
+  return response.data; // { accessToken, refreshToken, ... }
 };
 
-export const loginUser = async (email: string, password: string, nombre?: string) => {
-  const response = await api.post('/auth/login', { email, password, ...(nombre && { nombre }) });
-  const { accessToken, refreshToken } = response.data;
-  await AsyncStorage.setItem('accessToken', accessToken);
-  await AsyncStorage.setItem('refreshToken', refreshToken);
-  return response.data;
+// Register: crea cuenta y retorna datos igual que loginUser
+export const registerUser = async (nombre: string, email: string, password: string) => {
+  await api.post('/auth/register', { nombre, email, password });
+  return loginUser(email, password);
 };
 
 export const logoutUser = async () => {
-  await AsyncStorage.removeItem('accessToken');
-  await AsyncStorage.removeItem('refreshToken');
+  await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'rememberMe']);
 };
 
 export const getOnboardingStatus = async () => {
