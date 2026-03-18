@@ -6,6 +6,9 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { registerUser } from '../../../services/authService';
+// Agrega este import arriba
+import { sessionTokens } from '../../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const INPUT_HEIGHT = 52;
 
@@ -19,9 +22,10 @@ export default function RegisterScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+
   const handleRegister = async () => {
     setError('');
-
+    
     if (!nombre || !email || !password || !confirmPassword) {
       setError('Por favor completa todos los campos.');
       return;
@@ -30,10 +34,18 @@ export default function RegisterScreen({ navigation }: any) {
       setError('Las contraseñas no coinciden.');
       return;
     }
-
+    
     try {
       setLoading(true);
-      await registerUser(nombre, email, password);
+      const data = await registerUser(nombre, email, password);
+
+      // Registro siempre persiste sesión (rememberMe = true automático)
+      await AsyncStorage.multiSet([
+        ['accessToken', data.accessToken],
+        ['refreshToken', data.refreshToken],
+        ['rememberMe', 'true'],
+      ]);
+
       navigation.navigate('Story');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
