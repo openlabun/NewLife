@@ -8,6 +8,7 @@ export const loginUser = async (email: string, password: string) => {
   await AsyncStorage.multiSet([
     ['accessToken', accessToken],
     ['refreshToken', refreshToken],
+    ['userEmail', email], // guardar email para identificar al usuario
   ]);
   return response.data;
 };
@@ -19,7 +20,7 @@ export const registerUser = async (nombre: string, email: string, password: stri
 };
 
 export const logoutUser = async () => {
-  await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+  await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'userEmail']);
 };
 
 export const getOnboardingStatus = async () => {

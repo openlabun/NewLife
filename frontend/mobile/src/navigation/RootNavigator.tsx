@@ -13,17 +13,32 @@ export default function RootNavigator() {
       const refreshToken = await AsyncStorage.getItem('refreshToken');
 
       if (accessToken && refreshToken) {
-        // Hay tokens → siempre entrar, nunca borrar
         try {
           const status = await getOnboardingStatus();
-          setInitialRoute(status.completed ? 'Home' : 'Story');
+
+          if (!status.completed) {
+            // Onboarding de datos no completado → ir a Story
+            setInitialRoute('Story');
+            return;
+          }
+          
+          const email = await AsyncStorage.getItem('userEmail');
+          const tourCompleted = await AsyncStorage.getItem(`tourCompleted_${email}`);
+          if (tourCompleted !== 'true') {
+            // Datos completados pero tour no visto → ir al tour
+            setInitialRoute('AppTour');
+            return;
+          }
+
+          // Todo completado → Home
+          setInitialRoute('Home');
+
         } catch {
-          // Error de red u otro → igual entrar a Home
-          // Los tokens siguen válidos, no los borramos
+          // Error de red → igual entrar, no borrar tokens
           setInitialRoute('Home');
         }
       } else {
-        // Sin tokens → primera vez o cerró sesión explícitamente
+        // Sin tokens → primera vez o cerró sesión
         setInitialRoute('Splash1');
       }
     };

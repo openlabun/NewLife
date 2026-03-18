@@ -120,7 +120,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'userEmail']);
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (e) {
       console.log('Error cerrando sesión:', e);

@@ -4,7 +4,8 @@ import {
 } from 'react-native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import BottomTabNavigator from '../../../navigation/BottomTabNavigator';
-
+// Agrega este import arriba
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width, height } = Dimensions.get('window');
 
 const slides = [
@@ -80,10 +81,12 @@ export default function AppTourScreen({ navigation }: any) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const current = slides[currentIndex];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (currentIndex < slides.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
+      const email = await AsyncStorage.getItem('userEmail');
+      await AsyncStorage.setItem(`tourCompleted_${email}`, 'true'); // Tour completado → guardar para no mostrarlo de nuevo
       navigation.replace('Home');
     }
   };
