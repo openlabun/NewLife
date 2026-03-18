@@ -1,21 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
 
-// Login: solo llama al backend, NO guarda tokens
-// El guardado lo maneja LoginScreen según rememberMe
+// Login: llama al backend Y siempre guarda tokens
 export const loginUser = async (email: string, password: string) => {
   const response = await api.post('/auth/login', { email, password });
-  return response.data; // { accessToken, refreshToken, ... }
+  const { accessToken, refreshToken } = response.data;
+  await AsyncStorage.multiSet([
+    ['accessToken', accessToken],
+    ['refreshToken', refreshToken],
+  ]);
+  return response.data;
 };
 
-// Register: crea cuenta y retorna datos igual que loginUser
+// Register: crea cuenta y guarda tokens igual
 export const registerUser = async (nombre: string, email: string, password: string) => {
   await api.post('/auth/register', { nombre, email, password });
   return loginUser(email, password);
 };
 
 export const logoutUser = async () => {
-  await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'rememberMe']);
+  await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
 };
 
 export const getOnboardingStatus = async () => {

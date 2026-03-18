@@ -3,13 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'http://10.0.2.2:3000';
 
-// Tokens en memoria para sesiones sin "Recordarme"
-export const sessionTokens: { accessToken: string | null; refreshToken: string | null } = {
-  accessToken: null,
-  refreshToken: null,
-};
-
-// Mini event emitter para notificar sesión expirada
+// Event emitter para notificar sesión expirada
 type Listener = () => void;
 export const authEventEmitter = {
   listeners: new Set<Listener>(),
@@ -32,28 +26,9 @@ function resolveQueue(newToken: string) {
   pendingRequests = [];
 }
 
-async function getAccessToken(): Promise<string | null> {
-  if (sessionTokens.accessToken) return sessionTokens.accessToken;
-  return AsyncStorage.getItem('accessToken');
-}
-
-async function getRefreshToken(): Promise<string | null> {
-  if (sessionTokens.refreshToken) return sessionTokens.refreshToken;
-  return AsyncStorage.getItem('refreshToken');
-}
-
-async function saveNewAccessToken(token: string) {
-  const rememberMe = await AsyncStorage.getItem('rememberMe');
-  if (rememberMe === 'true') {
-    await AsyncStorage.setItem('accessToken', token);
-  } else {
-    sessionTokens.accessToken = token;
-  }
-}
-
 // REQUEST INTERCEPTOR
 api.interceptors.request.use(async (config) => {
-  const token = await getAccessToken();
+  const token = await AsyncStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -83,14 +58,13 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const refreshToken = await getRefreshToken();
-
+      const refreshToken = await AsyncStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('No hay refresh token');
 
       const { data } = await axios.post(`${BASE_URL}/auth/refresh-token`, { refreshToken });
       const newAccessToken: string = data.accessToken;
 
-      await saveNewAccessToken(newAccessToken);
+      await AsyncStorage.setItem('accessToken', newAccessToken);
       resolveQueue(newAccessToken);
 
       console.log('✅ Token refrescado correctamente');
@@ -99,9 +73,7 @@ api.interceptors.response.use(
       return api(originalRequest);
 
     } catch (refreshError) {
-      sessionTokens.accessToken = null;
-      sessionTokens.refreshToken = null;
-      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'rememberMe']);
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
       authEventEmitter.emit();
       return Promise.reject(refreshError);
     } finally {

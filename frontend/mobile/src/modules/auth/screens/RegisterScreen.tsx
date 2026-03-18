@@ -6,9 +6,6 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { registerUser } from '../../../services/authService';
-// Agrega este import arriba
-import { sessionTokens } from '../../../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const INPUT_HEIGHT = 52;
 
@@ -22,10 +19,9 @@ export default function RegisterScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-
   const handleRegister = async () => {
     setError('');
-    
+
     if (!nombre || !email || !password || !confirmPassword) {
       setError('Por favor completa todos los campos.');
       return;
@@ -34,18 +30,11 @@ export default function RegisterScreen({ navigation }: any) {
       setError('Las contraseñas no coinciden.');
       return;
     }
-    
+
     try {
       setLoading(true);
-      const data = await registerUser(nombre, email, password);
-
-      // Registro siempre persiste sesión (rememberMe = true automático)
-      await AsyncStorage.multiSet([
-        ['accessToken', data.accessToken],
-        ['refreshToken', data.refreshToken],
-        ['rememberMe', 'true'],
-      ]);
-
+      // registerUser ya llama a loginUser internamente que guarda los tokens
+      await registerUser(nombre, email, password);
       navigation.navigate('Story');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
@@ -124,12 +113,12 @@ export default function RegisterScreen({ navigation }: any) {
 
         </View>
 
-        <TouchableOpacity 
-          style={[styles.buttonPrimary, loading && { opacity: 0.7 }]} 
+        <TouchableOpacity
+          style={[styles.buttonPrimary, loading && { opacity: 0.7 }]}
           onPress={handleRegister}
           disabled={loading}
         >
-          {loading 
+          {loading
             ? <ActivityIndicator color={colors.white} />
             : <Text style={styles.buttonPrimaryText}>Registrarse</Text>
           }
@@ -148,78 +137,18 @@ export default function RegisterScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: 60,
-    paddingBottom: spacing.xxl,
-    flexGrow: 1,
-  },
-  backButton: {
-    marginBottom: spacing.xl,
-  },
-  title: {
-    fontSize: fontSizes.xxl,
-    fontWeight: '700',
-    color: colors.text,
-    lineHeight: 38,
-    marginBottom: spacing.xxl,
-  },
-  inputsContainer: {
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  inputWrapper: {
-    height: INPUT_HEIGHT,
-    backgroundColor: colors.inputBackground,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    height: INPUT_HEIGHT,
-    fontSize: fontSizes.md,
-    color: colors.text,
-  },
-  eyeButton: {
-    padding: 4,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  buttonPrimary: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  buttonPrimaryText: {
-    color: colors.white,
-    fontSize: fontSizes.lg,
-    fontWeight: '600',
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 'auto',
-    paddingTop: spacing.xl,
-  },
-  loginText: {
-    color: colors.textMuted,
-    fontSize: fontSizes.sm,
-  },
-  loginLink: {
-    color: colors.accent,
-    fontSize: fontSizes.sm,
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: 60, paddingBottom: spacing.xxl, flexGrow: 1 },
+  backButton: { marginBottom: spacing.xl },
+  title: { fontSize: fontSizes.xxl, fontWeight: '700', color: colors.text, lineHeight: 38, marginBottom: spacing.xxl },
+  inputsContainer: { gap: spacing.sm, marginBottom: spacing.xl },
+  inputWrapper: { height: INPUT_HEIGHT, backgroundColor: colors.inputBackground, borderRadius: borderRadius.full, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' },
+  input: { flex: 1, height: INPUT_HEIGHT, fontSize: fontSizes.md, color: colors.text },
+  eyeButton: { padding: 4 },
+  errorText: { color: 'red', fontSize: fontSizes.sm, textAlign: 'center', marginTop: spacing.xs },
+  buttonPrimary: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: borderRadius.full, alignItems: 'center', marginBottom: spacing.lg },
+  buttonPrimaryText: { color: colors.white, fontSize: fontSizes.lg, fontWeight: '600' },
+  loginContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 'auto', paddingTop: spacing.xl },
+  loginText: { color: colors.textMuted, fontSize: fontSizes.sm },
+  loginLink: { color: colors.accent, fontSize: fontSizes.sm, fontWeight: '600' },
 });

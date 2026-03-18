@@ -8,7 +8,7 @@ import { colors, fontSizes, spacing, borderRadius } from '../../../constants/the
 import { Animated } from 'react-native';
 import { getProfile, getSobrietyTime } from '../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { authEventEmitter, sessionTokens } from '../../../services/api';
+import api, { authEventEmitter} from '../../../services/api';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = 72;
@@ -120,9 +120,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleLogout = async () => {
     try {
-      sessionTokens.accessToken = null;
-      sessionTokens.refreshToken = null;
-      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'rememberMe']);
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (e) {
       console.log('Error cerrando sesión:', e);
@@ -183,18 +181,15 @@ export default function HomeScreen({ navigation }: any) {
         style={{ backgroundColor: '#333', padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}
 
         onPress={async () => {
-          // Borra AMBOS tokens para simular refresh expirado
-          await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
-          sessionTokens.accessToken = null;
-          sessionTokens.refreshToken = null;
-          console.log('🧪 Ambos tokens eliminados, simulando sesión expirada...');
-          try {
-            const response = await api.get('/auth/verify-token');
-            console.log('✅ Respuesta:', response.data);
-          } catch (e) {
-            console.log('❌ Error (esperado):', e);
-          }
-        }}
+          const access = await AsyncStorage.getItem('accessToken');
+          const refresh = await AsyncStorage.getItem('refreshToken');
+          console.log('accessToken:', access);
+          console.log('refreshToken:', refresh);
+         }}
+
+
+
+
       >
         <Text style={{ color: 'white' }}>Probar refresh token</Text>
       </TouchableOpacity>

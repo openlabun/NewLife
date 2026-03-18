@@ -8,7 +8,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { loginUser, getOnboardingStatus } from '../../../services/authService';
-import { sessionTokens } from '../../../services/api';
 
 const INPUT_HEIGHT = 52;
 
@@ -20,25 +19,23 @@ export default function LoginScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Auto-login: solo si rememberMe estaba activo en la sesión anterior
+  // Cargar email y contraseña guardados si rememberMe estaba activo
   useEffect(() => {
-    const checkTokens = async () => {
+    const loadSavedCredentials = async () => {
       try {
-        const remembered = await AsyncStorage.getItem('rememberMe');
-        if (remembered !== 'true') return; // sin rememberMe → no auto-login
-
-        const accessToken = await AsyncStorage.getItem('accessToken');
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
-
-        if (accessToken && refreshToken) {
-          const status = await getOnboardingStatus();
-          navigation.navigate(status.completed ? 'Home' : 'Story');
+        const saved = await AsyncStorage.getItem('rememberMe');
+        if (saved === 'true') {
+          const savedEmail = await AsyncStorage.getItem('savedEmail');
+          const savedPassword = await AsyncStorage.getItem('savedPassword');
+          if (savedEmail) setEmail(savedEmail);
+          if (savedPassword) setPassword(savedPassword);
+          setRememberMe(true);
         }
       } catch (e) {
-        console.log('No se pudo hacer autologin:', e);
+        console.log('Error cargando credenciales:', e);
       }
     };
-    checkTokens();
+    loadSavedCredentials();
   }, []);
 
   const handleLogin = async () => {
@@ -50,21 +47,19 @@ export default function LoginScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      const data = await loginUser(email, password);
 
+      // Guardar o borrar credenciales según rememberMe
       if (rememberMe) {
-        // Recordarme ON → persistir en AsyncStorage
         await AsyncStorage.multiSet([
-          ['accessToken', data.accessToken],
-          ['refreshToken', data.refreshToken],
           ['rememberMe', 'true'],
+          ['savedEmail', email.trim().toLowerCase()],
+          ['savedPassword', password],
         ]);
       } else {
-        // Recordarme OFF → solo en memoria, se pierden al cerrar la app
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'rememberMe']);
-        sessionTokens.accessToken = data.accessToken;
-        sessionTokens.refreshToken = data.refreshToken;
+        await AsyncStorage.multiRemove(['rememberMe', 'savedEmail', 'savedPassword']);
       }
+
+      await loginUser(email.trim().toLowerCase(), password);
 
       const status = await getOnboardingStatus();
       navigation.navigate(status.completed ? 'Home' : 'Story');
@@ -122,7 +117,7 @@ export default function LoginScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Switch Recordarme */}
+        {/* Switch Recordarme — ahora solo autocompleta credenciales */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}>
           <Switch
             value={rememberMe}

@@ -32,11 +32,18 @@ import AppTourScreen from '../modules/auth/screens/AppTourScreen';
 
 const Stack = createNativeStackNavigator();
 
-export default function AppNavigator() {
+type AppNavigatorProps = {
+  initialRoute?: string;
+};
+
+export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorProps) {
   return (
     <OnboardingProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator
+          screenOptions={{ headerShown: false }}
+          initialRouteName={initialRoute}
+        >
           <Stack.Screen name="Splash1" component={SplashScreen1} />
           <Stack.Screen name="Splash2" component={SplashScreen2} />
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
