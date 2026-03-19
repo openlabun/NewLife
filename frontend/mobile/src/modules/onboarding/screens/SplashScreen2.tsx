@@ -1,12 +1,56 @@
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet, StatusBar } from 'react-native';
 import { colors, spacing } from '../../../constants/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getOnboardingStatus } from '../../../services/authService';
+import { isGuestMode, getGuestOnboardingStatus, isGuestTourCompleted } from '../../../services/guestService';
 
 export default function SplashScreen2({ navigation }: any) {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Onboarding');
+    const timer = setTimeout(async () => {
+      try {
+        // ── Caso 1: usuario registrado ──────────────────────────────
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+
+        if (accessToken && refreshToken) {
+          try {
+            const status = await getOnboardingStatus();
+            if (!status.completed) {
+              navigation.replace('Story');
+              return;
+            }
+            const email = await AsyncStorage.getItem('userEmail');
+            const tourCompleted = await AsyncStorage.getItem(`tourCompleted_${email}`);
+            navigation.replace(tourCompleted === 'true' ? 'Home' : 'AppTour');
+          } catch {
+            navigation.replace('Home');
+          }
+          return;
+        }
+
+        // ── Caso 2: invitado ────────────────────────────────────────
+        const guest = await isGuestMode();
+        if (guest) {
+          const status = await getGuestOnboardingStatus();
+          if (!status.completed) {
+            navigation.replace('Story');
+            return;
+          }
+          const tourCompleted = await isGuestTourCompleted();
+          navigation.replace(tourCompleted ? 'Home' : 'AppTour');
+          return;
+        }
+
+        // ── Caso 3: sin sesión ──────────────────────────────────────
+        const onboardingShown = await AsyncStorage.getItem('onboardingShown');
+        navigation.replace(onboardingShown === 'true' ? 'Welcome' : 'Onboarding');
+
+      } catch {
+        navigation.replace('Onboarding');
+      }
     }, 2000);
+
     return () => clearTimeout(timer);
   }, []);
 

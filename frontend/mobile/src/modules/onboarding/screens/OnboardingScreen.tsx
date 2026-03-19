@@ -6,6 +6,9 @@ import {
 import { useSharedValue, withRepeat, withTiming, Easing, useAnimatedStyle } from 'react-native-reanimated';
 import Reanimated from 'react-native-reanimated';
 import { colors, fontSizes, spacing } from '../../../constants/theme';
+// Agrega este import arriba
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -88,12 +91,14 @@ export default function OnboardingScreen({ navigation }: any) {
     });
   };
 
-  const handlePress = () => {
+  // Reemplaza solo handlePress
+  const handlePress = async () => {
     if (currentIndex < slides.length - 1) {
       const nextIndex = currentIndex + 1;
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: false });
       animateTransition(nextIndex);
     } else {
+      await AsyncStorage.setItem('onboardingShown', 'true');
       navigation.replace('Welcome');
     }
   };
