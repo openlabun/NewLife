@@ -8,6 +8,7 @@ import { UserAdminController } from './presentation/controllers/user-admin.contr
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { RegisterStaffUseCase } from './application/use-cases/register-staff.use-case';
+import { MigrateGuestUseCase } from '../users/application/use-cases/migrate-guest.use-case';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { DatabaseModule } from '../database/database.module';
     LoginUseCase,
     RegisterUseCase,
     RegisterStaffUseCase,
+    MigrateGuestUseCase,
     {
       provide: 'IAuthProviderPort',
       useClass: RobleAuthAdapter,

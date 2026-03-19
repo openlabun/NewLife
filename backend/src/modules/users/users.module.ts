@@ -7,11 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { HomeModule } from '../home/home.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    AuthModule,
-    HomeModule
-  ],
+  imports: [DatabaseModule, AuthModule, HomeModule],
   controllers: [UserController],
   providers: [CompleteProfileUseCase, GetProfileUseCase],
 })

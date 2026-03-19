@@ -7,6 +7,7 @@ import { ForgotPasswordDto, ResetPasswordDto, RefreshTokenDto } from '../dtos/ac
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { InitialRegisterDto } from '../../../users/presentation/dtos/initial-register.dto';
 import { CompleteProfileUseCase } from '../../../users/application/use-cases/complete-profile.use-case';
+import { MigrateGuestUseCase } from '../../../users/application/use-cases/migrate-guest.use-case';
 
 @ApiTags('Perfil de Usuario')
 @Controller('user')
@@ -25,7 +26,10 @@ export class UserController {
 @ApiTags('Autenticación')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly migrateGuestUseCase: MigrateGuestUseCase,
+  ) {}
 
   @ApiOperation({ summary: 'Login App' })
   @Post('login')
@@ -72,7 +76,6 @@ export class AuthController {
   async logout(@Request() req: any) {
     const authHeader = req.headers.authorization;
     if (!authHeader) return { message: 'No hay sesión activa' };
-    
     const token = authHeader.split(' ')[1];
     await this.authService.logout(token);
     return { message: 'Sesión cerrada exitosamente.' };
@@ -83,5 +86,13 @@ export class AuthController {
   @Get('verify-token')
   async verifyToken() {
     return { valid: true, message: 'El token es válido' };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('migrate-guest')
+  @ApiOperation({ summary: 'Migrar datos de invitado al registrarse' })
+  async migrateGuest(@Request() req: any, @Body() body: any) {
+    return await this.migrateGuestUseCase.execute(req.user.uid, body);
   }
 }
