@@ -104,13 +104,14 @@ export default function Step3_UltimoConsumo({ navigation }: any) {
                     : require('../../../../assets/images/character3.png')
             }
             onBack={() => navigation.goBack()}
+
             onContinue={() => {
                 if (selectedDate) {
                     setField('ult_fecha_consumo', selectedDate.toISOString());
                 }
                 navigation.navigate('Step4');
             }}
-            showButton={hasDate}
+                            showButton={hasDate}
         >
             <View style={styles.container}>
 

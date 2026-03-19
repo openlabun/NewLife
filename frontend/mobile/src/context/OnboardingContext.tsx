@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { saveGuestProfile, isGuestMode } from '../services/guestService';
 
 type OnboardingData = {
   apodo?: string;
@@ -16,6 +17,7 @@ type OnboardingData = {
 type OnboardingContextType = {
   data: OnboardingData;
   setField: (key: keyof OnboardingData, value: any) => void;
+  saveOnboarding: () => Promise<void>;
 };
 
 const OnboardingContext = createContext<OnboardingContextType>({} as OnboardingContextType);
@@ -27,8 +29,17 @@ export function OnboardingProvider({ children }: any) {
     setData(prev => ({ ...prev, [key]: value }));
   };
 
+  // Llámalo en el Step10 al finalizar en lugar de completeProfile directo
+  const saveOnboarding = async () => {
+    const guest = await isGuestMode();
+    if (guest) {
+      await saveGuestProfile(data);
+    }
+    // Si no es invitado, el Step10 llama a completeProfile normalmente
+  };
+
   return (
-    <OnboardingContext.Provider value={{ data, setField }}>
+    <OnboardingContext.Provider value={{ data, setField, saveOnboarding }}>
       {children}
     </OnboardingContext.Provider>
   );

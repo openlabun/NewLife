@@ -8,7 +8,13 @@ import { colors, fontSizes, spacing, borderRadius } from '../../../constants/the
 import { Animated } from 'react-native';
 import { getProfile, getSobrietyTime } from '../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { authEventEmitter} from '../../../services/api';
+import api, { authEventEmitter } from '../../../services/api';
+import {
+  isGuestMode,
+  clearGuestData,
+  getGuestProfile,
+  getGuestSobrietyTime,
+} from '../../../services/guestService';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = 72;
@@ -33,8 +39,6 @@ function Ring({ value, label, max }: RingProps) {
 
   const size = RING_SIZE;
   const strokeWidth = 5;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
 
   return (
     <View style={styles.ringWrapper}>
@@ -72,6 +76,16 @@ function Ring({ value, label, max }: RingProps) {
 export default function HomeScreen({ navigation }: any) {
   const [apodo, setApodo] = useState('');
   const [sobriety, setSobriety] = useState({ dias: 0, horas: 0, minutos: 0 });
+  const [isGuest, setIsGuest] = useState(false);
+
+  // Detectar si es invitado
+  useEffect(() => {
+    const checkGuest = async () => {
+      const guest = await isGuestMode();
+      setIsGuest(guest);
+    };
+    checkGuest();
+  }, []);
 
   // Escuchar sesión expirada desde el interceptor
   useEffect(() => {
@@ -79,13 +93,20 @@ export default function HomeScreen({ navigation }: any) {
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     });
     return () => { unsubscribe(); };
-  }, [])
+  }, []);
 
+  // Cargar perfil
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const profile = await getProfile();
-        setApodo(profile.apodo);
+        const guest = await isGuestMode();
+        if (guest) {
+          const profile = await getGuestProfile();
+          setApodo(profile.apodo || '');
+        } else {
+          const profile = await getProfile();
+          setApodo(profile.apodo);
+        }
       } catch (e) {
         console.log('Error obteniendo perfil:', e);
       }
@@ -93,11 +114,18 @@ export default function HomeScreen({ navigation }: any) {
     fetchProfile();
   }, []);
 
+  // Cargar sobriedad
   useEffect(() => {
     const fetchSobriety = async () => {
       try {
-        const data = await getSobrietyTime();
-        setSobriety(data.contador);
+        const guest = await isGuestMode();
+        if (guest) {
+          const data = await getGuestSobrietyTime();
+          setSobriety(data.contador);
+        } else {
+          const data = await getSobrietyTime();
+          setSobriety(data.contador);
+        }
       } catch (e) {
         console.log('Error obteniendo sobriedad:', e);
       }
@@ -120,11 +148,19 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'userEmail']);
+      if (isGuest) {
+        await clearGuestData();
+      } else {
+        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'userEmail']);
+      }
       navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
     } catch (e) {
       console.log('Error cerrando sesión:', e);
     }
+  };
+
+  const handleCreateAccount = () => {
+    navigation.navigate('Register');
   };
 
   return (
@@ -176,30 +212,26 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Botón de prueba temporal - ELIMINAR DESPUÉS */}
-      <TouchableOpacity
-        style={{ backgroundColor: '#333', padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}
-
-        onPress={async () => {
-          const access = await AsyncStorage.getItem('accessToken');
-          const refresh = await AsyncStorage.getItem('refreshToken');
-          console.log('accessToken:', access);
-          console.log('refreshToken:', refresh);
-         }}
-
-
-
-
-      >
-        <Text style={{ color: 'white' }}>Probar refresh token</Text>
-      </TouchableOpacity>
+      {/* Botón crear cuenta — solo invitados */}
+      {isGuest && (
+        <TouchableOpacity
+          style={{ backgroundColor: colors.primary, padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}
+          onPress={handleCreateAccount}
+        >
+          <Text style={{ color: 'white', fontWeight: '700', fontSize: fontSizes.md }}>
+            Crear cuenta y guardar progreso
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Cerrar sesión */}
       <TouchableOpacity
         style={{ backgroundColor: '#FF6B6B', padding: 12, borderRadius: 8, marginBottom: 20, alignItems: 'center' }}
         onPress={handleLogout}
       >
-        <Text style={{ color: 'white', fontWeight: '700', fontSize: fontSizes.md }}>Cerrar sesión</Text>
+        <Text style={{ color: 'white', fontWeight: '700', fontSize: fontSizes.md }}>
+          {isGuest ? 'Salir' : 'Cerrar sesión'}
+        </Text>
       </TouchableOpacity>
 
       {/* Ayuda rápida */}

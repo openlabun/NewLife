@@ -7,6 +7,9 @@ import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/
 import { useOnboarding } from '../../../../context/OnboardingContext';
 import { completeProfile, createContact } from '../../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Agrega estos imports arriba
+import { isGuestMode, saveGuestProfile, saveGuestSobrietyStart, createGuestContact  } from '../../../../services/guestService';
+
 
 const { width } = Dimensions.get('window');
 const CLOCK_SIZE = width * 0.7;
@@ -47,32 +50,47 @@ export default function Step10_Horario({ navigation }: any) {
     };
 
 
+    // Reemplaza solo handleFinish
     const handleFinish = async () => {
-        try {
-            setLoading(true);
-            const token = await AsyncStorage.getItem('accessToken');
-            console.log('Token actual:', token);
-            
-            const hourIn24 = period === 'PM' && hour !== 12
-                ? hour + 12
-                : period === 'AM' && hour === 12
-                    ? 0
-                    : hour;
-            const moment_motiv = `${hourIn24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+    try {
+        setLoading(true);
 
-            const { nombre_contacto, ...profileData } = data;
-            await completeProfile({ ...profileData, moment_motiv });
+        const hourIn24 = period === 'PM' && hour !== 12
+        ? hour + 12
+        : period === 'AM' && hour === 12
+            ? 0
+            : hour;
+        const moment_motiv = `${hourIn24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
 
-            if (nombre_contacto && profileData.telefono) {
-                await createContact(nombre_contacto, profileData.telefono.toString());
-            }
+        const guest = await isGuestMode();
 
-            navigation.navigate('Congratulations');
-        } catch (err: any) {
-            console.log('Error completando perfil:', err.response?.data);
-        } finally {
-            setLoading(false);
+        if (guest) {
+        // Invitado → guardar todo localmente
+        const { nombre_contacto, ...profileData } = data;
+        await saveGuestProfile({ ...profileData, moment_motiv });
+        await saveGuestSobrietyStart(data.ult_fecha_consumo);
+        
+        // ✅ Guardar contacto de emergencia del onboarding
+        if (nombre_contacto && profileData.telefono) {
+            await createGuestContact(nombre_contacto, profileData.telefono.toString());
         }
+
+        navigation.navigate('Congratulations');
+        } else {
+        // Registrado → enviar al backend como antes
+        const { nombre_contacto, ...profileData } = data;
+        await completeProfile({ ...profileData, moment_motiv });
+
+        if (nombre_contacto && profileData.telefono) {
+            await createContact(nombre_contacto, profileData.telefono.toString());
+        }
+        navigation.navigate('Congratulations');
+        }
+    } catch (err: any) {
+        console.log('Error completando perfil:', err.response?.data);
+    } finally {
+        setLoading(false);
+    }
     };
         
 

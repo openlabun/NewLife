@@ -10,7 +10,7 @@ export default function SOSScreen({ navigation }: any) {
     <View style={styles.container}>
 
       {/* Header */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Home')}>
         <Icon name="chevron-left" size={24} color={colors.text} />
       </TouchableOpacity>
 

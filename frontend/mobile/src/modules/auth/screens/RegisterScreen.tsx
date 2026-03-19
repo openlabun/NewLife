@@ -6,6 +6,8 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { registerUser } from '../../../services/authService';
+import { isGuestMode, clearGuestData } from '../../../services/guestService';
+import { migrateGuestToUser } from '../../../services/authService';
 
 const INPUT_HEIGHT = 52;
 
@@ -33,8 +35,25 @@ export default function RegisterScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      // registerUser ya llama a loginUser internamente que guarda los tokens
+
+      // Verificar si viene de modo invitado antes de registrar
+      const wasGuest = await isGuestMode();
+
+      // Registrar usuario
       await registerUser(nombre, email, password);
+
+      // Si era invitado, migrar sus datos al backend
+      if (wasGuest) {
+        try {
+          await migrateGuestToUser();
+          console.log('✅ Datos de invitado migrados correctamente');
+        } catch {
+          // Si falla la migración, los datos locales siguen en AsyncStorage
+          // El usuario puede intentar migrar después
+          console.log('⚠️ Migración pendiente, datos locales preservados');
+        }
+      }
+
       navigation.navigate('Story');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');

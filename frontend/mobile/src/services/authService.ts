@@ -1,19 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
+import { getGuestDataForMigration, clearGuestData } from './guestService';
 
-// Login: llama al backend Y siempre guarda tokens
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
 export const loginUser = async (email: string, password: string) => {
   const response = await api.post('/auth/login', { email, password });
   const { accessToken, refreshToken } = response.data;
   await AsyncStorage.multiSet([
     ['accessToken', accessToken],
     ['refreshToken', refreshToken],
-    ['userEmail', email], // guardar email para identificar al usuario
+    ['userEmail', email],
   ]);
   return response.data;
 };
 
-// Register: crea cuenta y guarda tokens igual
 export const registerUser = async (nombre: string, email: string, password: string) => {
   await api.post('/auth/register', { nombre, email, password });
   return loginUser(email, password);
@@ -22,6 +23,27 @@ export const registerUser = async (nombre: string, email: string, password: stri
 export const logoutUser = async () => {
   await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'userEmail']);
 };
+
+// ─── Migración de invitado ────────────────────────────────────────────────────
+
+export const migrateGuestToUser = async (): Promise<void> => {
+  try {
+    const guestData = await getGuestDataForMigration();
+
+    // Solo migrar si hay datos reales
+    if (!guestData.guestId) return;
+
+    await api.post('/auth/migrate-guest', guestData);
+    await clearGuestData();
+
+    console.log('✅ Migración de invitado exitosa');
+  } catch (e) {
+    console.log('❌ Error en migración:', e);
+    throw e; // propagar para que el caller pueda manejar el error
+  }
+};
+
+// ─── User ─────────────────────────────────────────────────────────────────────
 
 export const getOnboardingStatus = async () => {
   const response = await api.get('/user/onboarding-status');
@@ -33,11 +55,6 @@ export const completeProfile = async (data: object) => {
   return response.data;
 };
 
-export const createContact = async (nombre: string, telefono: string) => {
-  const response = await api.post('/contacts', { nombre, telefono });
-  return response.data;
-};
-
 export const getProfile = async () => {
   const response = await api.get('/user/profile');
   return response.data;
@@ -45,6 +62,13 @@ export const getProfile = async () => {
 
 export const getSobrietyTime = async () => {
   const response = await api.get('/home/sobriety-time');
+  return response.data;
+};
+
+// ─── Contactos ────────────────────────────────────────────────────────────────
+
+export const createContact = async (nombre: string, telefono: string) => {
+  const response = await api.post('/contacts', { nombre, telefono });
   return response.data;
 };
 

@@ -6,9 +6,17 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { getContacts, createContact, updateContact, deleteContact } from '../../../services/authService';
+import {
+  getGuestContacts,
+  createGuestContact,
+  updateGuestContact,
+  deleteGuestContact,
+  isGuestMode,
+} from '../../../services/guestService';
 
 type Contact = {
-  contacto_id: string;
+  contacto_id?: string;
+  id?: string;
   nombre: string;
   telefono: string;
 };
@@ -29,8 +37,14 @@ export default function EmergencyContactsScreen({ navigation }: any) {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const data = await getContacts();
-      setContacts(Array.isArray(data) ? data : data.rows || []);
+      const guest = await isGuestMode();
+      if (guest) {
+        const data = await getGuestContacts();
+        setContacts(data);
+      } else {
+        const data = await getContacts();
+        setContacts(Array.isArray(data) ? data : data.rows || []);
+      }
     } catch (e) {
       console.log('Error obteniendo contactos:', e);
     } finally {
@@ -39,8 +53,7 @@ export default function EmergencyContactsScreen({ navigation }: any) {
   };
 
   const openModal = (contact?: Contact) => {
-    setErrorMessage(''); // 🔹 limpiar errores previos
-
+    setErrorMessage('');
     if (contact) {
       setEditingContact(contact);
       setName(contact.nombre);
@@ -54,38 +67,36 @@ export default function EmergencyContactsScreen({ navigation }: any) {
   };
 
   const saveContact = async () => {
-    // 🔹 Validar que nombre y teléfono no estén vacíos
     if (!name.trim() || !phone.trim()) {
       setErrorMessage('Nombre y teléfono son obligatorios');
       return;
     }
-
-    // 🔹 Validar longitud del teléfono
     if (phone.length !== 10) {
       setErrorMessage('Número inválido. Debe tener 10 dígitos.');
       return;
     }
 
     try {
-      if (editingContact) {
-        await updateContact(editingContact.contacto_id, name, phone);
+      const guest = await isGuestMode();
+      if (guest) {
+        if (editingContact) {
+          await updateGuestContact(editingContact.contacto_id || editingContact.id || '', name, phone);
+        } else {
+          await createGuestContact(name, phone);
+        }
       } else {
-        await createContact(name, phone);
+        if (editingContact) {
+          await updateContact(editingContact.contacto_id || '', name, phone);
+        } else {
+          await createContact(name, phone);
+        }
       }
-
-      // ✅ Resetear error y cerrar modal
       setErrorMessage('');
       setShowModal(false);
       fetchContacts();
     } catch (e: any) {
       console.log('Error guardando contacto:', e);
-      if (e.response?.data?.message) {
-        setErrorMessage(e.response.data.message);
-      } else if (e.message) {
-        setErrorMessage(e.message);
-      } else {
-        setErrorMessage('Error al guardar contacto');
-      }
+      setErrorMessage(e.response?.data?.message || e.message || 'Error al guardar contacto');
     }
   };
 
@@ -95,7 +106,12 @@ export default function EmergencyContactsScreen({ navigation }: any) {
       {
         text: 'Eliminar', style: 'destructive', onPress: async () => {
           try {
-            await deleteContact(id);
+            const guest = await isGuestMode();
+            if (guest) {
+              await deleteGuestContact(id);
+            } else {
+              await deleteContact(id);
+            }
             fetchContacts();
           } catch (e) {
             console.log('Error eliminando contacto:', e);
@@ -118,7 +134,7 @@ export default function EmergencyContactsScreen({ navigation }: any) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.navigate('SOS')}>
           <Icon name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Contactos de emergencia</Text>
@@ -139,7 +155,7 @@ export default function EmergencyContactsScreen({ navigation }: any) {
             <Text style={styles.emptyText}>No tienes contactos de emergencia aún.</Text>
           ) : (
             contacts.map((contact) => (
-              <View key={contact.contacto_id} style={styles.card}>
+              <View key={contact.contacto_id || contact.id} style={styles.card}>
                 <View style={styles.cardInfo}>
                   <Text style={styles.contactName}>{contact.nombre}</Text>
                   <Text style={styles.contactPhone}>{contact.telefono}</Text>
@@ -154,7 +170,7 @@ export default function EmergencyContactsScreen({ navigation }: any) {
                   <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => openModal(contact)}>
                     <Icon name="edit-2" size={16} color={colors.textMuted} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => handleDelete(contact.contacto_id)}>
+                  <TouchableOpacity style={styles.actionButtonSecondary} onPress={() => handleDelete(contact.contacto_id || contact.id || '')}>
                     <Icon name="trash-2" size={16} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
@@ -184,17 +200,16 @@ export default function EmergencyContactsScreen({ navigation }: any) {
               placeholderTextColor={colors.border}
               value={phone}
               onChangeText={(text) => {
-                const cleaned = text.replace(/[^0-9]/g, ''); // 👈 clave 
+                const cleaned = text.replace(/[^0-9]/g, '');
                 setPhone(cleaned);
               }}
               keyboardType="phone-pad"
             />
-            {/* 👈 Aquí mostramos el error si existe */}
             {errorMessage ? (
               <Text style={{ color: 'red', marginTop: 4, textAlign: 'center' }}>
                 {errorMessage}
               </Text>
-              ) : null}
+            ) : null}
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalCancel} onPress={() => setShowModal(false)}>
                 <Text style={styles.modalCancelText}>Cancelar</Text>

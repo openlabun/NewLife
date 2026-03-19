@@ -1,8 +1,15 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { initGuest } from '../../../services/guestService';
 
 export default function WelcomeScreen({ navigation }: any) {
+
+  const handleGuest = async () => {
+    await initGuest();
+    navigation.navigate('Story');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.imageContainer}>
@@ -30,7 +37,7 @@ export default function WelcomeScreen({ navigation }: any) {
           <Text style={styles.buttonSecondaryText}>Registrarse</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity onPress={handleGuest}>
           <Text style={styles.guestText}>Continuar como invitadx</Text>
         </TouchableOpacity>
       </View>
