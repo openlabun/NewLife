@@ -8,6 +8,7 @@ import { colors, fontSizes, spacing, borderRadius } from '../../../constants/the
 import { registerUser } from '../../../services/authService';
 import { isGuestMode, clearGuestData } from '../../../services/guestService';
 import { migrateGuestToUser } from '../../../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const INPUT_HEIGHT = 52;
 
@@ -21,46 +22,51 @@ export default function RegisterScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+
   const handleRegister = async () => {
-    setError('');
+  setError('');
 
-    if (!nombre || !email || !password || !confirmPassword) {
-      setError('Por favor completa todos los campos.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
+  if (!nombre || !email || !password || !confirmPassword) {
+    setError('Por favor completa todos los campos.');
+    return;
+  }
+  if (password !== confirmPassword) {
+    setError('Las contraseñas no coinciden.');
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      // Verificar si viene de modo invitado antes de registrar
-      const wasGuest = await isGuestMode();
+    const wasGuest = await isGuestMode();
 
-      // Registrar usuario
-      await registerUser(nombre, email, password);
+    await registerUser(nombre, email, password);
 
-      // Si era invitado, migrar sus datos al backend
-      if (wasGuest) {
-        try {
-          await migrateGuestToUser();
-          console.log('✅ Datos de invitado migrados correctamente');
-        } catch {
-          // Si falla la migración, los datos locales siguen en AsyncStorage
-          // El usuario puede intentar migrar después
-          console.log('⚠️ Migración pendiente, datos locales preservados');
-        }
+    if (wasGuest) {
+      try {
+        await migrateGuestToUser();
+
+        // Preservar el tour con el email del nuevo usuario registrado
+        const email = await AsyncStorage.getItem('userEmail');
+        await AsyncStorage.setItem(`tourCompleted_${email}`, 'true');
+
+        console.log('✅ Datos de invitado migrados correctamente');
+      } catch {
+        console.log('⚠️ Migración pendiente, datos locales preservados');
       }
-
+      // Ya vio todo → directo a Home
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    } else {
+      // Usuario nuevo normal → onboarding completo
       navigation.navigate('Story');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
-    } finally {
-      setLoading(false);
     }
-  };
+
+  } catch (err: any) {
+    setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView
