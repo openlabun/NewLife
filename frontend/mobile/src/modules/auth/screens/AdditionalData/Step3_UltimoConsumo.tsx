@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
-    View, Text, TouchableOpacity, StyleSheet
+    View, Text, TouchableOpacity, StyleSheet,
+    Alert
 } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
@@ -106,11 +107,19 @@ export default function Step3_UltimoConsumo({ navigation }: any) {
             onBack={() => navigation.goBack()}
 
             onContinue={() => {
-                if (selectedDate) {
-                    setField('ult_fecha_consumo', selectedDate.toISOString());
+                if (!selectedDate) {
+                    Alert.alert('Fecha requerida', 'Por favor selecciona la fecha de tu último consumo para calcular tu tiempo de sobriedad.');
+                    return;
                 }
+                const midnight = new Date(Date.UTC(
+                     selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate(),
+                    0, 0, 0, 0
+                ));
+                setField('ult_fecha_consumo', midnight.toISOString());
                 navigation.navigate('Step4');
-            }}
+                }}
                             showButton={hasDate}
         >
             <View style={styles.container}>

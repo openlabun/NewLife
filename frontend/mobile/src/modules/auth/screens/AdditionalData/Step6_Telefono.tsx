@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, TouchableOpacity, Modal,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import StepLayout from '../../components/StepLayout';
@@ -36,9 +37,31 @@ export default function Step6_Telefono({ navigation }: any) {
         question="En caso de crisis, ¿a quién podemos avisar?"
         characterImage={require('../../../../assets/images/character7.png')}
         onBack={() => navigation.goBack()}
+
         onContinue={() => {
-          setField('telefono', parseInt(phone));
-          setField('nombre_contacto', name);
+          const hasName = name.trim().length > 0;
+          const hasPhone = phone.trim().length > 0;
+
+          // Los dos o ninguno
+          if (hasName && !hasPhone) {
+            Alert.alert('Teléfono requerido', 'Si agregas un contacto debes incluir su número de teléfono.');
+            return;
+          }
+          if (hasPhone && !hasName) {
+            Alert.alert('Nombre requerido', 'Si agregas un número debes incluir el nombre del contacto.');
+            return;
+          }
+          if (hasPhone && phone.length !== 10) {
+            Alert.alert('Número inválido', 'El número de teléfono debe tener exactamente 10 dígitos.');
+            return;
+          }
+
+          if (hasName && hasPhone) {
+            setField('telefono', parseInt(phone));
+            setField('nombre_contacto', name.trim());
+          }
+          // Si ambos vacíos simplemente continúa sin guardar contacto
+
           navigation.navigate('Step7');
         }}
         showButton={true}

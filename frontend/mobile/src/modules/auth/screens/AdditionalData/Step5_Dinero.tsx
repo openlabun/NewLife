@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, TouchableOpacity, Modal,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import StepLayout from '../../components/StepLayout';
@@ -38,8 +39,13 @@ export default function Step5_Dinero({ navigation }: any) {
         question="¿Cuánto gastabas más o menos en alcohol a la semana?"
         characterImage={require('../../../../assets/images/character6.png')}
         onBack={() => navigation.goBack()}
+
         onContinue={() => {
           const numeric = parseFloat(amount.replace(/\D/g, ''));
+          if (amount.trim() && isNaN(numeric)) {
+            Alert.alert('Valor inválido', 'Por favor ingresa solo valores numéricos.');
+            return;
+          }
           setField('gasto_semana', isNaN(numeric) ? 0 : numeric);
           navigation.navigate('Step6');
         }}

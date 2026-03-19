@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 import { useOnboarding } from '../../../../context/OnboardingContext';
@@ -10,24 +10,30 @@ export default function Step2_Pronombres({ navigation }: any) {
   const [selected, setSelected] = useState('');
   const { setField } = useOnboarding();
 
+  const handleContinue = () => {
+    if (!selected) {
+      Alert.alert('Selección requerida', 'Por favor selecciona tus pronombres para continuar.');
+      return;
+    }
+    setField('pronombre', selected);
+    navigation.navigate('Step3');
+  };
+
   return (
     <StepLayout
       currentStep={2}
       question="Dime tus pronombres pa' no embarrarla jajaja"
       characterImage={require('../../../../assets/images/character2.png')}
       onBack={() => navigation.goBack()}
-      showButton={false}
+      onContinue={handleContinue}
+      showButton={true}
     >
       <View style={styles.optionsContainer}>
         {OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
             style={[styles.option, selected === option && styles.optionSelected]}
-            onPress={() => {
-              setSelected(option);
-              setField('pronombre', option);
-              setTimeout(() => navigation.navigate('Step3'), 300);
-            }}
+            onPress={() => setSelected(option)}
           >
             <Text style={[styles.optionText, selected === option && styles.optionTextSelected]}>
               {option}

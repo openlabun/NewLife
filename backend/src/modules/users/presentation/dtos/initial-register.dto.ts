@@ -15,8 +15,8 @@ export class InitialRegisterDto {
   ult_fecha_consumo: string;
 
   @ApiProperty({ example: 'Mi salud y bienestar' })
-  @IsString() @IsNotEmpty()
-  motivo_sobrio: string;
+  @IsString() @IsOptional()
+  motivo_sobrio?: string;
 
   @ApiProperty({ example: 50.5 })
   @IsNumber() @IsNotEmpty()

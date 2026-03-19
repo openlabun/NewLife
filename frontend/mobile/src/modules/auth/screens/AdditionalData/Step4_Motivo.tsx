@@ -8,26 +8,30 @@ export default function Step4_Motivo({ navigation }: any) {
   const [motivo, setMotivo] = useState('');
   const { setField } = useOnboarding();
 
+  const handleContinue = () => {
+    // Opcional — si está vacío se envía string vacío
+    setField('motivo_sobrio', motivo.trim() || '');
+    navigation.navigate('Step5');
+  };
+
   return (
     <StepLayout
       currentStep={4}
       question="¿Cuál es tu mayor motivo para estar sobrio? ❤️"
       characterImage={require('../../../../assets/images/character5.png')}
       onBack={() => navigation.goBack()}
-      onContinue={() => {
-        setField('motivo_sobrio', motivo);
-        navigation.navigate('Step5');
-      }}
+      onContinue={handleContinue}
       showButton={true}
     >
       <TextInput
         style={styles.input}
-        placeholder="Escribir un breve motivo..."
+        placeholder="Puedes dejarlo en blanco si prefieres..."
         placeholderTextColor={colors.border}
         value={motivo}
         onChangeText={setMotivo}
         multiline
         textAlignVertical="top"
+        maxLength={200}
       />
     </StepLayout>
   );
