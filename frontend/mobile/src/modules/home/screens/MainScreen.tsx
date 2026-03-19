@@ -3,10 +3,11 @@ import { View, StyleSheet } from 'react-native';
 import BottomTabNavigator from '../../../navigation/BottomTabNavigator';
 import HomeScreen from './HomeScreen';
 import { colors } from '../../../constants/theme';
+import ProgressScreen from '../../progress/screens/ProgressScreen';
 
 const SCREENS: Record<string, (navigation: any) => React.ReactNode> = {
   Home: (navigation) => <HomeScreen navigation={navigation} />,
-  Progress: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
+  Progress: (navigation) => <ProgressScreen navigation={navigation} />,
   Motivation: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
   Care: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
   Social: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,

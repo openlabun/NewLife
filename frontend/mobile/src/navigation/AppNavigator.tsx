@@ -29,6 +29,7 @@ import MotivationalPhrasesScreen from '../modules/home/screens/crisis/Motivation
 import GuidedMeditationScreen from '../modules/home/screens/crisis/GuidedMeditationScreen';
 import CongratulationsScreen from '../modules/auth/screens/AdditionalData/Congratulations';
 import AppTourScreen from '../modules/auth/screens/AppTourScreen';
+import GratitudeHistoryScreen from '../modules/progress/screens/GratitudeHistoryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -70,6 +71,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="GuidedMeditationScreen" component={GuidedMeditationScreen} />
           <Stack.Screen name="Congratulations" component={CongratulationsScreen} />
           <Stack.Screen name="AppTour" component={AppTourScreen} />
+          <Stack.Screen name="GratitudeHistory" component={GratitudeHistoryScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>
