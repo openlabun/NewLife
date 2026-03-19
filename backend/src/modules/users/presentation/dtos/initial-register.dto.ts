@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsDateString, IsNumber, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsNumber, IsBoolean, IsOptional } from 'class-validator';
 
 export class InitialRegisterDto {
   @ApiProperty({ example: 'Ricardo Alberto' })
@@ -22,9 +22,9 @@ export class InitialRegisterDto {
   @IsNumber() @IsNotEmpty()
   gasto_semana: number;
 
-  @ApiProperty({ example: 3001234567, description: 'Se guarda como numeric' })
-  @IsNotEmpty()
-  telefono: number | string;
+  @ApiProperty({ example: 3001234567, description: 'Se guarda como numeric, opcional' })
+  @IsOptional()
+  telefono?: number | string;
 
   @ApiProperty({ example: true })
   @IsBoolean() @IsNotEmpty()
