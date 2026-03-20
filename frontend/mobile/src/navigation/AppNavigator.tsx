@@ -32,6 +32,9 @@ import AppTourScreen from '../modules/auth/screens/AppTourScreen';
 import GratitudeHistoryScreen from '../modules/progress/screens/GratitudeHistoryScreen';
 import DailyCheckInScreen from '../modules/progress/screens/DailyCheckInScreen';
 import CheckInSuccessScreen from '../modules/progress/screens/CheckInSuccessScreen';
+import AnalysisScreen from '../modules/progress/screens/AnalysisScreen';
+
+
 
 const Stack = createNativeStackNavigator();
 
@@ -76,6 +79,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="GratitudeHistory" component={GratitudeHistoryScreen} />
           <Stack.Screen name="DailyCheckIn" component={DailyCheckInScreen} />
           <Stack.Screen name="CheckInSuccess" component={CheckInSuccessScreen} />
+          <Stack.Screen name="Analysis" component={AnalysisScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>

@@ -67,7 +67,7 @@ export default function ProgressScreen({ navigation }: any) {
                 ))}
 
                 {/* Mi análisis */}
-                <TouchableOpacity style={styles.sectionHeader} onPress={() => { }}>
+                <TouchableOpacity style={styles.sectionHeader} onPress={() => navigation.navigate('Analysis')}>
                     <Text style={styles.sectionTitle}>Mi análisis</Text>
                     <Feather name="chevron-right" size={18} color={colors.text} />
                 </TouchableOpacity>
