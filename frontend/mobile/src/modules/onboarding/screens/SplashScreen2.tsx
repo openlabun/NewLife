@@ -9,6 +9,16 @@ export default function SplashScreen2({ navigation }: any) {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
+        const accessToken2 = await AsyncStorage.getItem('accessToken');
+        const refreshToken2 = await AsyncStorage.getItem('refreshToken');
+        console.log('🔍 accessToken:', !!accessToken2);
+        console.log('🔍 refreshToken:', !!refreshToken2);
+
+        const guest2 = await isGuestMode();
+        console.log('🔍 isGuest:', guest2);
+
+        const onboardingShown2 = await AsyncStorage.getItem('onboardingShown');
+        console.log('🔍 onboardingShown:', onboardingShown2);
         // ── Caso 1: usuario registrado ──────────────────────────────
         const accessToken = await AsyncStorage.getItem('accessToken');
         const refreshToken = await AsyncStorage.getItem('refreshToken');

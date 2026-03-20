@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import StepLayout from '../../components/StepLayout';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 import { useOnboarding } from '../../../../context/OnboardingContext';
@@ -10,13 +10,10 @@ export default function Step2_Pronombres({ navigation }: any) {
   const [selected, setSelected] = useState('');
   const { setField } = useOnboarding();
 
-  const handleContinue = () => {
-    if (!selected) {
-      Alert.alert('Selección requerida', 'Por favor selecciona tus pronombres para continuar.');
-      return;
-    }
-    setField('pronombre', selected);
-    navigation.navigate('Step3');
+  const handleSelect = (option: string) => {
+    setSelected(option);
+    setField('pronombre', option);
+    setTimeout(() => navigation.navigate('Step3'), 300);
   };
 
   return (
@@ -25,15 +22,14 @@ export default function Step2_Pronombres({ navigation }: any) {
       question="Dime tus pronombres pa' no embarrarla jajaja"
       characterImage={require('../../../../assets/images/character2.png')}
       onBack={() => navigation.goBack()}
-      onContinue={handleContinue}
-      showButton={true}
+      showButton={false}
     >
       <View style={styles.optionsContainer}>
         {OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
             style={[styles.option, selected === option && styles.optionSelected]}
-            onPress={() => setSelected(option)}
+            onPress={() => handleSelect(option)}
           >
             <Text style={[styles.optionText, selected === option && styles.optionTextSelected]}>
               {option}
@@ -46,9 +42,7 @@ export default function Step2_Pronombres({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  optionsContainer: {
-    gap: spacing.sm,
-  },
+  optionsContainer: { gap: spacing.sm },
   option: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -57,16 +51,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.inputBackground,
   },
-  optionSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  optionText: {
-    fontSize: fontSizes.lg,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  optionTextSelected: {
-    color: colors.white,
-  },
+  optionSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionText: { fontSize: fontSizes.lg, color: colors.text, fontWeight: '500' },
+  optionTextSelected: { color: colors.white },
 });

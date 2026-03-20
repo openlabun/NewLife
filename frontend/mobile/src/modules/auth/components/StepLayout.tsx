@@ -34,8 +34,6 @@ export default function StepLayout({
 
     return (
         <View style={styles.container}>
-
-            {/* Header con back y progress bar */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={onBack} style={styles.backButton}>
                     <Icon name="chevron-left" size={24} color={colors.text} />
@@ -45,30 +43,22 @@ export default function StepLayout({
                 </View>
             </View>
 
-            {/* Personaje + burbuja */}
             <View style={styles.characterRow}>
-                <Image
-                    source={characterImage}
-                    style={styles.character}
-                    resizeMode="contain"
-                />
+                <Image source={characterImage} style={styles.character} resizeMode="contain" />
                 <View style={styles.bubble}>
                     <Text style={styles.bubbleText}>{question}</Text>
                 </View>
             </View>
 
-            {/* Contenido del paso */}
             <View style={styles.content}>
                 {children}
             </View>
 
-            {/* Botón continuar */}
             {showButton && (
                 <TouchableOpacity style={styles.button} onPress={onContinue}>
                     <Text style={styles.buttonText}>{continueLabel}</Text>
                 </TouchableOpacity>
             )}
-
         </View>
     );
 }
@@ -87,9 +77,7 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
         marginBottom: spacing.xl,
     },
-    backButton: {
-        padding: 4,
-    },
+    backButton: { padding: 4 },
     progressTrack: {
         flex: 1,
         height: 8,
@@ -108,10 +96,7 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
         marginBottom: spacing.xl,
     },
-    character: {
-        width: 80,
-        height: 80,
-    },
+    character: { width: 80, height: 80 },
     bubble: {
         flex: 1,
         backgroundColor: colors.primary,
@@ -124,9 +109,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         lineHeight: 22,
     },
-    content: {
-        flex: 1,
-    },
+    content: { flex: 1 },
     button: {
         backgroundColor: 'transparent',
         borderWidth: 1,
