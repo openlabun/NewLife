@@ -82,7 +82,7 @@ export default function ProgressScreen({ navigation }: any) {
             </ScrollView>
 
             {/* Botón fijo abajo */}
-            <TouchableOpacity style={styles.dailyButton} onPress={() => { }}>
+            <TouchableOpacity style={styles.dailyButton} onPress={() => navigation.navigate('DailyCheckIn')}>
                 <Text style={styles.dailyButtonText}>Hacer registro diario</Text>
             </TouchableOpacity>
         </View>
