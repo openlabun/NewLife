@@ -78,7 +78,6 @@ export default function HomeScreen({ navigation }: any) {
   const [sobriety, setSobriety] = useState({ dias: 0, horas: 0, minutos: 0 });
   const [isGuest, setIsGuest] = useState(false);
 
-  // Detectar si es invitado
   useEffect(() => {
     const checkGuest = async () => {
       const guest = await isGuestMode();
@@ -87,7 +86,6 @@ export default function HomeScreen({ navigation }: any) {
     checkGuest();
   }, []);
 
-  // Escuchar sesión expirada desde el interceptor
   useEffect(() => {
     const unsubscribe = authEventEmitter.on(() => {
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
@@ -95,7 +93,6 @@ export default function HomeScreen({ navigation }: any) {
     return () => { unsubscribe(); };
   }, []);
 
-  // Cargar perfil
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -114,7 +111,6 @@ export default function HomeScreen({ navigation }: any) {
     fetchProfile();
   }, []);
 
-  // Cargar sobriedad
   useEffect(() => {
     const fetchSobriety = async () => {
       try {
@@ -215,27 +211,25 @@ export default function HomeScreen({ navigation }: any) {
       {/* Botón crear cuenta — solo invitados */}
       {isGuest && (
         <TouchableOpacity
-          style={{ backgroundColor: colors.primary, padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}
+          style={styles.createAccountButton}
           onPress={handleCreateAccount}
+          activeOpacity={0.85}
         >
-          <Text style={{ color: 'white', fontWeight: '700', fontSize: fontSizes.md }}>
-            Crear cuenta y guardar progreso
-          </Text>
+          <View style={styles.createAccountIconWrapper}>
+            <Icon name="user-plus" size={18} color={colors.white} />
+          </View>
+          <View style={styles.createAccountTextWrapper}>
+            <Text style={styles.createAccountTitle}>Guardar mi progreso</Text>
+            <Text style={styles.createAccountSub}>Crea una cuenta para no perder nada</Text>
+          </View>
+          <Icon name="chevron-right" size={18} color="rgba(255,255,255,0.6)" />
         </TouchableOpacity>
       )}
 
-      {/* Cerrar sesión */}
-      <TouchableOpacity
-        style={{ backgroundColor: '#FF6B6B', padding: 12, borderRadius: 8, marginBottom: 20, alignItems: 'center' }}
-        onPress={handleLogout}
-      >
-        <Text style={{ color: 'white', fontWeight: '700', fontSize: fontSizes.md }}>
-          {isGuest ? 'Salir' : 'Cerrar sesión'}
-        </Text>
-      </TouchableOpacity>
-
       {/* Ayuda rápida */}
       <Text style={styles.sectionTitle}>Ayuda rápida</Text>
+
+      {/* SOS */}
       <TouchableOpacity
         style={styles.sosButton}
         onPress={() => navigation.navigate('SOS')}
@@ -243,6 +237,27 @@ export default function HomeScreen({ navigation }: any) {
       >
         <Text style={styles.sosText}>SOS</Text>
       </TouchableOpacity>
+
+      {/* Cerrar sesión / Salir — debajo del SOS siempre */}
+      {!isGuest ? (
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Icon name="log-out" size={16} color={colors.textMuted} />
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Icon name="log-out" size={16} color={colors.textMuted} />
+          <Text style={styles.logoutText}>Salir sin guardar</Text>
+        </TouchableOpacity>
+      )}
 
     </ScrollView>
   );
@@ -273,8 +288,52 @@ const styles = StyleSheet.create({
   moneyIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFF3E0', alignItems: 'center', justifyContent: 'center' },
   moneyAmount: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
   moneySub: { fontSize: fontSizes.sm, color: colors.textMuted },
-  sosButton: { backgroundColor: '#FF6B6B', borderRadius: borderRadius.full, paddingVertical: spacing.lg, alignItems: 'center', elevation: 120, shadowColor: '#FF9AA2', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.9, shadowRadius: 20 },
+  createAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+  },
+  createAccountIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createAccountTextWrapper: { flex: 1 },
+  createAccountTitle: { fontSize: fontSizes.md, fontWeight: '700', color: colors.white },
+  createAccountSub: { fontSize: fontSizes.xs, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  sosButton: {
+    backgroundColor: '#FF6B6B',
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    elevation: 120,
+    shadowColor: '#FF9AA2',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 20,
+    marginBottom: spacing.md,
+  },
   sosText: { fontSize: fontSizes.xl, fontWeight: '800', color: colors.white, letterSpacing: 3 },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    marginTop: spacing.xs,
+  },
+  logoutText: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: colors.white, borderTopLeftRadius: borderRadius.md * 2, borderTopRightRadius: borderRadius.md * 2, padding: spacing.xl, gap: spacing.md },
   modalTitle: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: spacing.sm },
