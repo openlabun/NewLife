@@ -1,5 +1,3 @@
-// backend/admin-api/src/modules/admin/infrastructure/adapters/roble-user.repository.ts
-
 import {
   Injectable,
   InternalServerErrorException,
@@ -21,18 +19,19 @@ export class RobleUserRepository implements IAdminUserRepository {
 
   // Mapea una fila cruda de Roble a la entidad AdminUser
   private mapRow(row: Record<string, unknown>): AdminUser {
-    return new AdminUser({
-      _id:              row._id as string,
-      usuario_id:       row.usuario_id as string,
-      email:            row.email as string,
-      nombre:           row.nombre as string,
-      rol:              (row.rol as UserRole)    || UserRole.USUARIO,
-      estado:           (row.estado as UserStatus) || UserStatus.ACTIVO,
-      suspension_hasta: (row.suspension_hasta as string) || null,
-      created_at:       row.created_at as string,
-      last_login:       row.last_login as string,
-    });
-  }
+  
+  return new AdminUser({
+    _id:              row._id as string,
+    usuario_id:       row.usuario_id as string,
+    email:            row.email as string,
+    nombre:           row.nombre as string,
+    rol:              (row.rol as UserRole) ?? UserRole.USUARIO,
+    estado:           (row.estado as UserStatus) ?? UserStatus.ACTIVO,
+    suspension_hasta: (row.suspension_hasta as string) || null,
+    created_at:       row.created_at as string,
+    last_login:       row.last_login as string,
+  });
+}
 
   async findById(id: string): Promise<AdminUser | null> {
     const rows = await this.roble.dbRead<unknown[]>(USERS_TABLE, { _id: id });

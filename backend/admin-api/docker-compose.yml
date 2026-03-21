@@ -1,0 +1,19 @@
+services:
+  admin-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: newlife-admin-api
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      ROBLE_BASE_URL: ${ROBLE_BASE_URL}
+      ROBLE_PROJECT_TOKEN: ${ROBLE_PROJECT_TOKEN}
+      ROBLE_DB_NAME: ${ROBLE_DB_NAME}
+      ROBLE_SYSTEM_EMAIL: ${ROBLE_SYSTEM_EMAIL}
+      ROBLE_SYSTEM_PASSWORD: ${ROBLE_SYSTEM_PASSWORD}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      ADMIN_JWT_EXPIRES_IN: ${ADMIN_JWT_EXPIRES_IN}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    restart: unless-stopped

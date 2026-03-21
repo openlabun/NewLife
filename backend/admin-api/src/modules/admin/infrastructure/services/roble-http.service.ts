@@ -20,11 +20,11 @@ export class RobleHttpService implements OnModuleInit {
   private systemToken: string | null = null;
 
   constructor(private readonly config: ConfigService) {
-    this.baseUrl       = this.config.get<string>('ROBLE_BASE_URL');
-    this.projectToken  = this.config.get<string>('ROBLE_PROJECT_TOKEN');
-    this.dbName        = this.config.get<string>('ROBLE_DB_NAME');
-    this.systemEmail   = this.config.get<string>('ROBLE_SYSTEM_EMAIL');
-    this.systemPassword = this.config.get<string>('ROBLE_SYSTEM_PASSWORD');
+    this.baseUrl = this.config.get<string>('ROBLE_BASE_URL') ?? '';
+    this.projectToken = this.config.get<string>('ROBLE_PROJECT_TOKEN') ?? '';
+    this.dbName = this.config.get<string>('ROBLE_DB_NAME') ?? '';
+    this.systemEmail = this.config.get<string>('ROBLE_SYSTEM_EMAIL') ?? '';
+    this.systemPassword = this.config.get<string>('ROBLE_SYSTEM_PASSWORD') ?? '';
 
     this.authClient = axios.create({
       baseURL: `${this.baseUrl}/auth/${this.projectToken}`,

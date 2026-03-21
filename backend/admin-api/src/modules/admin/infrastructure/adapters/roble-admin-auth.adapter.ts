@@ -23,7 +23,7 @@ interface RobleRefreshResponse {
 
 @Injectable()
 export class RobleAdminAuthAdapter implements IAdminAuthPort {
-  constructor(private readonly roble: RobleHttpService) {}
+  constructor(private readonly roble: RobleHttpService) { }
 
   async loginWithRoble(email: string, password: string): Promise<RobleLoginResult> {
     try {
@@ -42,16 +42,14 @@ export class RobleAdminAuthAdapter implements IAdminAuthPort {
 
   async verifyRobleToken(accessToken: string): Promise<RobleUserInfo> {
     try {
-      const res = await this.roble.authGet<RobleVerifyResponse>(
-        '/verify-token',
-        accessToken,
-      );
+      const res = await this.roble.authGet<any>('/verify-token', accessToken);
+
       return {
-        id: res.id,
-        email: res.email,
-        name: res.name,
+        id: res.user?.sub ?? '',
+        email: res.user?.email ?? '',
+        name: res.user?.name ?? res.user?.nombre ?? '',
       };
-    } catch {
+    } catch (err) {
       throw new UnauthorizedException('Token de Roble inválido o expirado');
     }
   }
@@ -68,6 +66,6 @@ export class RobleAdminAuthAdapter implements IAdminAuthPort {
   }
 
   async logoutFromRoble(accessToken: string): Promise<void> {
-    await this.roble.authPost<void>('/logout', null, accessToken);
+    await this.roble.authPost<void>('/logout', {}, accessToken);
   }
 }
