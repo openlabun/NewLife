@@ -1,3 +1,5 @@
+import Link from "next/dist/client/link"
+
 function LeavesSVGTopLeft() {
   return (
     <svg
@@ -239,9 +241,11 @@ export function HeroSection() {
             </p>
 
             {/* Login button */}
-            <button className="inline-flex items-center justify-center rounded-full border-2 border-[#1a1a1a] bg-[#ffffff] px-10 py-3.5 text-base font-semibold text-[#1a1a1a] transition-all hover:bg-[#1a1a1a] hover:text-[#ffffff] hover:shadow-lg">
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center justify-center rounded-full border-2 border-[#1a1a1a] bg-[#ffffff] px-10 py-3.5 text-base font-semibold text-[#1a1a1a] transition-all hover:bg-[#1a1a1a] hover:text-[#ffffff] hover:shadow-lg">
               Login
-            </button>
+            </Link>
           </div>
 
           {/* Right column - Phone mockup */}
