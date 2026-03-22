@@ -7,9 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Leaf, Eye, EyeOff } from "lucide-react"
+import { login, saveSession } from "@/lib/auth"
+import { useAuth } from "@/context/AuthContext"
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const { setSession } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -21,15 +24,23 @@ export default function AdminLoginPage() {
     setError("")
     setIsLoading(true)
 
-    // Simulated login - replace with actual auth logic
-    setTimeout(() => {
-      if (email && password) {
-        router.push("/admin/dashboard")
+    try {
+      const { accessToken, user } = await login(email, password)
+      saveSession(accessToken, user)
+      setSession(accessToken, user)
+      router.push("/admin/dashboard")
+    } catch (err: any) {
+      const msg = err?.response?.data?.message
+      if (msg === 'No tienes permisos para acceder al panel de administración.') {
+        setError("Tu cuenta no tiene permisos de administrador.")
+      } else if (msg === 'Credenciales inválidas') {
+        setError("Correo o contraseña incorrectos.")
       } else {
-        setError("Por favor ingresa tu correo y contraseña")
+        setError("Error al iniciar sesión. Intenta de nuevo.")
       }
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (

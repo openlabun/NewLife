@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/context/AuthContext'
 import './globals.css'
 
 const poppins = Poppins({
@@ -38,7 +39,9 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} ${playfair.variable} font-sans antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Analytics />
       </body>
     </html>
