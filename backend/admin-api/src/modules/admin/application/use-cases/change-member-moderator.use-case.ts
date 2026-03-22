@@ -29,16 +29,14 @@ export class ChangeMemberModeratorUseCase {
       );
     }
 
-    // Si se asigna como moderador → acceso completo automáticamente
-    // Si se quita como moderador → vuelve a POSTEAR_COMENTAR por defecto
+    // Si se asigna moderador → CHAT_COMPLETO automático
+    // Si se quita moderador → se mantiene el tipo_acceso actual
     const updates: { es_moderador: boolean; tipo_acceso?: TipoAcceso } = {
       es_moderador: esModerador,
     };
 
     if (esModerador) {
       updates.tipo_acceso = TipoAcceso.CHAT_COMPLETO;
-    } else {
-      updates.tipo_acceso = TipoAcceso.POSTEAR_COMENTAR;
     }
 
     const updated = await this.communityRepo.updateMember(member._id, updates);
