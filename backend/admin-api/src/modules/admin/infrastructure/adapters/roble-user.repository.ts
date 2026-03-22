@@ -8,6 +8,7 @@ import {
   IAdminUserRepository,
   CreateAdminUserInput,
   UpdateAdminUserInput,
+  FindAllFilters,
 } from '../../domain/ports/admin-user.repository.port';
 import { AdminUser, UserRole, UserStatus } from '../../domain/entities/admin-user.entity';
 
@@ -15,23 +16,21 @@ const USERS_TABLE = 'usuarios';
 
 @Injectable()
 export class RobleUserRepository implements IAdminUserRepository {
-  constructor(private readonly roble: RobleHttpService) {}
+  constructor(private readonly roble: RobleHttpService) { }
 
-  // Mapea una fila cruda de Roble a la entidad AdminUser
   private mapRow(row: Record<string, unknown>): AdminUser {
-  
-  return new AdminUser({
-    _id:              row._id as string,
-    usuario_id:       row.usuario_id as string,
-    email:            row.email as string,
-    nombre:           row.nombre as string,
-    rol:              (row.rol as UserRole) ?? UserRole.USUARIO,
-    estado:           (row.estado as UserStatus) ?? UserStatus.ACTIVO,
-    suspension_hasta: (row.suspension_hasta as string) || null,
-    created_at:       row.created_at as string,
-    last_login:       row.last_login as string,
-  });
-}
+    return new AdminUser({
+      _id: row._id as string,
+      usuario_id: row.usuario_id as string,
+      email: row.email as string,
+      nombre: row.nombre as string,
+      rol: (row.rol as UserRole) ?? UserRole.USUARIO,
+      estado: (row.estado as UserStatus) ?? UserStatus.ACTIVO,
+      suspension_hasta: (row.suspension_hasta as string) || null,
+      created_at: row.created_at as string,
+      last_login: row.last_login as string,
+    });
+  }
 
   async findById(id: string): Promise<AdminUser | null> {
     const rows = await this.roble.dbRead<unknown[]>(USERS_TABLE, { _id: id });
@@ -53,10 +52,23 @@ export class RobleUserRepository implements IAdminUserRepository {
     return this.mapRow(rows[0] as Record<string, unknown>);
   }
 
-  async findAll(filters?: { rol?: UserRole; estado?: UserStatus }): Promise<AdminUser[]> {
-    const rows = await this.roble.dbRead<unknown[]>(USERS_TABLE, filters || {});
-    if (!rows) return [];
-    return (rows as Record<string, unknown>[]).map((r) => this.mapRow(r));
+  async findAll(filters?: FindAllFilters): Promise<AdminUser[]> {
+    // Roble solo filtra por igualdad exacta, así que
+    // filtramos en memoria si hay múltiples condiciones
+    const rows = await this.roble.dbRead<unknown[]>(USERS_TABLE, {});
+    if (!rows || rows.length === 0) return [];
+
+    let users = (rows as Record<string, unknown>[]).map((r) => this.mapRow(r));
+
+    if (filters?.rol) {
+      users = users.filter((u) => u.rol === filters.rol);
+    }
+
+    if (filters?.estado) {
+      users = users.filter((u) => u.estado === filters.estado);
+    }
+
+    return users;
   }
 
   async create(data: CreateAdminUserInput): Promise<AdminUser> {
@@ -66,16 +78,18 @@ export class RobleUserRepository implements IAdminUserRepository {
     }>(USERS_TABLE, [
       {
         usuario_id: data.usuario_id,
-        email:      data.email,
-        nombre:     data.nombre,
-        rol:        data.rol    || UserRole.USUARIO,
-        estado:     data.estado || UserStatus.ACTIVO,
+        email: data.email,
+        nombre: data.nombre,
+        rol: data.rol ?? UserRole.USUARIO,
+        estado: data.estado ?? UserStatus.ACTIVO,
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
       },
     ]);
 
     if (!result.inserted || result.inserted.length === 0) {
       throw new InternalServerErrorException(
-        `No se pudo crear el usuario en Roble. Skipped: ${JSON.stringify(result.skipped)}`,
+        `No se pudo crear el usuario. Skipped: ${JSON.stringify(result.skipped)}`,
       );
     }
 
@@ -85,10 +99,10 @@ export class RobleUserRepository implements IAdminUserRepository {
   async update(id: string, data: UpdateAdminUserInput): Promise<AdminUser> {
     const updates: Record<string, unknown> = {};
 
-    if (data.rol              !== undefined) updates.rol              = data.rol;
-    if (data.estado           !== undefined) updates.estado           = data.estado;
+    if (data.rol !== undefined) updates.rol = data.rol;
+    if (data.estado !== undefined) updates.estado = data.estado;
     if (data.suspension_hasta !== undefined) updates.suspension_hasta = data.suspension_hasta;
-    if (data.last_login       !== undefined) updates.last_login       = data.last_login;
+    if (data.last_login !== undefined) updates.last_login = data.last_login;
 
     const updated = await this.roble.dbUpdate<Record<string, unknown>>(
       USERS_TABLE,

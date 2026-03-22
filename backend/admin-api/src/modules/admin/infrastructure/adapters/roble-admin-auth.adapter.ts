@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { RobleHttpService } from '../services/roble-http.service';
 import {
   IAdminAuthPort,
   RobleLoginResult,
+  RobleSignupResult,
   RobleUserInfo,
 } from '../../domain/ports/admin-auth.port';
 
@@ -67,5 +68,42 @@ export class RobleAdminAuthAdapter implements IAdminAuthPort {
 
   async logoutFromRoble(accessToken: string): Promise<void> {
     await this.roble.authPost<void>('/logout', {}, accessToken);
+  }
+
+  async signupDirect(
+    email: string,
+    password: string,
+    nombre: string,
+  ): Promise<RobleSignupResult> {
+    try {
+      // 1. Crear la cuenta en Roble
+      await this.roble.authPost<any>(
+        '/signup-direct',
+        { email, password, name: nombre },
+      );
+
+      // 2. Hacer login para obtener el token
+      const loginRes = await this.roble.authPost<{ accessToken: string }>(
+        '/login',
+        { email, password },
+      );
+
+      // 3. Verificar el token para obtener el ID
+      const verifyRes = await this.roble.authGet<any>(
+        '/verify-token',
+        loginRes.accessToken,
+      );
+
+      console.log('=== verify después de signup ===', JSON.stringify(verifyRes));
+
+      return {
+        id: verifyRes.user?.sub ?? '',
+        email: verifyRes.user?.email ?? email,
+      };
+    } catch (err) {
+      throw new ConflictException(
+        'No se pudo crear la cuenta en Roble. El correo puede estar en uso.',
+      );
+    }
   }
 }
