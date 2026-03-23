@@ -47,9 +47,9 @@ export class LoginUseCase {
         email: authUser.email,
         created_at: now,
         last_login: now,
-        rol: 'paciente',
-        nombre: authUser.nombre || dto.nombre || ''
-
+        rol: 'USUARIO',
+        estado: 'ACTIVO',
+        nombre: authUser.nombre || dto.nombre || '',
       };
 
       await this.dbService.insert('usuarios', [newRecord], masterToken);
@@ -70,7 +70,7 @@ export class LoginUseCase {
         'email',
         userInDb.email,
         updates,
-        masterToken
+        masterToken,
       );
       finalUserData = { ...userInDb, ...updates };
     }

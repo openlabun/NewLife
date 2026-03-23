@@ -11,7 +11,7 @@ import { CompleteProfileUseCase } from '../../../users/application/use-cases/com
 @ApiTags('Perfil de Usuario')
 @Controller('user')
 export class UserController {
-  constructor(private readonly completeProfileUseCase: CompleteProfileUseCase) {}
+  constructor(private readonly completeProfileUseCase: CompleteProfileUseCase) { }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -30,7 +30,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login App' })
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    return await this.authService.login(loginDto);
+    return await this.authService.login(loginDto, ['USUARIO', 'MODERADOR']);
   }
 
   @ApiOperation({ summary: 'Login exclusivo para Panel Administrativo' })
@@ -72,7 +72,7 @@ export class AuthController {
   async logout(@Request() req: any) {
     const authHeader = req.headers.authorization;
     if (!authHeader) return { message: 'No hay sesión activa' };
-    
+
     const token = authHeader.split(' ')[1];
     await this.authService.logout(token);
     return { message: 'Sesión cerrada exitosamente.' };
