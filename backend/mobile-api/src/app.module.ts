@@ -5,17 +5,19 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CareModule } from './modules/care/care.module';
 import { HomeModule } from './modules/home/home.module';
+import { ProgressModule } from './modules/progress/progress.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, 
+      isGlobal: true,
     }),
-    DatabaseModule, 
-    AuthModule, 
-    UsersModule, 
-    CareModule, 
-    HomeModule
+    DatabaseModule,
+    AuthModule,
+    UsersModule,
+    CareModule,
+    HomeModule,
+    ProgressModule
   ],
 })
-export class AppModule {}
+export class AppModule { }

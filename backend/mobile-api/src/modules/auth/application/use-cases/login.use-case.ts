@@ -11,7 +11,7 @@ export class LoginUseCase {
     private readonly authProvider: IAuthProviderPort,
     private readonly dbService: DatabaseService,
     private readonly systemAuth: SystemAuthService,
-  ) {}
+  ) { }
 
   async execute(dto: LoginDto, allowedRoles?: string[]) {
     const now = new Date().toISOString();
@@ -51,8 +51,15 @@ export class LoginUseCase {
         nombre: authUser.nombre || dto.nombre || ''
 
       };
-      
+
       await this.dbService.insert('usuarios', [newRecord], masterToken);
+      await this.dbService.insert('camino', [{
+        usuario_id: authUser.uid,
+        nivel: null,
+        subnivel: null,
+        updated_at: now,
+      }], masterToken);
+
       finalUserData = newRecord;
     } else {
       const updates: any = { last_login: now };
@@ -60,7 +67,7 @@ export class LoginUseCase {
 
       await this.dbService.update(
         'usuarios',
-        'email', 
+        'email',
         userInDb.email,
         updates,
         masterToken
