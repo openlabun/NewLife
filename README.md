@@ -17,6 +17,11 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 
+[Diseño en Figma](https://www.figma.com/design/tmy3p6WL45FEvoEQAmLWF2/New-life-Ver.2)
+
+[Prototipo en Figma](https://www.figma.com/proto/tmy3p6WL45FEvoEQAmLWF2/New-life-Ver.2)
+
+
 Aplicación móvil de acompañamiento para jóvenes en proceso de rehabilitación y post-rehabilitación por consumo problemático de alcohol.
 
 [Introducción](#1-introducción) •
