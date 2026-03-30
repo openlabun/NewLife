@@ -23,7 +23,7 @@ export default function ProgressScreen({ navigation }: any) {
                 <Text style={styles.subtitle}>Avanza y descubre cómo has progresado.</Text>
 
                 {/* Tu camino */}
-                <TouchableOpacity style={styles.sectionHeader} onPress={() => { }}>
+                <TouchableOpacity style={styles.sectionHeader} onPress={() => navigation.navigate('Path')}>
                     <Text style={styles.sectionTitle}>Tu camino</Text>
                     <Feather name="chevron-right" size={18} color={colors.text} />
                 </TouchableOpacity>
