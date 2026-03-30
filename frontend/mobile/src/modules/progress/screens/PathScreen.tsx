@@ -25,7 +25,7 @@ const LEVELS = [
 // Mock: usuario va en nivel 1, subnivel 2 (libro completado, en estrella)
 const USER_PROGRESS = {
     level: 2,
-    sublevel: 3, // 1=libro, 2=estrella, 3=corazon
+    sublevel: 1, // 1=libro, 2=estrella, 3=corazon
 };
 
 // Subniveles: orden libro(1), estrella(2), corazon(3)
@@ -61,8 +61,18 @@ function SubNode({ type, state, isCurrent }: SubnodeProps & { isCurrent?: boolea
 }
 
 const MODULE_ROUTES: Record<number, Record<number, string>> = {
-  1: { 1: 'Nivel1Modulo1', 2: 'Nivel1Modulo2', 3: 'Nivel1Modulo3' },
-  2: { 1: 'Nivel2Modulo1', 2: 'Nivel2Modulo2', 3: 'Nivel2Modulo3' },
+    1: { 1: 'Nivel1Modulo1', 2: 'Nivel1Modulo2', 3: 'Nivel1Modulo3' },
+    2: { 1: 'Nivel2Modulo1', 2: 'Nivel2Modulo2', 3: 'Nivel2Modulo3' },
+    3: { 1: 'Nivel3Modulo1', 2: 'Nivel3Modulo2', 3: 'Nivel3Modulo3' },
+    4: { 1: 'Nivel4Modulo1', 2: 'Nivel4Modulo2', 3: 'Nivel4Modulo3' },
+    5: { 1: 'Nivel5Modulo1', 2: 'Nivel5Modulo2', 3: 'Nivel5Modulo3' },
+    6: { 1: 'Nivel6Modulo1', 2: 'Nivel6Modulo2', 3: 'Nivel6Modulo3' },
+    7: { 1: 'Nivel7Modulo1', 2: 'Nivel7Modulo2', 3: 'Nivel7Modulo3' },
+    8: { 1: 'Nivel8Modulo1', 2: 'Nivel8Modulo2', 3: 'Nivel8Modulo3' },
+    9: { 1: 'Nivel9Modulo1', 2: 'Nivel9Modulo2', 3: 'Nivel9Modulo3' },
+    10: { 1: 'Nivel10Modulo1', 2: 'Nivel10Modulo2', 3: 'Nivel10Modulo3' },
+    11: { 1: 'Nivel11Modulo1', 2: 'Nivel11Modulo2', 3: 'Nivel11Modulo3' },
+    12: { 1: 'Nivel12Modulo1', 2: 'Nivel12Modulo2', 3: 'Nivel12Modulo3' },
 };
 
 function LevelCard({

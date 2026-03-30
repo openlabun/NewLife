@@ -41,6 +41,37 @@ import LevelCompleteScreen from '../modules/progress/screens/levels/LevelComplet
 import Nivel2Modulo1 from '../modules/progress/screens/levels/nivel2/Nivel2Modulo1';
 import Nivel2Modulo2 from '../modules/progress/screens/levels/nivel2/Nivel2Modulo2';
 import Nivel2Modulo3 from '../modules/progress/screens/levels/nivel2/Nivel2Modulo3';
+import Nivel3Modulo1 from '../modules/progress/screens/levels/nivel3/Nivel3Modulo1';
+import Nivel3Modulo2 from '../modules/progress/screens/levels/nivel3/Nivel3Modulo2';
+import Nivel3Modulo3 from '../modules/progress/screens/levels/nivel3/Nivel3Modulo3';
+import Nivel4Modulo1 from '../modules/progress/screens/levels/nivel4/Nivel4Modulo1';
+import Nivel4Modulo2 from '../modules/progress/screens/levels/nivel4/Nivel4Modulo2';
+import Nivel4Modulo3 from '../modules/progress/screens/levels/nivel4/Nivel4Modulo3';
+import Nivel5Modulo1 from '../modules/progress/screens/levels/nivel5/Nivel5Modulo1';
+import Nivel5Modulo2 from '../modules/progress/screens/levels/nivel5/Nivel5Modulo2';
+import Nivel5Modulo3 from '../modules/progress/screens/levels/nivel5/Nivel5Modulo3';
+import Nivel6Modulo1 from '../modules/progress/screens/levels/nivel6/Nivel6Modulo1';
+import Nivel6Modulo2 from '../modules/progress/screens/levels/nivel6/Nivel6Modulo2';
+import Nivel6Modulo3 from '../modules/progress/screens/levels/nivel6/Nivel6Modulo3';
+import Nivel7Modulo1 from '../modules/progress/screens/levels/nivel7/Nivel7Modulo1';
+import Nivel7Modulo2 from '../modules/progress/screens/levels/nivel7/Nivel7Modulo2';
+import Nivel7Modulo3 from '../modules/progress/screens/levels/nivel7/Nivel7Modulo3';
+import Nivel8Modulo1 from '../modules/progress/screens/levels/nivel8/Nivel8Modulo1';
+import Nivel8Modulo2 from '../modules/progress/screens/levels/nivel8/Nivel8Modulo2';
+import Nivel8Modulo3 from '../modules/progress/screens/levels/nivel8/Nivel8Modulo3';
+import Nivel9Modulo1 from '../modules/progress/screens/levels/nivel9/Nivel9Modulo1';
+import Nivel9Modulo2 from '../modules/progress/screens/levels/nivel9/Nivel9Modulo2';
+import Nivel9Modulo3 from '../modules/progress/screens/levels/nivel9/Nivel9Modulo3';
+import Nivel10Modulo1 from '../modules/progress/screens/levels/nivel10/Nivel10Modulo1';
+import Nivel10Modulo2 from '../modules/progress/screens/levels/nivel10/Nivel10Modulo2';
+import Nivel10Modulo3 from '../modules/progress/screens/levels/nivel10/Nivel10Modulo3';
+import Nivel11Modulo1 from '../modules/progress/screens/levels/nivel11/Nivel11Modulo1';
+import Nivel11Modulo2 from '../modules/progress/screens/levels/nivel11/Nivel11Modulo2';
+import Nivel11Modulo3 from '../modules/progress/screens/levels/nivel11/Nivel11Modulo3';
+import Nivel12Modulo1 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo1';
+import Nivel12Modulo2 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo2';
+import Nivel12Modulo3 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo3';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -94,7 +125,36 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="Nivel2Modulo1" component={Nivel2Modulo1} />
           <Stack.Screen name="Nivel2Modulo2" component={Nivel2Modulo2} />
           <Stack.Screen name="Nivel2Modulo3" component={Nivel2Modulo3} />
-
+          <Stack.Screen name="Nivel3Modulo1" component={Nivel3Modulo1} />
+          <Stack.Screen name="Nivel3Modulo2" component={Nivel3Modulo2} />
+          <Stack.Screen name="Nivel3Modulo3" component={Nivel3Modulo3} />
+          <Stack.Screen name="Nivel4Modulo1" component={Nivel4Modulo1} />
+          <Stack.Screen name="Nivel4Modulo2" component={Nivel4Modulo2} />
+          <Stack.Screen name="Nivel4Modulo3" component={Nivel4Modulo3} />
+          <Stack.Screen name="Nivel5Modulo1" component={Nivel5Modulo1} />
+          <Stack.Screen name="Nivel5Modulo2" component={Nivel5Modulo2} />
+          <Stack.Screen name="Nivel5Modulo3" component={Nivel5Modulo3} />
+          <Stack.Screen name="Nivel6Modulo1" component={Nivel6Modulo1} />
+          <Stack.Screen name="Nivel6Modulo2" component={Nivel6Modulo2} />
+          <Stack.Screen name="Nivel6Modulo3" component={Nivel6Modulo3} />
+          <Stack.Screen name="Nivel7Modulo1" component={Nivel7Modulo1} />
+          <Stack.Screen name="Nivel7Modulo2" component={Nivel7Modulo2} />
+          <Stack.Screen name="Nivel7Modulo3" component={Nivel7Modulo3} />
+          <Stack.Screen name="Nivel8Modulo1" component={Nivel8Modulo1} />
+          <Stack.Screen name="Nivel8Modulo2" component={Nivel8Modulo2} />
+          <Stack.Screen name="Nivel8Modulo3" component={Nivel8Modulo3} />
+          <Stack.Screen name="Nivel9Modulo1" component={Nivel9Modulo1} />
+          <Stack.Screen name="Nivel9Modulo2" component={Nivel9Modulo2} />
+          <Stack.Screen name="Nivel9Modulo3" component={Nivel9Modulo3} />
+          <Stack.Screen name="Nivel10Modulo1" component={Nivel10Modulo1} />
+          <Stack.Screen name="Nivel10Modulo2" component={Nivel10Modulo2} />
+          <Stack.Screen name="Nivel10Modulo3" component={Nivel10Modulo3} />
+          <Stack.Screen name="Nivel11Modulo1" component={Nivel11Modulo1} />
+          <Stack.Screen name="Nivel11Modulo2" component={Nivel11Modulo2} />
+          <Stack.Screen name="Nivel11Modulo3" component={Nivel11Modulo3} />
+          <Stack.Screen name="Nivel12Modulo1" component={Nivel12Modulo1} />
+          <Stack.Screen name="Nivel12Modulo2" component={Nivel12Modulo2} />
+          <Stack.Screen name="Nivel12Modulo3" component={Nivel12Modulo3} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>
