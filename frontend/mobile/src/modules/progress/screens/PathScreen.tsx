@@ -24,8 +24,8 @@ const LEVELS = [
 
 // Mock: usuario va en nivel 1, subnivel 2 (libro completado, en estrella)
 const USER_PROGRESS = {
-    level: 1,
-    sublevel: 2, // 1=libro, 2=estrella, 3=corazon
+    level: 2,
+    sublevel: 3, // 1=libro, 2=estrella, 3=corazon
 };
 
 // Subniveles: orden libro(1), estrella(2), corazon(3)
@@ -60,19 +60,31 @@ function SubNode({ type, state, isCurrent }: SubnodeProps & { isCurrent?: boolea
     );
 }
 
+const MODULE_ROUTES: Record<number, Record<number, string>> = {
+  1: { 1: 'Nivel1Modulo1', 2: 'Nivel1Modulo2', 3: 'Nivel1Modulo3' },
+  2: { 1: 'Nivel2Modulo1', 2: 'Nivel2Modulo2', 3: 'Nivel2Modulo3' },
+};
+
 function LevelCard({
     level,
     userProgress,
-    onPress,
+    navigation,  // agrega navigation como prop
 }: {
     level: typeof LEVELS[0];
     userProgress: typeof USER_PROGRESS;
-    onPress: () => void;
+    navigation: any;
 }) {
     const isCurrentLevel = userProgress.level === level.id;
     const isCompletedLevel = userProgress.level > level.id;
     const isLockedLevel = userProgress.level < level.id;
     const isDisabled = isLockedLevel;
+
+    const handlePress = () => {
+        const levelRoutes = MODULE_ROUTES[level.id];
+        if (!levelRoutes) return;
+        const route = levelRoutes[userProgress.sublevel];
+        if (route) navigation.navigate(route);
+    };
 
     const getSubnodeState = (sublevelIndex: number): SubnodeProps['state'] => {
         if (isLockedLevel) return 'locked';
@@ -87,8 +99,6 @@ function LevelCard({
     return (
         <TouchableOpacity
             style={styles.levelWrapper}
-            onPress={onPress}
-            disabled={isDisabled}
             activeOpacity={0.8}
         >
             {/* Card */}
@@ -110,22 +120,41 @@ function LevelCard({
                 <View style={styles.subnodesTopRow}>
                     {SUBLEVEL_ORDER.slice(0, 2).map((type, i) => {
                         const state = getSubnodeState(i);
+                        const route = MODULE_ROUTES[level.id]?.[i + 1];
                         return (
-                            <SubNode
+                            <TouchableOpacity
                                 key={i}
-                                type={type as SubnodeProps['type']}
-                                state={state}
-                                isCurrent={state === 'current'}
-                            />
+                                disabled={state === 'locked' || state === 'pending'}
+                                onPress={() => route && navigation.navigate(route)}
+                                activeOpacity={0.8}
+                            >
+                                <SubNode
+                                    type={type as SubnodeProps['type']}
+                                    state={state}
+                                    isCurrent={state === 'current'}
+                                />
+                            </TouchableOpacity>
                         );
                     })}
                 </View>
                 <View style={styles.subnodesBottomRow}>
-                    <SubNode
-                        type={SUBLEVEL_ORDER[2] as SubnodeProps['type']}
-                        state={getSubnodeState(2)}
-                        isCurrent={getSubnodeState(2) === 'current'}
-                    />
+                    {(() => {
+                        const state = getSubnodeState(2);
+                        const route = MODULE_ROUTES[level.id]?.[3];
+                        return (
+                            <TouchableOpacity
+                                disabled={state === 'locked' || state === 'pending'}
+                                onPress={() => route && navigation.navigate(route)}
+                                activeOpacity={0.8}
+                            >
+                                <SubNode
+                                    type={SUBLEVEL_ORDER[2] as SubnodeProps['type']}
+                                    state={state}
+                                    isCurrent={state === 'current'}
+                                />
+                            </TouchableOpacity>
+                        );
+                    })()}
                 </View>
             </View>
 
@@ -159,7 +188,7 @@ export default function PathScreen({ navigation }: any) {
                         key={level.id}
                         level={level}
                         userProgress={USER_PROGRESS}
-                        onPress={() => navigation.navigate('LevelDetail', { levelId: level.id })}
+                        navigation={navigation}
                     />
                 ))}
             </ScrollView>

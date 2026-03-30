@@ -34,7 +34,13 @@ import DailyCheckInScreen from '../modules/progress/screens/DailyCheckInScreen';
 import CheckInSuccessScreen from '../modules/progress/screens/CheckInSuccessScreen';
 import AnalysisScreen from '../modules/progress/screens/AnalysisScreen';
 import PathScreen from '../modules/progress/screens/PathScreen';
-
+import Nivel1Modulo1 from '../modules/progress/screens/levels/nivel1/Nivel1Modulo1';
+import Nivel1Modulo2 from '../modules/progress/screens/levels/nivel1/Nivel1Modulo2';
+import Nivel1Modulo3 from '../modules/progress/screens/levels/nivel1/Nivel1Modulo3';
+import LevelCompleteScreen from '../modules/progress/screens/levels/LevelCompleteScreen';
+import Nivel2Modulo1 from '../modules/progress/screens/levels/nivel2/Nivel2Modulo1';
+import Nivel2Modulo2 from '../modules/progress/screens/levels/nivel2/Nivel2Modulo2';
+import Nivel2Modulo3 from '../modules/progress/screens/levels/nivel2/Nivel2Modulo3';
 
 const Stack = createNativeStackNavigator();
 
@@ -81,6 +87,14 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="CheckInSuccess" component={CheckInSuccessScreen} />
           <Stack.Screen name="Analysis" component={AnalysisScreen} />
           <Stack.Screen name="Path" component={PathScreen} />
+          <Stack.Screen name="Nivel1Modulo1" component={Nivel1Modulo1} />
+          <Stack.Screen name="Nivel1Modulo2" component={Nivel1Modulo2} />
+          <Stack.Screen name="Nivel1Modulo3" component={Nivel1Modulo3} />
+          <Stack.Screen name="LevelComplete" component={LevelCompleteScreen} />
+          <Stack.Screen name="Nivel2Modulo1" component={Nivel2Modulo1} />
+          <Stack.Screen name="Nivel2Modulo2" component={Nivel2Modulo2} />
+          <Stack.Screen name="Nivel2Modulo3" component={Nivel2Modulo3} />
+
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>
