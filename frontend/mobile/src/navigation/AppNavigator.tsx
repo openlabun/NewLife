@@ -72,7 +72,6 @@ import Nivel12Modulo1 from '../modules/progress/screens/levels/nivel12/Nivel12Mo
 import Nivel12Modulo2 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo2';
 import Nivel12Modulo3 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo3';
 
-
 const Stack = createNativeStackNavigator();
 
 type AppNavigatorProps = {

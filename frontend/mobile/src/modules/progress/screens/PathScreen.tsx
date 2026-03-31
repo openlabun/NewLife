@@ -180,7 +180,7 @@ export default function PathScreen({ navigation }: any) {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <TouchableOpacity onPress={() => navigation.navigate('Home')}>
                     <Feather name="chevron-left" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View>
