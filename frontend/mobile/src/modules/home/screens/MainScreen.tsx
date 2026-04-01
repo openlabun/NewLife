@@ -4,11 +4,12 @@ import BottomTabNavigator from '../../../navigation/BottomTabNavigator';
 import HomeScreen from './HomeScreen';
 import { colors } from '../../../constants/theme';
 import ProgressScreen from '../../progress/screens/ProgressScreen';
+import MotivationScreen from '../../motivation/screens/MotivationScreen';
 
 const SCREENS: Record<string, (navigation: any) => React.ReactNode> = {
   Home: (navigation) => <HomeScreen navigation={navigation} />,
   Progress: (navigation) => <ProgressScreen navigation={navigation} />,
-  Motivation: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
+  Motivation: (navigation) => <MotivationScreen navigation={navigation} />,
   Care: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
   Social: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
 };

@@ -24,8 +24,8 @@ const LEVELS = [
 
 // Mock: usuario va en nivel 1, subnivel 2 (libro completado, en estrella)
 const USER_PROGRESS = {
-    level: 2,
-    sublevel: 1, // 1=libro, 2=estrella, 3=corazon
+    level: 12,
+    sublevel: 3, // 1=libro, 2=estrella, 3=corazon
 };
 
 // Subniveles: orden libro(1), estrella(2), corazon(3)

@@ -71,6 +71,11 @@ import Nivel11Modulo3 from '../modules/progress/screens/levels/nivel11/Nivel11Mo
 import Nivel12Modulo1 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo1';
 import Nivel12Modulo2 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo2';
 import Nivel12Modulo3 from '../modules/progress/screens/levels/nivel12/Nivel12Modulo3';
+import DailyPhraseScreen from '../modules/motivation/screens/DailyPhraseScreen';
+import MedalsScreen from '../modules/motivation/screens/MedalsScreen';
+import ChallengesScreen from '../modules/motivation/screens/ChallengesScreen';
+import ChallengeDetailScreen from '../modules/motivation/screens/ChallengeDetailScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -154,6 +159,10 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="Nivel12Modulo1" component={Nivel12Modulo1} />
           <Stack.Screen name="Nivel12Modulo2" component={Nivel12Modulo2} />
           <Stack.Screen name="Nivel12Modulo3" component={Nivel12Modulo3} />
+          <Stack.Screen name="DailyPhrase" component={DailyPhraseScreen} />
+          <Stack.Screen name="Medals" component={MedalsScreen} />
+          <Stack.Screen name="Challenges" component={ChallengesScreen} />
+          <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>
