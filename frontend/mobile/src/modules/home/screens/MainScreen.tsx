@@ -5,12 +5,13 @@ import HomeScreen from './HomeScreen';
 import { colors } from '../../../constants/theme';
 import ProgressScreen from '../../progress/screens/ProgressScreen';
 import MotivationScreen from '../../motivation/screens/MotivationScreen';
+import CareScreen from '../../care/screens/CareScreen';
 
 const SCREENS: Record<string, (navigation: any) => React.ReactNode> = {
   Home: (navigation) => <HomeScreen navigation={navigation} />,
   Progress: (navigation) => <ProgressScreen navigation={navigation} />,
   Motivation: (navigation) => <MotivationScreen navigation={navigation} />,
-  Care: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
+  Care: (navigation) => <CareScreen navigation={navigation} />,
   Social: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
 };
 

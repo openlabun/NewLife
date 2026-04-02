@@ -75,6 +75,15 @@ import DailyPhraseScreen from '../modules/motivation/screens/DailyPhraseScreen';
 import MedalsScreen from '../modules/motivation/screens/MedalsScreen';
 import ChallengesScreen from '../modules/motivation/screens/ChallengesScreen';
 import ChallengeDetailScreen from '../modules/motivation/screens/ChallengeDetailScreen';
+import CareScreen from '../modules/care/screens/CareScreen';
+import ContactsScreen from '../modules/care/screens/ContactsScreen';
+import GroupsScreen from '../modules/care/screens/GroupsScreen';
+import ContentScreen from '../modules/care/screens/ContentScreen';
+import ArticleScreen from '../modules/care/screens/ArticleScreen';
+import CategoryScreen from '../modules/care/screens/CategoryScreen';
+import FavoritesScreen from '../modules/care/screens/FavoritesScreen';
+import AgendaScreen from '../modules/care/screens/AgendaScreen';
+import AddEventScreen from '../modules/care/screens/AddEventScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -163,6 +172,14 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="Medals" component={MedalsScreen} />
           <Stack.Screen name="Challenges" component={ChallengesScreen} />
           <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} />
+          <Stack.Screen name="CareContacts" component={ContactsScreen} />
+          <Stack.Screen name="GroupsScreen" component={GroupsScreen} />
+          <Stack.Screen name="ContentScreen" component={ContentScreen} />
+          <Stack.Screen name="ArticleScreen" component={ArticleScreen} />
+          <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
+          <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
+          <Stack.Screen name="AgendaScreen" component={AgendaScreen} />
+          <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>
