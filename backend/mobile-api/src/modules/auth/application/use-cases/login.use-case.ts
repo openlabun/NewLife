@@ -31,6 +31,27 @@ export class LoginUseCase {
 
     const userInDb = Array.isArray(searchResponse) ? searchResponse[0] : (searchResponse.rows?.[0]);
 
+    // ← NUEVO: verificar estado antes de continuar
+    if (userInDb) {
+      if (userInDb.estado === 'ELIMINADO') {
+        throw new UnauthorizedException('Esta cuenta ha sido eliminada.');
+      }
+      if (userInDb.estado === 'BANEADO') {
+        throw new UnauthorizedException('Esta cuenta ha sido suspendida permanentemente.');
+      }
+      if (userInDb.estado === 'SUSPENDIDO' && userInDb.suspension_hasta) {
+        const hasta = new Date(userInDb.suspension_hasta);
+        if (hasta > new Date()) {
+          throw new UnauthorizedException(
+            `Tu cuenta está suspendida hasta ${hasta.toLocaleDateString('es-CO')}.`
+          );
+        }
+        // Suspensión vencida → reactivar automáticamente
+        await this.dbService.update('usuarios', 'email', userInDb.email, { estado: 'ACTIVO' }, masterToken);
+        userInDb.estado = 'ACTIVO';
+      }
+    }
+
     if (allowedRoles && userInDb) {
       if (!allowedRoles.includes(userInDb.rol)) {
         throw new ForbiddenException(`Acceso denegado: Tu rol de ${userInDb.rol} no tiene permiso aquí.`);

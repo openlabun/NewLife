@@ -5,14 +5,16 @@ import { GetProfileUseCase } from './application/use-cases/get-profile.use-case'
 import { DatabaseModule } from '../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 import { HomeModule } from '../home/home.module';
+import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
+import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
 
 @Module({
   imports: [
     DatabaseModule,
     AuthModule,
-    HomeModule
+    HomeModule,
   ],
   controllers: [UserController],
-  providers: [CompleteProfileUseCase, GetProfileUseCase],
+  providers: [CompleteProfileUseCase, GetProfileUseCase, UpdateProfileUseCase, DeleteAccountUseCase],
 })
-export class UsersModule {}
+export class UsersModule { }

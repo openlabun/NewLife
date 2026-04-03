@@ -5,22 +5,6 @@ import { LoginDto } from '../dtos/login.dto';
 import { RegisterDto } from '../dtos/register.dto';
 import { ForgotPasswordDto, ResetPasswordDto, RefreshTokenDto } from '../dtos/account-recovery.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { InitialRegisterDto } from '../../../users/presentation/dtos/initial-register.dto';
-import { CompleteProfileUseCase } from '../../../users/application/use-cases/complete-profile.use-case';
-
-@ApiTags('Perfil de Usuario')
-@Controller('user')
-export class UserController {
-  constructor(private readonly completeProfileUseCase: CompleteProfileUseCase) { }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('complete-profile')
-  @ApiOperation({ summary: 'Primer registro de datos del paciente' })
-  async completeProfile(@Request() req: any, @Body() dto: InitialRegisterDto) {
-    return await this.completeProfileUseCase.execute(req.user.uid, dto);
-  }
-}
 
 @ApiTags('Autenticación')
 @Controller('auth')
@@ -31,13 +15,6 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto, ['USUARIO', 'MODERADOR']);
-  }
-
-  @ApiOperation({ summary: 'Login exclusivo para Panel Administrativo' })
-  @Post('web/login')
-  async webLogin(@Body() loginDto: LoginDto) {
-    const webRoles = ['moderador', 'admin', 'superadmin'];
-    return await this.authService.login(loginDto, webRoles);
   }
 
   @ApiOperation({ summary: 'Registro para pacientes' })
