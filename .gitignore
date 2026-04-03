@@ -1,0 +1,24 @@
+# Dependencias
+**/node_modules/
+node_modules/
+
+# Compilación
+**/dist/
+dist/
+**/build/
+
+# Variables de entorno
+**/.env
+.env
+.env.*
+
+# Otros
+backend/mobile-api/dist/
+backend/mobile-api/node_modules/
+backend/mobile-api/tsconfig.tsbuildinfo
+
+backend/admin-api/dist/
+backend/admin-api/node_modules/
+backend/admin-api/tsconfig.tsbuildinfo
+
+.vscode/
