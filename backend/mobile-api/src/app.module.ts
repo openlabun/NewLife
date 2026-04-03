@@ -6,6 +6,7 @@ import { UsersModule } from './modules/users/users.module';
 import { CareModule } from './modules/care/care.module';
 import { HomeModule } from './modules/home/home.module';
 import { ProgressModule } from './modules/progress/progress.module';
+import { CommunitiesModule } from './modules/communities/communities.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { ProgressModule } from './modules/progress/progress.module';
     UsersModule,
     CareModule,
     HomeModule,
-    ProgressModule
+    ProgressModule,
+    CommunitiesModule,
   ],
 })
 export class AppModule { }
