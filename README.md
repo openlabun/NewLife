@@ -16,20 +16,21 @@
 [![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
+[Diseño en Figma](https://www.figma.com/design/tmy3p6WL45FEvoEQAmLWF2/New-life-Ver.2)
+
+[Prototipo en Figma](https://www.figma.com/proto/tmy3p6WL45FEvoEQAmLWF2/New-life-Ver.2)
 
 Aplicación móvil de acompañamiento para jóvenes en proceso de rehabilitación y post-rehabilitación por consumo problemático de alcohol.
 
 [Introducción](#1-introducción) •
 [Planteamiento del problema](#2-planteamiento-del-problema) •
-[Restricciones y supuestos de diseño](#3-restricciones-y-supuestos-de-diseño) •
-[Alcance](#4-alcance) •
-[Objetivos](#5-objetivos) •
-[Estado del arte](#6-estado-del-arte--soluciones-relacionadas) •
-[Propuesta de solución](#7-propuesta-de-solución-alto-nivel) •
-[Requerimientos preliminares](#8-requerimientos-preliminares) •
-[Criterios de aceptación](#9-criterios-de-aceptación-iniciales) •
-[Plan de trabajo](#10-plan-de-trabajo) •
-[Referencias](#11-referencias)
+[Objetivos](#3-objetivos) •
+[Estado del arte](#4-estado-del-arte--soluciones-relacionadas) •
+[Requerimientos Funcionales y No Funcionales](#5-requerimientos-funcionalesrf-y-no-funcionalesrnf) •
+[Diseño y Arquitectura](#6-diseño-y-arquitectura) •
+[Implementación](#7-implementación) •
+[Plan de pruebas](#8-plan-de-pruebas) •
+[Referencias](#9-referencias)
 
 </div>
 
@@ -49,150 +50,86 @@ La solución contempla **tres niveles de acceso**: un modo invitado con almacena
 El presente documento recoge la **formulación técnica integral del proyecto**. Se desarrolla a través del planteamiento del problema, las restricciones y supuestos de diseño, el alcance definido para el semestre, los objetivos general y específicos, el estado del arte, la propuesta de solución a alto nivel con la arquitectura del sistema, los requerimientos preliminares, los criterios de aceptación y el plan de trabajo. De esta manera, *NewLife* no solo representa la implementación técnica de un diseño previamente validado, sino la materialización de una **herramienta tecnológica con potencial impacto social en el contexto local**.
 
 ## 2. Planteamiento del problema
+
 ### 2.1 Descripción del problema
 
-El **consumo problemático de alcohol en jóvenes universitarios de Barranquilla** constituye un fenómeno de alta prevalencia con consecuencias graves en la salud mental, el desempeño académico y la cohesión familiar y social. Según datos de la Universidad Simón Bolívar (2019), el **26,48 % de sus estudiantes presentan riesgo de consumo de alcohol**, y la *Encuesta Nacional de Salud Mental* reporta que los adultos entre 18 y 44 años concentran las proporciones más altas de consumo perjudicial en el país *(Ministerio de Salud y Protección Social, 2015)*. En Barranquilla, la normalización cultural del alcohol —acentuada por eventos masivos como el Carnaval, con **incrementos de ventas de hasta el 48,4 % en establecimientos de bebidas**— genera un entorno de alta exposición que dificulta la abstinencia incluso en personas con voluntad de recuperarse.
+El **consumo problemático de alcohol en jóvenes universitarios de Barranquilla** es un fenómeno de alta prevalencia con consecuencias graves en la salud mental, el desempeño académico y la cohesión social. El 26,48 % de los estudiantes de la Universidad Simón Bolívar presentan riesgo de consumo de alcohol (2019), y la *Encuesta Nacional de Salud Mental* reporta que los adultos entre 18 y 44 años concentran las proporciones más altas de consumo perjudicial en Colombia *(Ministerio de Salud, 2015)*. En Barranquilla, la normalización cultural del alcohol —acentuada por eventos como el Carnaval, con incrementos de ventas de hasta el 48,4 % en establecimientos de bebidas— genera un entorno de alta exposición que dificulta la abstinencia incluso en personas con voluntad de recuperarse.
 
-Una vez finalizado un programa de rehabilitación, el **riesgo de recaída se mantiene elevado**. Estudios en América Latina señalan que una proporción considerable de jóvenes egresados de tratamiento recae en el primer año posterior al alta, siendo los **primeros tres meses el periodo más crítico** *(Mazariegos, 2021)*. Entre los principales factores detonantes se encuentran la presión social, la disponibilidad de sustancias y, de manera determinante, la **ausencia de acompañamiento continuo** una vez concluida la fase residencial. Esta brecha en el seguimiento post-tratamiento representa el **núcleo del problema** que el presente proyecto busca atender.
+Una vez finalizado un programa de rehabilitación, el **riesgo de recaída se mantiene elevado**: estudios en América Latina señalan que una proporción considerable de egresados de tratamiento recae en el primer año, siendo los primeros tres meses el periodo más crítico *(Mazariegos, 2021)*. Los principales factores detonantes son la presión social, la disponibilidad de sustancias y, de forma determinante, la **ausencia de acompañamiento continuo** tras la fase residencial. Esta brecha en el seguimiento post-tratamiento constituye el núcleo del problema que el presente proyecto busca atender.
 
-El sistema de salud colombiano presenta **limitaciones estructurales** que agravan esta situación: el país cuenta con entre **1,6 y 3 psiquiatras por cada 100.000 habitantes** *(El País, 2022)*, y se estima que entre el **84 % y el 92 % de las personas con trastornos mentales no reciben atención adecuada** *(Ministerio de Salud, 2015)*. Las consultas breves en EPS, los altos costos de la atención privada y el estigma social asociado al alcoholismo reducen significativamente la adherencia a los tratamientos y la búsqueda de ayuda profesional. Frente a este panorama, las aplicaciones móviles de salud (*mHealth*) emergen como una **alternativa viable, escalable y de bajo costo** para complementar los procesos terapéuticos existentes.
+El sistema de salud colombiano agrava esta situación: el país cuenta con entre 1,6 y 3 psiquiatras por cada 100.000 habitantes *(El País, 2022)*, y entre el 84 % y el 92 % de las personas con trastornos mentales no reciben atención adecuada *(Ministerio de Salud, 2015)*. Las consultas breves en EPS, los altos costos de atención privada y el estigma social asociado al alcoholismo reducen la adherencia a tratamientos y la búsqueda de ayuda. Frente a este panorama, las aplicaciones móviles de salud (*mHealth*) emergen como una **alternativa viable, escalable y de bajo costo** para complementar los procesos terapéuticos existentes.
 
-Si bien existen aplicaciones internacionales orientadas a la sobriedad —como *I Am Sober*, *Sober Grid* o *Sunflower Sober*—, estas plataformas suelen centrarse en funciones generales como contadores de sobriedad o comunidades abiertas entre usuarios, sin integrar procesos de acompañamiento estructurado, seguimiento del progreso personal ni herramientas diseñadas para entornos de recuperación guiados. Tampoco integran mecanismos de control comunitario adaptados a la dinámica de fundaciones y grupos de apoyo locales como *Alcohólicos Anónimos*. Además, no ofrecen **modos de acceso diferenciado** que permitan a un usuario explorar la herramienta de forma anónima antes de comprometerse con un proceso de registro, lo que puede ser una barrera para poblaciones altamente estigmatizadas.
+Si bien existen aplicaciones internacionales orientadas a la sobriedad —como *I Am Sober*, *Sober Grid* o *Sunflower Sober*—, estas se centran en funciones generales como contadores de sobriedad o comunidades abiertas, sin integrar acompañamiento estructurado, seguimiento del progreso personal ni mecanismos de control comunitario adaptados a la dinámica de fundaciones y grupos de apoyo locales como *Alcohólicos Anónimos*. Tampoco ofrecen **modos de acceso diferenciado** que permitan explorar la herramienta de forma anónima antes del registro, una barrera relevante para poblaciones altamente estigmatizadas.
 
-### 2.2 Pregunta problema
+#### Pregunta problema
 
 **¿Cómo puede el desarrollo de una aplicación móvil, construida sobre un diseño UX/UI validado y apoyada por un sistema de administración web, ofrecer acompañamiento continuo y personalizado a jóvenes barranquilleros entre 18 y 24 años en proceso de rehabilitación y post-rehabilitación por adicción al alcohol, integrando funcionalidades de seguimiento del progreso, motivación, cuidado y comunidad controlada, y asegurando su viabilidad técnica mediante una arquitectura modular escalable?**
 
-### 2.3 Justificación
+### 2.2 Restricciones y supuestos de diseño
 
-El presente proyecto se justifica desde **tres dimensiones complementarias**. Desde el punto de vista social, responde a una **necesidad real y documentada** de la población joven de Barranquilla que transita por procesos de rehabilitación: la necesidad de **acompañamiento constante, accesible y no estigmatizante** una vez concluida la etapa de tratamiento residencial. La aplicación convierte al usuario en **agente activo de su propia recuperación** al facilitarle el registro de hábitos, el seguimiento emocional y el acceso a redes de apoyo, sin reemplazar la atención profesional sino complementándola *(Norman, 2013)*.
+#### Restricciones
 
-Desde el punto de vista técnico, el proyecto representa una oportunidad de **materializar un diseño exhaustivamente validado en un producto funcional y desplegado**. El prototipo de alta fidelidad desarrollado en el semestre anterior fue evaluado por psicólogos, especialistas en UX/UI y una desarrolladora, quienes confirmaron su **pertinencia terapéutica y viabilidad técnica**. Construir la implementación sobre ese diseño permite reducir la incertidumbre en la toma de decisiones de producto y enfocar el esfuerzo del equipo en la **calidad de la arquitectura, la integración de sistemas y la experiencia de usuario en producción**.
+Las restricciones delimitan el espacio de solución técnica y organizativa dentro del cual opera el equipo. Se clasifican en cuatro categorías:
 
-Desde el punto de vista académico, el proyecto aborda de forma integrada **competencias centrales de la ingeniería de software**: diseño de arquitecturas modulares, desarrollo frontend y backend, integración con APIs institucionales, gestión de bases de datos, pruebas de calidad y despliegue en producción. La articulación entre el módulo social con comunidades controladas y el panel de administración web añade una **capa de complejidad técnica y de gobernanza de datos** que enriquece el alcance del proyecto y aporta valor diferencial frente a soluciones existentes.
+**De alcance:** La aplicación está dirigida exclusivamente al acompañamiento en rehabilitación y post-rehabilitación por adicción al alcohol; no contempla otras sustancias psicoactivas en esta versión. El módulo Social no es de acceso público: los usuarios solo pueden acceder a una comunidad mediante invitación gestionada por un administrador. La aplicación no reemplaza la atención psicológica o médica profesional —su rol es complementario—, y no implementará videollamadas, mensajería externa ni geolocalización en tiempo real en la versión inicial.
 
-### 2.4 Impacto esperado
+**Tecnológicas:** El frontend móvil debe desarrollarse en React Native (iOS y Android), siguiendo el diseño de alta fidelidad entregado en Figma. El backend debe implementarse con NestJS bajo arquitectura de monolito modular. El panel de administración web y la landing page deben desarrollarse en Next.js. La autenticación debe integrarse obligatoriamente con la API institucional Roble de la Universidad del Norte; no se implementará un sistema de autenticación propio. La infraestructura de despliegue debe ser compatible con los recursos disponibles en el marco académico del proyecto.
 
-Se espera que *NewLife* contribuya a **reducir la brecha de acompañamiento post-tratamiento** para jóvenes en recuperación en Barranquilla, ofreciendo una herramienta digital que fortalezca la **adherencia, la motivación y la autogestión del proceso de sobriedad**. A nivel comunitario, el módulo social con comunidades administradas por fundaciones y grupos de apoyo como *Alcohólicos Anónimos* busca replicar digitalmente la **estructura de acompañamiento par** que ha demostrado ser efectiva en los programas presenciales de recuperación. A nivel técnico, el sistema entregará una **base de código modular y documentada** que podrá ser mantenida, extendida y potencialmente adoptada por instituciones reales en fases posteriores del proyecto.
+**Institucionales:** El proyecto debe cumplir con el cronograma del proyecto de grado de la Universidad del Norte, con entrega final al cierre del semestre en curso. El equipo está conformado por tres personas, lo que exige una distribución eficiente de responsabilidades. El tratamiento de datos personales de usuarios en situación de rehabilitación debe enmarcarse en la Ley 1581 de 2012 (Ley de Protección de Datos Personales de Colombia).
 
-## 3. Restricciones y supuestos de diseño
-### 3.1 Restricciones
+#### Supuestos de diseño
 
-Las restricciones del proyecto delimitan el espacio de solución técnica y organizativa dentro del cual el equipo debe operar. Se clasifican en **restricciones de alcance, tecnológicas, institucionales y de tiempo**.
+Los supuestos son condiciones que el equipo asume como verdaderas para el diseño y desarrollo del sistema. Si alguno resultara falso, podría requerirse una revisión del alcance o la solución técnica:
 
-#### 3.1.1 Restricciones de alcance
+- La API Roble de la Universidad del Norte estará disponible y operativa durante el periodo de desarrollo e integración.
+- El prototipo de alta fidelidad en Figma constituye la especificación visual y funcional de referencia y no sufrirá modificaciones estructurales significativas durante el desarrollo.
+- Los usuarios objetivo cuentan con dispositivo móvil (iOS o Android) con acceso a internet para funciones en la nube, y con almacenamiento local suficiente para el modo invitado.
+- Cada comunidad contará con al menos un administrador activo responsable de la moderación de contenido y la gestión de invitaciones.
+- Las pruebas de usabilidad con usuarios reales podrán realizarse con la participación de al menos cinco personas en proceso de rehabilitación o post-rehabilitación, en coordinación con una fundación o grupo de apoyo local.
+- El contenido educativo inicial (artículos, reflexiones, recursos sobre los 12 pasos) podrá ser cargado y administrado directamente desde el panel web por los administradores, sin intervención del equipo de desarrollo.
+- Los activos gráficos del diseño (ilustraciones, iconos, paleta de colores, mascota evolutiva) están disponibles en formatos exportables desde Figma para su uso directo en el desarrollo.
 
-- La aplicación móvil está dirigida exclusivamente al acompañamiento en procesos de rehabilitación y post-rehabilitación por adicción al alcohol. No se contempla, en esta versión, la atención de otras sustancias psicoactivas.
-- El módulo de comunidad (Social) no es de acceso público. Los usuarios solo pueden acceder a una comunidad mediante invitación explicita gestionada por un administrador.
-- La aplicación no reemplaza ni suplanta la atención psicológica o medica profesional. Su rol es complementario y de acompañamiento.
-- El sistema no implementara videollamadas, transmisiones en vivo ni integración con plataformas de mensajería externas como WhatsApp en la versión inicial.
-- El mapa de zonas seguras e inseguras será de carácter referencial, basado en datos ingresados manualmente por el usuario o el administrador; no se implementará geolocalización en tiempo real en la primera versión.
+### 2.3 Alcance
 
-#### 3.1.2 Restricciones tecnológicas
+#### Descripción general
 
-- El frontend móvil debe desarrollarse en React Native, compatible con iOS y Android, siguiendo el diseño de alta fidelidad entregado en Figma por el proyecto precedente.
-- El backend debe implementarse con NestJS bajo una arquitectura de monolito modular, garantizando separación de responsabilidades por módulo de negocio.
-- El panel de administración web y la landing page deben desarrollarse en NextJS.
-- La autenticación de usuarios debe integrarse obligatoriamente con la API institucional Roble de la Universidad del Norte. No se implementará un sistema de autenticación propio independiente.
-- El almacenamiento local del modo invitado estará sujeto a las capacidades nativas del dispositivo móvil; no se garantiza persistencia indefinida en caso de desinstalación de la app.
-- La infraestructura de despliegue debe ser compatible con los recursos disponibles para el equipo en el marco académico del proyecto. No se contempla contratación de servicios en la nube de costo elevado.
+*NewLife* comprende el diseño de arquitectura, desarrollo, integración y despliegue en producción de un sistema de acompañamiento digital para jóvenes en proceso de rehabilitación y post-rehabilitación por adicción al alcohol. El sistema se compone de tres elementos: una **aplicación móvil** para iOS y Android, un **panel de administración web** y una **landing page** informativa. El desarrollo parte del prototipo de alta fidelidad validado en Figma, adoptándolo como especificación funcional y visual de referencia.
 
-#### 3.1.3 Restricciones institucionales
+#### Dentro del alcance
 
-- El proyecto debe cumplir con los lineamientos académicos y el cronograma del proyecto de grado de la Universidad del Norte, con entrega final al cierre del semestre en curso.
-- El equipo de desarrollo está conformado por tres personas, lo que limita la capacidad de desarrollo paralelo y exige una distribución eficiente de responsabilidades entre frontend, backend e integración.
-- El tratamiento de datos personales de usuarios en situación de rehabilitación debe enmarcarse en los principios de la Ley 1581 de 2012 (Ley de Protección de Datos Personales de Colombia), garantizando confidencialidad y no divulgación de información sensible.
+**Aplicación móvil (React Native):** Pantalla de bienvenida e historieta interactiva de onboarding con mascota evolutiva. Módulo de Registro y Login con tres modos de acceso: invitado (local), registrado (nube) y con comunidad (invitación), con integración a la API Roble. Módulo Inicio con dashboard de tiempo sobrio, dinero ahorrado, estado de la mascota y Botón SOS. Módulo Mi Progreso con check-in diario, registro emocional, calendario de sobriedad y avance en los 12 pasos. Módulo Cuidado con contenido educativo, recordatorios, directorio de profesionales y mapa referencial. Módulo Motivación con retos, sistema de logros y mascota animada. Módulo Social con comunidades cerradas por invitación, publicaciones, foros de reflexión, chats grupales y moderación de contenido.
 
-### 3.2 Supuestos de diseño
+**Panel de administración web y landing page (Next.js):** Gestión de comunidades (creación, edición, eliminación, invitaciones). Administración de usuarios por comunidad: roles, moderación y gestión de miembros. Gestión de contenido educativo para el módulo Cuidado. Panel de métricas agregadas de uso por comunidad. Landing page informativa con acceso a descarga de la app.
 
-Los supuestos son condiciones que el equipo asume como verdaderas para efectos del diseño y desarrollo del sistema, sin que estén bajo su control directo. Si alguno de estos supuestos resultara falso, podría requerirse una revisión del alcance o la solución técnica.
+**Backend y servicios (NestJS — monolito modular):** API REST con módulos independientes por dominio: autenticación, usuarios, progreso, cuidado, motivación, comunidad y administración. Integración con API Roble. Soporte para los tres modos de acceso. Notificaciones push para recordatorios y alertas. Almacenamiento local para modo invitado con migración automática al registrarse.
 
-- Se asume que la API de autenticación Roble de la Universidad del Norte estará disponible y operativa durante el periodo de desarrollo e integración del sistema.
-- Se asume que el prototipo de alta fidelidad entregado en Figma por el proyecto precedente constituye la especificación visual y funcional de referencia, y que no sufrirá muchas modificaciones estructurales durante el desarrollo.
-- Se asume que los usuarios objetivo cuentan con un dispositivo móvil (iOS o Android) con acceso a internet para las funciones que requieren sincronización en la nube, y con almacenamiento local suficiente para el modo invitado.
-- Se asume que cada comunidad dentro del módulo Social contara con al menos un administrador activo responsable de la moderación de contenido y la gestión de invitaciones.
-- Se asume que las pruebas de usabilidad con usuarios reales podrán realizarse con la participación de al menos cinco personas en proceso de rehabilitación o post-rehabilitación, en coordinación con una fundación o grupo de apoyo local.
-- Se asume que el contenido educativo inicial (artículos, reflexiones, recursos sobre los 12 pasos) podrá ser cargado y administrado directamente desde el panel web por los administradores de cada comunidad, sin requerir intervención del equipo de desarrollo.
-- Se asume que la mascota evolutiva y los activos gráficos del diseño (ilustraciones, iconos, paleta de colores e identidad visual) están disponibles en formatos exportables desde Figma para su uso directo en el desarrollo.
+**Calidad y despliegue:** Pruebas unitarias por módulo y pruebas de integración end-to-end. Dos rondas de pruebas de usabilidad con usuarios reales (n ≥ 5 por ronda). Despliegue de la app en Google Play y del backend, panel web y landing page en infraestructura de producción. Monitoreo post-lanzamiento y corrección de errores críticos.
 
-## 4. Alcance
-### 4.1 Descripción general
+#### Fuera del alcance
 
-El proyecto *NewLife* comprende el **diseño de arquitectura, desarrollo, integración y despliegue en producción** de un sistema de acompañamiento digital para jóvenes en proceso de rehabilitación y post-rehabilitación por adicción al alcohol. El sistema se compone de **tres elementos**: una aplicación móvil para iOS y Android, un panel de administración web y una *landing page* informativa. El desarrollo parte del **prototipo de alta fidelidad validado en Figma** por el proyecto precedente, adoptándolo como especificación funcional y visual de referencia.
+Atención clínica, psicológica o médica de cualquier tipo. Soporte para sustancias psicoactivas distintas al alcohol. Integración con plataformas de mensajería externas (WhatsApp, Telegram). Videollamadas o funciones de audio/video en tiempo real. Geolocalización en tiempo real. Sistema de pagos o cualquier modelo de monetización. Internacionalización o adaptación a contextos fuera de Barranquilla. Integración con sistemas de historia clínica electrónica. Versión web de la aplicación móvil.
 
-El alcance incluye las fases de **desarrollo incremental por módulos**, integración frontend-backend, pruebas de calidad, pruebas de usabilidad con usuarios reales y despliegue final de todos los componentes del sistema.
+#### Entregables principales
 
-### 4.2 Dentro del alcance
+| Entregable | Tecnología | Estado esperado |
+|---|---|---|
+| Aplicación móvil *NewLife* (6 módulos) | React Native | Desplegada en Google Play |
+| Panel de administración web | Next.js | Desplegado en producción |
+| Landing page informativa | Next.js | Desplegada en producción |
+| API REST backend | NestJS | Desplegada en producción |
+| Base de datos | Roble (PostgreSQL) | Configurada en producción |
+| Integración con API Roble | Backend | Funcional y validada |
+| Pruebas unitarias e integración | Backend + Frontend | Ejecutadas y documentadas |
+| Pruebas de usabilidad (2 rondas) | n ≥ 5 usuarios | Documentadas con resultados |
+| Documento técnico del proyecto | Informe de grado | Entregado y sustentado |
 
-#### 4.2.1 Aplicación móvil (*React Native*)
+## 3. Objetivos
 
-- Pantalla de bienvenida e historieta interactiva de onboarding con la mascota evolutiva.
-- Modulo Registro y Login con **tres modos de acceso**: invitado (local), registrado (nube) y con comunidad (invitación). Integración con la API institucional Roble.
-- Modulo Inicio: dashboard con conteo de tiempo sobrio y dinero ahorrado, estado de la mascota, accesos rápidos y **Botón SOS con modo crisis**.
-- Modulo Mi Progreso: check-in diario con registro emocional, calendario de sobriedad, graficas de evolución, historial de gratitud y nivel de avance en los **12 pasos**.
-- Modulo Cuidado: contenido educativo, recordatorios y rutinas, directorio de profesionales y fundaciones, mapa referencial de zonas y contactos de emergencia.
-- Modulo Motivación: frase motivacional del día, retos individuales, sistema de logros con medallas e insignias y mascota animada.
-- Modulo Social: **comunidades cerradas con acceso por invitación**, publicaciones, foros de reflexión diaria, chats grupales y moderación de contenido por administrador.
-
-#### 4.2.2 Panel de administración web y *landing page* (*NextJS*)
-
-- Gestión de comunidades: creación, edición, eliminación y generación de invitaciones para nuevos miembros.
-- Administración de usuarios por comunidad: roles, moderación de contenido y gestión de miembros.
-- Gestión de contenido educativo: carga, edición y publicación de artículos, reflexiones y recursos del modulo Cuidado.
-- Panel de **métricas agregadas de uso por comunidad**, sin exposición de datos individuales sensibles.
-- *Landing page* informativa con acceso a descarga de la aplicación móvil.
-
-#### 4.2.3 Backend y servicios (*NestJS* - monolito modular)
-
-- API REST con módulos independientes por dominio: autenticación, usuarios, progreso, cuidado, motivación, comunidad y administración.
-- Integración con la API Roble de la Universidad del Norte para autenticación institucional.
-- Base de datos relacional con esquema para los **tres modos de acceso**: invitado, registrado y con comunidad.
-- Sistema de **notificaciones push** para recordatorios de rutinas y alertas en fechas de riesgo.
-- Almacenamiento local en dispositivo para modo invitado con migración automática de datos al registrarse.
-
-#### 4.2.4 Calidad y despliegue
-
-- Pruebas unitarias por modulo y pruebas de integración end-to-end.
-- **Dos rondas de pruebas de usabilidad con usuarios reales** (n >= 5 por ronda), con análisis e iteración entre rondas.
-- Despliegue de la aplicación móvil en Google Play.
-- Despliegue del backend, panel de administración web y landing page en infraestructura de producción.
-- Monitoreo post-lanzamiento, gestión de alertas y corrección de errores críticos (semanas 13-15).
-
-### 4.3 Fuera del alcance
-
-- **Atención clínica, psicológica o médica**. La aplicación no diagnostica ni reemplaza la intervención profesional.
-- Soporte para sustancias psicoactivas distintas al alcohol en esta primera versión.
-- Integración con plataformas de mensajería externas como WhatsApp o Telegram.
-- Videollamadas, transmisiones en vivo o funciones de audio y video en tiempo real.
-- Geolocalización en tiempo real para el mapa de zonas seguras e inseguras.
-- Sistema de pagos, suscripciones o cualquier modelo de monetización.
-- Internacionalización o adaptación a contextos culturales distintos al de Barranquilla, Colombia.
-- Integración con sistemas de historia clínica electrónica o plataformas institucionales de salud.
-- Versión web de la aplicación móvil; solo se desarrollan panel de administración y *landing page* en entorno web.
-
-### 4.4 Resumen de entregables
-
-La siguiente tabla resume los entregables principales del proyecto y su estado esperado al cierre del semestre:
-
-| Entregable | Tecnología / Medio | Estado esperado |
-|------------|-------------------|-----------------|
-| Aplicacion movil *NewLife* (6 modulos) | React Native | Desplegada en Google Play |
-| Panel de administracion web | NextJS | Desplegado en produccion |
-| Landing page informativa | NextJS | Desplegada en produccion |
-| API REST backend | NestJS | Desplegada en produccion |
-| Base de datos relacional | PostgreSQL | Configurada en produccion |
-| Integracion con API Roble | Backend | Funcional y validada |
-| Pruebas unitarias e integracion | Backend + Frontend | Ejecutadas y documentadas |
-| Pruebas de usabilidad (2 rondas) | n >= 5 usuarios | Documentadas con resultados |
-| Documento tecnico del proyecto | Informe de grado | Entregado y sustentado |
-
-## 5. Objetivos
-
-### 5.1 Objetivo General
+### 3.1 Objetivo General
 
 **Desarrollar e implementar la aplicación móvil *NewLife*, junto con su panel de administración web y landing page, como un sistema funcional y desplegado en producción que brinde acompañamiento continuo a jóvenes de Barranquilla entre 18 y 24 años en proceso de rehabilitación y post-rehabilitación por adicción al alcohol**, partiendo del diseño validado en Figma e implementando una **arquitectura de monolito modular**.
 
-### 5.2 Objetivos Especificos
+### 3.2 Objetivos Especificos
 
 - **OE1.** Diseñar e implementar la **arquitectura técnica del sistema** bajo el patrón de monolito modular, definiendo los módulos de dominio (autenticación, usuarios, progreso, cuidado, motivación, comunidad y administración), y el esquema de base de datos relacional para los **tres modos de acceso**.
 
@@ -204,11 +141,11 @@ La siguiente tabla resume los entregables principales del proyecto y su estado e
 
 - **OE5.** Desplegar todos los componentes del sistema en producción (aplicación móvil en Google Play, backend en servidor, panel web y landing page en entorno web) y realizar el **monitoreo post-lanzamiento** para corregir errores críticos y asegurar la estabilidad del sistema al cierre del semestre.
 
-## 6. Estado del arte / Soluciones relacionadas
+## 4. Estado del arte / Soluciones relacionadas
 
 El presente capitulo revisa el **estado del arte en tres dimensiones**: aplicaciones móviles de apoyo a la rehabilitación por adicción al alcohol, arquitecturas de software en sistemas de salud digital móvil, y enfoques de diseño centrado en el usuario para poblaciones vulnerables. Esta revisión identifica **brechas que *NewLife* busca cubrir** y justifica las decisiones técnicas adoptadas.
 
-### 6.1 Aplicaciones móviles de apoyo a la sobriedad
+### 4.1 Aplicaciones móviles de apoyo a la sobriedad
 
 En los últimos años ha crecido el número de aplicaciones móviles orientadas a apoyar procesos de rehabilitación por adicción al alcohol. Las más representativas son *I Am Sober*, *Sober Grid* y *Reframe*, cada una con enfoques distintos que permiten establecer comparaciones con *NewLife*.
 
@@ -233,7 +170,7 @@ En síntesis, el panorama actual evidencia **tres brechas que *NewLife* busca cu
 (2) **falta de adaptación cultural al contexto barranquillero**, y  
 (3) **carencia de modos de acceso diferenciado que reduzcan la barrera de entrada para usuarios estigmatizados**.
 
-### 6.2 Antecedentes del proyecto
+### 4.2 Antecedentes del proyecto
 
 El presente proyecto tiene como antecedente el trabajo desarrollado por Andrea Díaz De La Hoz, estudiante del programa de Diseño Gráfico de la Universidad del Norte, quien realizó, durante el segundo semestre de 2025, el diseño UX/UI de alta fidelidad de la aplicación *NewLife* como parte de su proyecto de grado.
 
@@ -247,11 +184,11 @@ El diseño fue sometido a pruebas de usabilidad y procesos de validación, con e
 
 A partir de este antecedente, el presente proyecto retoma el prototipo UX/UI validado como base conceptual y funcional, y se enfoca en su implementación tecnológica, desarrollando la arquitectura del sistema, los componentes de software y la integración entre la aplicación móvil, el backend y el panel de administración, con el objetivo de transformar el diseño propuesto en una aplicación completamente funcional.
 
-### 6.3 Arquitecturas de software en sistemas de salud digital móvil
+### 4.3 Arquitecturas de software en sistemas de salud digital móvil
 
 El diseño arquitectónico de sistemas de salud digital móvil ha evolucionado desde arquitecturas **monolíticas tradicionales** hacia **microservicios** y, más recientemente, hacia *monolitos modulares* como punto de equilibrio entre **simplicidad operativa** y **separación de responsabilidades** (Richardson, 2018).
 
-#### 6.3.1 Monolito modular vs. microservicios
+#### 4.3.1 Monolito modular vs. microservicios
 
 Los **microservicios** ofrecen **alta escalabilidad** y **despliegue independiente**, pero introducen **complejidad operativa significativa** para equipos pequeños: gestión de múltiples repositorios, comunicación entre servicios y mayor curva de aprendizaje (Fowler y Lewis, 2014).
 
@@ -259,7 +196,7 @@ Para proyectos con equipos reducidos y plazos acotados como *NewLife* (tres desa
 
 **NestJS** está diseñado nativamente para implementar este patrón mediante su sistema de módulos.
 
-#### 6.3.2 React Native para desarrollo móvil multiplataforma
+#### 4.3.2 React Native para desarrollo móvil multiplataforma
 
 **React Native** es uno de los frameworks líderes para aplicaciones móviles multiplataforma. Su modelo de **componentes reutilizables** y la capacidad de compartir lógica entre **iOS y Android** lo hacen eficiente para equipos con recursos limitados (Meta, 2023).
 
@@ -267,17 +204,17 @@ Estudios comparativos con *Flutter* muestran que **React Native** presenta venta
 
 En *NewLife*, donde el equipo posee conocimientos previos en *React*, esta elección minimiza la **curva de aprendizaje** y maximiza la **velocidad de desarrollo**.
 
-#### 6.2.3 NextJS para el panel de administración web
+#### 4.3.3 NextJS para el panel de administración web
 
 **NextJS**, basado en *React*, es el framework de referencia para aplicaciones web con **renderizado híbrido** (*SSR/SSG/CSR*). Su uso en el panel de administración de *NewLife* permite aprovechar **capacidades de renderizado del lado del servidor**, **soporte nativo para rutas API** y un **ecosistema maduro de autenticación y gestión de sesiones** (Vercel, 2023).
 
 Para la *landing page* informativa, el **renderizado estático** garantiza **tiempos de respuesta óptimos**.
 
-### 6.4 Diseño centrado en el usuario en aplicaciones de salud mental
+### 4.4 Diseño centrado en el usuario en aplicaciones de salud mental
 
 El diseño de aplicaciones para poblaciones en situación de vulnerabilidad exige principios de **diseño centrado en el usuario** que van más allá de la usabilidad convencional. La literatura especializada destaca tres dimensiones críticas: **accesibilidad emocional**, **reducción de barreras de entrada** y **privacidad como valor de diseño** (Torous et al., 2019).
 
-#### 6.4.1 Accesibilidad emocional y diseño no estigmatizante
+#### 4.4.1 Accesibilidad emocional y diseño no estigmatizante
 
 Norman (2013) señala que el **diseño emocional** opera en tres niveles: *visceral* (impresión estética), *conductual* (facilidad de uso) y *reflexivo* (el significado e identidad que el producto genera en el usuario).  
 
@@ -285,7 +222,7 @@ Para aplicaciones de **salud mental**, el nivel *reflexivo* es especialmente cr�
 
 El proyecto precedente incorporó estos principios en la **paleta de colores** (tonos cálidos y naturales), **tipografía accesible** (*Inter*), **lenguaje inclusivo** y una **mascota evolutiva** que personaliza el progreso sin imponer metas externas.
 
-#### 6.4.2 Design Thinking como metodología de validación
+#### 4.4.2 Design Thinking como metodología de validación
 
 El proyecto precedente aplicó **Design Thinking** en cinco etapas:  
 - *Empatizar* (entrevistas con usuarios en rehabilitación y psicólogos de la Fundación Shalom)  
@@ -298,7 +235,7 @@ Este proceso garantizó que el diseño de *NewLife* responda a **necesidades doc
 
 El presente proyecto hereda esta base validada y la extiende con **dos rondas adicionales de pruebas de usabilidad** durante el desarrollo.
 
-#### 6.4.3 Gamificación en aplicaciones de salud
+#### 4.4.3 Gamificación en aplicaciones de salud
 
 La incorporación de **gamificación** en aplicaciones de salud ha demostrado aumentar la **adherencia** y **motivación**. Según Cugelman (2013), las técnicas más efectivas incluyen el **progreso visible**, los **logros desbloqueables** y la **narrativa de avance personal**.
 
@@ -306,7 +243,7 @@ La incorporación de **gamificación** en aplicaciones de salud ha demostrado au
 
 La literatura señala que estos elementos deben alinearse con **metas intrínsecas del usuario** y no con competición externa, para ser efectivos en contextos de recuperación (Deterding et al., 2011).
 
-### 6.5 Brecha identificada y aporte de NewLife
+### 4.5 Brecha identificada y aporte de NewLife
 
 La revisión del estado del arte permite identificar que ninguna solución existente combina los siguientes atributos de forma integrada:
 
@@ -317,134 +254,7 @@ d) Un **módulo de progreso estructurado alrededor de los 12 pasos** con *check-
 
 *NewLife* no pretende competir con soluciones internacionales consolidadas, sino cubrir una **necesidad específica y documentada en el contexto local**, donde la combinación de **alta prevalencia de consumo**, **estigma social**, **limitaciones del sistema de salud** y **ausencia de herramientas culturalmente adaptadas** crea una brecha que una aplicación móvil bien diseñada puede contribuir a cerrar.
 
-
-## 7. Propuesta de solución (alto nivel)
-
-Esta sección describe la **arquitectura técnica**, los **componentes del sistema** y las **decisiones de diseño** que conforman la propuesta de implementación de NewLife. La propuesta parte del prototipo validado en Figma por el proyecto precedente y lo materializa en un sistema *funcional, desplegado y mantenible*, diseñado para operar en el contexto real de jóvenes barranquilleros en proceso de rehabilitación por
-
-### 7.1 Visión general del sistema 
-NewLife es un sistema de acompañamiento digital compuesto por tres componentes principales que operan de manera integrada bajo una arquitectura cliente–servidor: (1) una aplicación móvil multiplataforma (iOS y Android) desarrollada en React Native, que constituye el punto de contacto directo con el usuario final; (2) un backend implementado en NestJS bajo el patrón de monolito modular, encargado de centralizar la lógica de negocio, la persistencia de datos y la integración con servicios externos mediante una API REST versionada; y (3) un panel de administración web junto con una landing page informativa desarrollados en NextJS, que permiten a los gestores de comunidades (fundaciones y grupos de apoyo) administrar el sistema sin requerir intervención técnica del equipo de desarrollo. 
-
-Los tres componentes se articulan a través del backend, que actúa como único punto de entrada al sistema. La base de datos relacional es gestionada exclusivamente por el backend, garantizando la separación entre la capa de presentación y la capa de persistencia. Toda la comunicación se realiza mediante conexiones seguras (HTTPS). La autenticación de usuarios se delega a la API institucional Roble de la Universidad del Norte, lo que permite validar la identidad a través del proveedor institucional y mantener trazabilidad y control sobre los accesos dentro del contexto universitario. 
-
-### 7.2 Arquitectura del sistema
-
-#### Patrón arquitectónico: monolito modular 
-
-El backend de NewLife sigue el patrón de monolito modular, en el que cada dominio funcional del sistema esta encapsulado en un módulo independiente con su propia capa de controladores, servicios y repositorios, pero todos conviven en una única aplicación desplegable. Los módulos definidos son: Autenticación, Usuarios, Progreso, Cuidado, Motivación, Comunidad y Administración. Cada módulo expone sus funcionalidades a través de endpoints REST versionados y puede evolucionar de forma relativamente independiente sin afectar a los demás, lo que facilita el mantenimiento y la extensión futura del sistema. 
-
-#### Diagrama de componentes 
-
-El sistema se organiza en cuatro capas principales: (1) capa de presentación, conformada por la aplicación movil React Native y el panel web NextJS; (2) capa de integración, conformada por la API REST de NestJS que actúa como único punto de entrada al sistema; (3) capa de dominio, conformada por los módulos de negocio del backend; y (4) capa de infraestructura, conformada por la base de datos relacional, el servicio de notificaciones push y la API externa Roble. Esta separación garantiza que los cambios en la presentación no afecten la lógica de negocio y viceversa. 
-
-#### Modos de acceso al sistema 
-
-Una de las decisiones de diseño centrales de NewLife es la implementación de tres modos de acceso diferenciados, orientados a reducir la barrera de entrada según el momento del proceso de recuperación del usuario. El modo invitado permite utilizar la aplicación sin registro, almacenando la información exclusivamente en el dispositivo. En este modo están disponibles los módulos Inicio, Cuidado y Motivación, junto con una versión limitada de Mi Progreso. 
-
-El modo registrado habilita la sincronización de datos en la nube y el acceso completo a los módulos funcionales, con excepción del módulo Social. Finalmente, el modo con comunidad, activado mediante invitación de un administrador, permite el acceso al módulo Social y a las comunidades privadas correspondientes. 
-
-La transición entre modos está diseñada para preservar la continuidad de la información: cuando un usuario se registra, los datos generados en modo invitado se migran automáticamente a la cuenta en la nube, garantizando consistencia y continuidad en el seguimiento del progreso. 
-
-#### Niveles de Acceso y Roles de Usuario
-
-El sistema NewLife implementa un modelo de control de acceso basado en roles (RBAC, Role-Based Access Control) que define cinco niveles jerárquicos de permisos. Este modelo garantiza que cada actor del sistema tenga acceso exclusivamente a las funcionalidades que le corresponden según su nivel de responsabilidad, protegiendo la privacidad de los usuarios y la integridad de las comunidades.
-
-- **Superadmin:** El superadmin es el rol de máximo nivel del sistema. Tiene acceso completo a todos los módulos de la aplicación móvil, al panel de administración web y a las funciones de configuración global del sistema. Es responsable de:
-
-  - Creación y gestión de comunidades
-  - Creación y gestión de usuarios
-  - Creación y gestión de moderadores de comunidad
-  - Gestionar el contenido educativo del módulo Cuidado
-  - Acceso a **todos** los modulos del sistema
-
-> En el contexto del proyecto, este rol será ejercido por el equipo de desarrollo durante la fase de despliegue y monitoreo.
-
-- **Moderador de Comunidad:** El moderador de comunidad es el rol asignado a gestores de fundaciones, líderes de grupos de apoyo u otras figuras de confianza dentro de una comunidad. Tiene acceso completo a todas las funcionalidades de la app como usuario regular, y además accede al **panel de administración** para gestionar su comunidad:
-
-  - Editar y configurar la comunidad
-  - Generar y gestionar invitaciones para nuevos miembros
-  - Asignar y revocar roles de usuario dentro de la comunidad
-  - Moderar contenido: eliminar publicaciones, comentarios y mensajes; suspender miembros
-
-> Un moderador **no puede** acceder a las comunidades de otros moderadores ni a la configuración global del sistema.
-
-
-- **Usuario Regular:** El usuario regular es el rol base para cualquier persona registrada que haya sido invitada a una comunidad. Tiene acceso completo a todos los módulos de la aplicación móvil:
-
-  - Realizar check-ins diarios y registrar progreso
-  - Acceder al contenido educativo y guardar favoritos
-  - Activar el Botón SOS con modo crisis
-  - **Publicar** en el feed de la comunidad
-  - Comentar y reaccionar a publicaciones de otros miembros
-  - Participar en foros de reflexión diaria
-  - Usar el chat grupal
-
-- **Usuario Solo Comentar y Chatear:** Este rol permite una incorporación gradual a la comunidad para usuarios que aún no se sienten listos para compartir públicamente. Tiene acceso completo a las funcionalidades individuales de la app (Inicio, Mi Progreso, Cuidado, Motivación), pero dentro del módulo Social su participación está restringida:
-
-  - ✅ Comentar publicaciones de otros miembros
-  - ✅ Reaccionar a contenido del feed
-  - ✅ Participar en chats individuales y grupales
-  - ❌ **No puede** crear publicaciones propias en el feed
-  - ❌ **No puede** iniciar temas en los foros
-
-
-- **Usuario Solo Lectura:** Diseñado para usuarios en etapas muy tempranas de recuperación que se benefician de la presencia comunitaria sin la presión de la interacción activa. Tiene acceso completo a todas las funcionalidades individuales de la app, pero dentro del módulo Social únicamente puede visualizar:
-
-  - ✅ Ver el feed de publicaciones de la comunidad
-  - ✅ Ver los foros y perfiles de otros miembros
-  - ❌ **No puede** publicar, comentar ni reaccionar
-  - ❌ **No puede** participar en chats
-  - ❌ **No puede** guardar favoritos de contenido
-
-### 7.3 Componentes del sistema 
-
-#### Aplicación móvil (React Native) 
-
-La aplicación móvil es el componente central de NewLife. Está estructurada en seis módulos funcionales, cada uno con su propia navegación interna y conjunto de pantallas, siguiendo fielmente el prototipo de alta fidelidad validado en Figma. La navegación principal utiliza un tab bar inferior con acceso a los módulos Inicio, Mi Progreso, Cuidado, Motivación y Social, complementado con un menú de perfil y configuración accesible desde el encabezado. 
-
-El módulo Inicio actúa como dashboard central del usuario y es el primer punto de contacto tras el login. Muestra el contador de días sobrio, el dinero ahorrado estimado, el estado emocional del día, accesos directos a los demás módulos y el estado actual de la mascota evolutiva. El Botón SOS, elemento crítico para situaciones de crisis, está siempre visible en este módulo y despliega un modo de emergencia con respiraciones guiadas, frases motivadoras, ejercicios de distracción y acceso rápido a contactos de emergencia registrados por el usuario. 
-
-El módulo Mi Progreso es el módulo más denso funcionalmente. Incluye un check-in diario con registro del estado emocional (mediante un selector visual de emociones), un calendario de sobriedad que marca los días de cumplimiento, graficas de evolución emocional y de racha de sobriedad, un historial de gratitud donde el usuario registra reflexiones diarias, y un tracker de los 12 pasos de Alcohólicos Anónimos donde puede registrar su avance e hitos en cada paso. 
-
-El módulo Cuidado agrupa los recursos de apoyo al bienestar. Incluye una sección de contenido educativo (artículos, videos e infografías gestionados desde el panel web), un sistema de recordatorios y rutinas personalizables con notificaciones push, un directorio de profesionales de salud y fundaciones de apoyo locales, un mapa referencial de zonas seguras e inseguras, y una sección de contactos de emergencia. El módulo motivación ofrece una frase motivacional diaria (Solo por hoy), retos individuales con seguimiento de progreso, un sistema de logros con medallas e insignias desbloqueables, y la mascota evolutiva con expresiones animadas que reflejan el estado de sobriedad del usuario. 
-
-El módulo Social implementa comunidades cerradas con acceso por invitación. Dentro de una comunidad, el usuario puede publicar reflexiones, comentar y reaccionar a publicaciones de otros miembros, participar en foros temáticos de reflexión diaria, y acceder a chats grupales. El contenido es moderado por el administrador de la comunidad. El perfil de usuario muestra el tiempo de sobriedad, los logros obtenidos y los contactos dentro de la comunidad. 
-
-#### Backend (NestJS - monolito modular) 
-
-El backend es el núcleo del sistema y esta implementado en NestJS siguiendo el patrón de monolito modular. Cada módulo de dominio (Autenticación, Usuarios, Progreso, Cuidado, Motivación, Comunidad y Administración) contiene su propia capa de controladores REST, servicios de lógica de negocio y repositorios de acceso a datos. La comunicación entre módulos se realiza a través de inyección de dependencias, evitando el acoplamiento directo entre dominios. 
-
-El módulo de Autenticación integra la API Roble de la Universidad del Norte, gestionando el ciclo completo de autenticación: obtención de tokens, validación de sesiones, refresco de tokens y cierre de sesión. Para el modo invitado, el módulo genera identificadores anónimos locales que se asocian a una cuenta real cuando el usuario decide registrarse. El esquema de base de datos relacional esta diseñado para soportar los tres modos de acceso, con una separación clara entre datos locales (sincronizados bajo demanda) y datos de nube (sincronizados en tiempo real). 
-
-El sistema de notificaciones push esta implementado a través de Firebase Cloud Messaging (FCM), con soporte para notificaciones programadas (recordatorios de rutinas, alertas de check-in diario) y notificaciones por evento (nuevos mensajes en comunidad, logros desbloqueados, alertas en fechas de riesgo como aniversarios o periodos de alta exposición como el Carnaval). 
-
-#### Panel de administración web y landing page (NextJS) 
-
-El panel de administración web está desarrollado en NextJS y está orientado a la gestión operativa del sistema por parte de fundaciones y grupos de apoyo. Permite a los gestores de comunidades realizar, sin intervención del equipo de desarrollo, las siguientes operaciones: crear, editar y eliminar comunidades; generar y administrar invitaciones para nuevos miembros; asignar y revocar roles administrativos dentro de cada comunidad; moderar contenido generado por los usuarios (publicaciones y comentarios), incluyendo la eliminación de contenido y la suspensión de cuentas; gestionar el contenido educativo del módulo Cuidado (creación, edición y publicación de artículos, videos e infografías); y consultar métricas agregadas de uso por comunidad, tales como número de usuarios activos, volumen de publicaciones y frecuencia de check-ins diarios, sin acceso a información individual sensible. 
-
-La landing page corresponde a una página pública de carácter informativo que presenta el propósito del proyecto, sus módulos funcionales, el equipo desarrollador y los objetivos de la aplicación, incluyendo acceso directo a su descarga en Google Play. Esta página se genera mediante renderizado estático con NextJS, lo que permite optimizar tiempos de carga, mejorar el posicionamiento básico en buscadores y reducir la carga operativa del servidor. 
-
-### 7.4 Estrategia de pruebas 
-
-La estrategia de aseguramiento de calidad del sistema NewLife se estructura en tres niveles complementarios: pruebas unitarias, pruebas de integración y pruebas de usabilidad. 
-
-Las pruebas unitarias se implementan por módulo en el backend utilizando Jest y por componente en el frontend móvil mediante React Native Testing Library. Estas pruebas cubren la lógica de negocio crítica del sistema, incluyendo el cálculo de rachas de sobriedad, la gestión de los modos de acceso (invitado, registrado y con comunidad), los flujos de autenticación y los mecanismos de moderación de contenido. Su propósito es validar el comportamiento aislado de servicios y funciones, reduciendo la probabilidad de regresiones ante cambios evolutivos. 
-
-Las pruebas de integración validan el funcionamiento conjunto entre la aplicación móvil y el backend, verificando los flujos completos de interacción. Entre los escenarios evaluados se incluyen el proceso de inicio de sesión mediante la API institucional Roble, la sincronización de datos entre almacenamiento local y nube, la publicación y moderación de contenido en comunidades, y el envío y recepción de notificaciones push. Estas pruebas permiten identificar inconsistencias en el intercambio de datos y asegurar la correcta interoperabilidad entre componentes. 
-
-Las pruebas de usabilidad se desarrollan en dos rondas con usuarios reales (n ≥ 5 por ronda), en coordinación con la Fundación Shalom. Este tamaño muestral se adopta como mínimo viable para la identificación de problemas recurrentes de interacción en estudios exploratorios. La primera ronda se ejecuta en la semana 9 con una versión funcional de los módulos Inicio, Mi Progreso y Cuidado, y se orienta a detectar dificultades de navegación, claridad del lenguaje y percepción emocional de la interfaz. La segunda ronda, realizada en la semana 12 con el sistema completo, evalúa la experiencia integral del usuario, incluyendo el módulo Social y el flujo de incorporación a comunidades. Los hallazgos obtenidos en cada ronda se documentan formalmente y se incorporan como iteraciones de mejora antes del despliegue en producción. 
-
-### 7.5 Estrategia de despliegue 
-
-El despliegue del sistema se estructura en tres frentes paralelos correspondientes a cada componente de la arquitectura. La aplicación móvil se publica en Google Play (Android), siguiendo el proceso de revisión y validación establecido por la plataforma. Para la generación de builds de producción se utiliza EAS Build (Expo Application Services), con un perfil de distribución configurado específicamente para el entorno productivo. 
-
-El backend desarrollado en NestJS se despliega en un servidor con soporte para Node.js, utilizando variables de entorno gestionadas de forma segura para la configuración de credenciales y parámetros sensibles. El proceso de despliegue se automatiza mediante un flujo básico de integración y entrega continua (CI/CD), lo que permite compilar, validar y actualizar el servicio de manera controlada ante nuevas versiones del sistema. 
-
-El panel de administración web y la landing page se despliegan en MyOpenLab, aprovechando la compatibilidad de NextJS con despliegues automatizados. Esta configuración permite compilación automática ante cambios en el repositorio, distribución mediante red de entrega de contenidos (CDN) y optimización de tiempos de carga para los usuarios finales. 
-
-Durante las semanas 13 a 15 se realiza un periodo de monitoreo activo en entorno de producción. Este seguimiento incluye la detección y registro de errores mediante Sentry, la revisión periódica de métricas agregadas de uso y la atención a reportes provenientes de usuarios de prueba. Los errores clasificados como críticos se corrigen mediante actualizaciones priorizadas (hotfixes), mientras que los incidentes de menor severidad se documentan para su inclusión en iteraciones posteriores. 
-
-## 8. Requerimientos preliminares
+## 5. Requerimientos Funcionales(RF) y No Funcionales(RNF)
 
 Los requerimientos del sistema *NewLife* se clasifican en **funcionales** y **no funcionales**.
 
@@ -454,7 +264,7 @@ Los **requerimientos no funcionales** establecen los atributos de calidad, restr
 
 Esta especificación preliminar se basa en el análisis del **prototipo validado en Figma**, las necesidades identificadas en el proceso de **diseño centrado en el usuario** del proyecto precedente, y las restricciones técnicas e institucionales definidas en la sección 3.
 
-### 8.1 Requerimientos Funcionales
+### 5.1 Requerimientos Funcionales
 
 #### RF-01 a RF-05: Autenticación y modos de acceso
 
@@ -541,7 +351,7 @@ Esta especificación preliminar se basa en el análisis del **prototipo validado
 
 - **RF-30.** La *landing page* debe mostrar información pública sobre *NewLife* y acceso directo a descarga en Google Play.
 
-### 8.2 Requerimientos No Funcionales
+### 5.2 Requerimientos No Funcionales
 
 Los requerimientos no funcionales definen los **atributos de calidad**, restricciones técnicas y criterios de desempeño que el sistema *NewLife* debe cumplir para garantizar una experiencia segura, eficiente y sostenible.
 
@@ -589,372 +399,13 @@ Los requerimientos no funcionales definen los **atributos de calidad**, restricc
 
 - **RNF-15.** El panel de administración web debe ser funcional en los navegadores **Chrome, Firefox, Edge y Safari** en sus versiones más recientes, con un diseño responsivo optimizado para pantallas de **13 pulgadas o mayores**.
 
+## 6. Diseño y Arquitectura
 
-## 9. Criterios de aceptación iniciales
+## 7. Implementación
 
-Los **criterios de aceptación** definen las condiciones mínimas que el sistema *NewLife* debe cumplir para que cada requerimiento se considere implementado correctamente.
+## 8. Plan de pruebas
 
-Están organizados por módulo funcional y por categoría de requerimiento no funcional, y serán utilizados como base para las **pruebas de validación** y las rondas de **pruebas de usabilidad con usuarios reales**.
-
-Un requerimiento se considera aceptado cuando **todos sus criterios son verificados y aprobados** por el equipo de desarrollo y el tutor del proyecto.
-
-
-### 9.1 Criterios para Requerimientos Funcionales
-
-#### Autenticación y modos de acceso
-
-- **CA-RF01.** El usuario puede abrir la aplicación y acceder al dashboard de *Inicio* sin registrarse. Los módulos *Inicio*, *Cuidado* y *Motivación* son navegables. Los datos generados se persisten localmente tras cerrar y reabrir la app.
-
-- **CA-RF02.** El usuario puede iniciar sesión con sus credenciales. Tras el login, la aplicación muestra el dashboard con datos sincronizados en la nube y el módulo *Social* visible (si tiene comunidad asignada).
-
-- **CA-RF03.** Un usuario en modo invitado que se registra visualiza sus datos previos disponibles en su cuenta registrada sin ingreso manual.
-
-- **CA-RF04.** Un usuario recibe una invitación a una comunidad, la acepta desde la aplicación y queda visible dentro del módulo *Social* con acceso a publicaciones, foros y chats.
-
-- **CA-RF05.** Al cerrar sesión, la aplicación regresa a la pantalla de bienvenida y no permite acceder a datos sin autenticación.
-
-
-#### Módulo Inicio y SOS
-
-- **CA-RF06.** El dashboard muestra correctamente días sobrio, dinero ahorrado, estado emocional y estado de la mascota. Los valores cambian coherentemente al actualizar el check-in.
-
-- **CA-RF07.** Al presionar el botón SOS se despliega en menos de 1 segundo una pantalla de crisis con: frases motivadoras, respiración guiada, ejercicio de distracción y contactos de emergencia con opción de llamada directa.
-
-- **CA-RF08.** El usuario recibe notificación push en la fecha de riesgo configurada (±2 minutos). La notificación es visible aunque la app esté cerrada.
-
-
-#### Módulo Mi Progreso
-
-- **CA-RF09.** El usuario puede completar el check-in diario con selector visual. El registro aparece con fecha y hora correctas. Solo se permite uno por día calendario.
-
-- **CA-RF10.** El calendario muestra correctamente días marcados según historial. El mes actual es visible por defecto.
-
-- **CA-RF11.** Las gráficas se renderizan correctamente con al menos 7 días de datos. Los filtros modifican el rango visible.
-
-- **CA-RF12.** El usuario puede crear entrada de gratitud, verla ordenada por fecha, marcarla como favorita y filtrar favoritas.
-
-- **CA-RF13.** El usuario puede marcar los 12 pasos como iniciados o completados, agregar nota y visualizar fechas registradas.
-
-
-#### Módulos Cuidado y Motivación
-
-- **CA-RF14.** El usuario puede navegar contenido educativo, filtrar por categoría y guardar favoritos. Cambios desde el panel web se reflejan en la app en menos de 1 minuto.
-
-- **CA-RF15.** El usuario puede crear recordatorio con hora y repetición. La notificación push se recibe aunque la app esté cerrada.
-
-- **CA-RF16.** El directorio muestra al menos 3 entradas con información legible y teléfono marcable.
-
-- **CA-RF17.** El usuario puede gestionar contactos de emergencia. Estos aparecen en el modo SOS con llamada directa.
-
-- **CA-RF18.** La frase del día cambia cada día. Los retos muestran progreso y al completarse pasan al historial.
-
-- **CA-RF19.** Al cumplir un hito, el usuario recibe notificación push y la insignia aparece en su perfil sin duplicación.
-
-- **CA-RF20.** La mascota cambia según rango de sobriedad y muestra animación al completar check-in.
-
-
-#### Módulo Social y Comunidades
-
-- **CA-RF21.** El administrador puede crear comunidad, generar invitación y el usuario puede unirse desde la app.
-
-- **CA-RF22.** El usuario puede publicar texto. Otros miembros lo ven en menos de 5 segundos. Comentarios y reacciones son visibles para todos.
-
-- **CA-RF23.** El administrador puede configurar tema del foro diario. Las respuestas aparecen en orden cronológico.
-
-- **CA-RF24.** El chat individual entrega mensajes en tiempo real o con máximo 2 segundos de latencia en 4G.
-
-- **CA-RF25.** El administrador puede eliminar contenido y suspender miembros. El contenido desaparece del feed y el miembro suspendido no puede publicar.
-
-- **CA-RF26.** El perfil muestra tiempo de sobriedad, logros y avance en 12 pasos si el usuario lo ha configurado como visible.
-
-
-#### Panel de administración web
-
-- **CA-RF27.** El administrador puede crear, editar y eliminar una comunidad desde el panel web. Los cambios se reflejan en la app móvil en menos de 1 minuto. El administrador puede cambiar el rol de un miembro entre administrador y miembro regular.
-
-- **CA-RF28.** El administrador puede crear un artículo con título, cuerpo de texto, categoría e imagen, guardarlo como borrador y publicarlo. Al publicarlo, aparece visible en el módulo *Cuidado* de la app móvil en menos de 1 minuto.
-
-- **CA-RF29.** El panel de métricas muestra correctamente el número de miembros activos en los últimos 7 días, el total de publicaciones en ese periodo y el promedio de check-ins diarios, sin mostrar datos individuales de usuarios.
-
-- **CA-RF30.** La *landing page* es accesible desde navegador web y muestra la descripción de *NewLife*, los módulos principales y los botones de descarga en Google Play con el enlace correctos.
-
-
-### 9.2 Criterios para Requerimientos No Funcionales
-
-#### Rendimiento
-
-- **CA-RNF01.** Se mide el tiempo desde el inicio de la app hasta la carga completa del dashboard de *Inicio* en un dispositivo de gama media con conexión 4G. El resultado es ≤ 3 segundos en al menos 9 de cada 10 mediciones.
-
-- **CA-RNF02.** Se ejecuta una prueba de carga con hasta 100 usuarios concurrentes contra la API REST. El percentil 95 de los tiempos de respuesta es ≤ 500 ms y la tasa de error es < 1%.
-
-- **CA-RNF03.** Se programa una notificación push para una hora determinada y se verifica su entrega. La notificación llega dentro de los 2 minutos posteriores en al menos 9 de cada 10 pruebas.
-
-
-#### Seguridad y privacidad
-
-- **CA-RNF04.** Al inspeccionar el tráfico de red con herramienta de proxy, todas las solicitudes al backend usan HTTPS. No existen llamadas en HTTP plano.
-
-- **CA-RNF05.** Al revisar la base de datos, los datos personales sensibles aparecen cifrados. Las contraseñas no se almacenan en texto plano, solo hashes con sal.
-
-- **CA-RNF06.** El sistema cuenta con una política de privacidad accesible desde la app y la landing page conforme a la Ley 1581 de 2012. El usuario debe aceptarla durante el registro.
-
-- **CA-RNF07.** Al autenticarse como administrador y consultar el detalle de un usuario, los endpoints no retornan datos de check-ins, avance en 12 pasos ni historial de gratitud.
-
-
-
-#### Usabilidad
-
-- **CA-RNF08.** En la primera ronda de pruebas, al menos 4 de cada 5 usuarios completan tareas clave (check-in, botón SOS, guardar favorito) sin ayuda.
-
-- **CA-RNF09.** En la primera ronda, ningún participante menciona espontáneamente términos como "confuso", "raro" o "incómodo" sobre el lenguaje de la interfaz. No se registran comentarios negativos sobre el tono.
-
-- **CA-RNF10.** El promedio del score SUS en la segunda ronda de pruebas es ≥ 70/100.
-
-
-
-#### Disponibilidad y mantenibilidad
-
-- **CA-RNF11.** Durante semanas 9 a 15, el uptime del backend y panel web es ≥ 99%, excluyendo mantenimientos programados con aviso de 24 horas.
-
-- **CA-RNF12.** Se agrega un nuevo endpoint a un módulo sin modificar otros módulos. Los tests de integración restantes pasan sin cambios.
-
-- **CA-RNF13.** El repositorio Git contiene ramas separadas de `main`, al menos un Pull Request documentado por feature y documentación Swagger accesible en `/api/docs` en producción.
-
-
-#### Compatibilidad
-
-- **CA-RNF14.** La app se instala y ejecuta correctamente en al menos un dispositivo iOS 14+ y un Android 10+, sin errores críticos ni crashes en pruebas de usabilidad.
-
-- **CA-RNF15.** El panel web opera correctamente en Chrome, Firefox y Edge (versiones actuales). Las acciones principales funcionan sin errores en los tres navegadores.
-
-
-## 10. Plan de trabajo
-
-El plan de trabajo de **NewLife** comprende **11 semanas de ejecución**, desde la **semana 5 hasta la semana 15** del semestre. Está organizado en **cuatro fases secuenciales con solapamiento controlado**:
-
-- **Fundación técnica** (semanas 5–6)  
-- **Desarrollo de módulos** (semanas 6–11)  
-- **Calidad y usabilidad** (semanas 9–12)  
-- **Despliegue y cierre** (semanas 11–15)  
-
-El equipo está conformado por **tres integrantes con roles diferenciados**, pero con colaboración cruzada en integración y pruebas.
-
-### 10.1 Equipo de desarrollo y roles
-
-**Zharick Oviedo** asume el rol principal de desarrollo **frontend móvil (React Native)** y es responsable de los módulos:
-
-- **Bienvenida / Onboarding**
-- **Inicio** (incluyendo el botón **SOS**)
-- **Mi Progreso**
-- Integración de **notificaciones push** en el cliente
-
-**Vanessa Diaz** asume el rol principal de desarrollo **backend (NestJS)** y es responsable de:
-
-- Arquitectura del **monolito modular**
-- Módulos de **Autenticación** (integración Roble), **Usuarios**, **Progreso** y **Cuidado** en el servidor
-- Gestión del esquema de base de datos
-
-**Franklin Amador** asume el rol principal de:
-
-- Desarrollo del módulo **Social**
-- Desarrollo del **panel de administración web (NextJS)**
-- Desarrollo de la **landing page**
-- Liderazgo del proceso de **pruebas de usabilidad**
-- Coordinación con la fundación local
-
-Los tres integrantes participan conjuntamente en:
-
-- Sesiones de **integración frontend–backend**
-- **Pruebas de calidad**
-- **Despliegue en producción**
-
-Todo el proceso se realiza bajo la tutoría de **Augusto Salazar**.
-
-
-### 10.2 Fases y actividades por semana
-
-#### **Semana 5 – Fundación técnica**
-
-- Configuración del repositorio **Git** con estructura de ramas (*main*, *develop*, *feature/*) y pipeline básico de **CI/CD**.
-- Diseño y migración del **esquema de base de datos relacional** (entidades, relaciones, índices críticos).
-- Implementación del módulo de **Autenticación en NestJS**:
-  - Integración con API Roble (*OAuth 2.0*)
-  - Generación y validación de **JWT** propios
-  - Gestión de los tres modos de acceso
-- Configuración del proyecto **React Native**:
-  - Navegación base (*React Navigation*)
-  - Sistema de temas (paleta de colores, tipografía *Inter*)
-  - Estructura de carpetas por módulo
-- Implementación de:
-  - Pantalla de **Bienvenida**
-  - Historieta de **Onboarding**
-  - Flujo completo de **Registro y Login**
-  - Migración de datos de modo invitado a cuenta registrada
-
-#### **Semana 6 – Módulo Inicio y backend base**
-
-- Implementación del **dashboard de Inicio**:
-  - Conteo de días sobrio
-  - Dinero ahorrado
-  - Estado de la mascota
-  - Accesos rápidos
-  - Botón **SOS** con modo crisis completo
-- Implementación de módulos backend:
-  - **Usuarios**
-  - **Progreso**
-  - Endpoints para:
-    - Check-in diario
-    - Calendario de sobriedad
-    - Historial de gratitud
-    - Tracker de 12 pasos
-- Configuración de **Firebase Cloud Messaging (FCM)** en backend y app móvil para notificaciones push.
-- Inicio del desarrollo del **panel de administración web (NextJS)**:
-  - Autenticación de administradores
-  - Estructura de navegación del panel
-
-#### **Semana 7 – Módulo Mi Progreso**
-
-- Implementación completa del módulo **Mi Progreso** en la app móvil:
-  - Check-in diario con selector visual de emociones
-  - Calendario de sobriedad
-  - Gráficas de evolución (*emocional y racha*)
-  - Historial de gratitud
-  - Tracker de 12 pasos
-- Integración de **Mi Progreso** con endpoints del backend:
-  - Sincronización en la nube para modo registrado
-  - Almacenamiento local para modo invitado
-- Inicio del módulo **Cuidado** en el backend:
-  - Endpoints para contenido educativo
-  - Recordatorios
-  - Directorio de profesionales
-
-#### **Semana 8 – Módulo Cuidado**
-
-- Implementación completa del módulo **Cuidado** en la app móvil:
-  - Listado y detalle de contenido educativo
-  - Filtros y sistema de favoritos
-  - Sistema de recordatorios con **notificaciones push**
-  - Directorio de profesionales y fundaciones
-  - Mapa referencial de zonas
-  - Gestión de contactos de emergencia
-- Implementación de la **gestión de contenido educativo** en el panel web:
-  - Creación
-  - Edición
-  - Publicación de artículos, videos e infografías
-- Integración **end-to-end** del flujo de contenido:
-  - Publicación desde el panel web
-  - Visualización inmediata en la app móvil
-
-#### **Semana 9 – Módulo Motivación y primera ronda de usabilidad**
-
-- Implementación completa del módulo **Motivación**:
-  - Frase del día
-  - Retos individuales con seguimiento de progreso
-  - Sistema de logros (medallas e insignias)
-  - Mascota evolutiva con animaciones
-- Implementación del módulo **Motivación** en el backend:
-  - Lógica de otorgamiento de logros
-  - Cálculo de hitos de sobriedad
-  - Gestión de retos
-- Ejecución de la **primera ronda de pruebas de usabilidad** con al menos 5 usuarios reales:
-  - Evaluación de los módulos **Inicio**, **Mi Progreso** y **Cuidado**
-  - Documentación de hallazgos
-  - Definición de plan de iteración
-
-#### **Semanas 10–11 – Módulo Social**
-
-- Implementación del módulo **Social** en el backend:
-  - Comunidades
-  - Miembros
-  - Publicaciones
-  - Comentarios
-  - Reacciones
-  - Foros
-  - Chat individual y grupal con soporte en tiempo real (*WebSockets* o *polling*)
-- Implementación del módulo **Social** en la app móvil:
-  - Feed de comunidad
-  - Publicaciones y comentarios
-  - Foros de reflexión diaria
-  - Chats
-  - Perfil de usuario en comunidad
-- Implementación del módulo de **administración de comunidades** en el panel web:
-  - Creación y gestión de comunidades
-  - Invitaciones
-  - Gestión de roles
-  - Moderación de contenido
-- Implementación del **panel de métricas agregadas**:
-  - Usuarios activos
-  - Publicaciones
-  - Check-ins por comunidad
-- Incorporación de las iteraciones identificadas en la primera ronda de usabilidad (semana 9)
-
-#### **Semana 12 – Integración total y segunda ronda de usabilidad**
-
-- Integración completa de todos los módulos:
-  - Login con Roble
-  - Check-in diario
-  - Publicación en comunidad
-  - Recepción de logros
-  - Moderación desde panel web
-- Ejecución de la **segunda ronda de pruebas de usabilidad** con al menos 5 usuarios reales:
-  - Evaluación del sistema completo
-  - Inclusión del módulo **Social**
-  - Evaluación del flujo de invitación a comunidades
-  - Cálculo del **score SUS**
-- Documentación de hallazgos e incorporación de iteraciones críticas antes del despliegue
-- Desarrollo y despliegue de la **landing page de NewLife** con información pública y accesos a tiendas de aplicaciones
-
-#### **Semana 13 – Pruebas de calidad y preparación para despliegue**
-
-- Ejecución de la suite completa de **pruebas unitarias**:
-  - *Jest* para backend
-  - *React Native Testing Library* para frontend
-- Corrección de errores identificados
-- Ejecución de:
-  - Pruebas de integración end-to-end
-  - Prueba de carga de la API (hasta 100 usuarios concurrentes)
-- Configuración de perfiles de distribución en:
-  - **Google Play Console**
-- Generación de builds de producción con **EAS Build**
-- Configuración de **Sentry** para monitoreo de errores en backend y app móvil
-
-#### **Semana 14 – Despliegue en producción**
-
-- Despliegue del backend **NestJS** en servidor de producción:
-  - Verificación de variables de entorno
-  - Migraciones de base de datos
-  - Disponibilidad de la API
-- Despliegue del panel de administración web y la landing:
-  - Verificación de rutas
-  - Autenticación
-  - Contenido
-- Envío de la aplicación móvil a revisión en **Google Play**
-- Seguimiento del proceso de revisión
-- Verificación de flujos críticos en producción:
-  - Login con Roble
-  - Check-in diario
-  - Publicación en comunidad
-  - Recepción de notificaciones push
-  - Acceso al panel web
-
-#### **Semana 15 – Monitoreo, cierre y entrega**
-
-- Monitoreo activo del sistema en producción:
-  - Revisión de métricas en **Sentry**
-  - Atención a reportes de usuarios de prueba
-  - Corrección de errores críticos con *hotfixes* priorizados
-- Documentación técnica final:
-  - Diagrama de arquitectura
-  - Diagrama de entidades de base de datos
-  - Documentación de endpoints (*Swagger*)
-  - Guía de despliegue
-- Preparación de:
-  - Presentación final del proyecto
-  - Informe técnico de grado
-- Entrega del proyecto y sustentación ante el tutor y el comité evaluador
-
-
-## 11. Referencias
+## 9. Referencias
 
 Las siguientes referencias bibliográficas están organizadas en orden alfabético por apellido del primer autor y siguen el formato de citación **APA (séptima edición)**. Se incluyen las fuentes citadas a lo largo del presente informe técnico, organizadas por categoría temática.
 
