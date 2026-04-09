@@ -741,6 +741,10 @@ La arquitectura descrita responde directamente a los requerimientos del sistema 
 
 **Docker** para el despliegue garantiza reproducibilidad entre entornos (desarrollo, producción) y facilita que los tres miembros del equipo trabajen con configuraciones idénticas independientemente de su sistema operativo.
 
+### 6.4 Diagramas
+<img width="1339" height="822" alt="image" src="https://github.com/user-attachments/assets/87bac9cc-6163-4a38-9dbd-34b92f00813f" />
+
+
 ## 7. Implementación
 
 ### 7.1 Stack tecnológico
