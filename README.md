@@ -742,15 +742,48 @@ La arquitectura descrita responde directamente a los requerimientos del sistema 
 **Docker** para el despliegue garantiza reproducibilidad entre entornos (desarrollo, producción) y facilita que los tres miembros del equipo trabajen con configuraciones idénticas independientemente de su sistema operativo.
 
 ### 6.4 Diagramas
-
 #### 6.4.1 Arquitectura General del Sistema
-
 <img width="1339" height="822" alt="image" src="https://github.com/user-attachments/assets/87bac9cc-6163-4a38-9dbd-34b92f00813f" />
 
-Descripción: El diagrama ilustra un ecosistema de tres capas: Clientes (App Móvil en React Native y Panel Web en Next.js), Lógica de Negocio (Monolito modular en NestJS con seguridad RBAC/JWT) e Infraestructura (Persistencia en ROBLE DB y notificaciones mediante Firebase).
+**Descripción:** El diagrama ilustra un ecosistema de tres capas: Presentación (App Móvil en React Native y Panel Web en Next.js), Lógica de Negocio (Monolito modular en NestJS con seguridad RBAC/JWT) e Infraestructura (Persistencia en ROBLE DB y notificaciones mediante Firebase).
 
-Propósito: Visualizar la segregación de accesos según el rol del usuario y la centralización de servicios en el backend, destacando la independencia del almacenamiento local para invitados frente a la integración total de los administradores y pacientes con los servicios del OpenLab.
+**Propósito:** Visualizar la segregación de accesos según el rol del usuario y la centralización de servicios en el backend, destacando la independencia del almacenamiento local para invitados frente a la integración total de los administradores y pacientes con los servicios del OpenLab.
 
+#### 6.4.2 Diagrama de Interacción entre Módulos
+<img width="1103" height="683" alt="image" src="https://github.com/user-attachments/assets/25c66e95-1553-4a6b-9783-fe5d2cad7195" />
+
+**Descripción:** Representa la comunicación interna entre los componentes del sistema, dividiendo el backend en dos núcleos de Monolito Modular (Usuarios y Admin) que comparten un servicio de autenticación unificado (Roble Auth) y persisten datos de forma segmentada en la base de datos.
+
+**Propósito:** Mostrar la independencia funcional de los módulos y cómo el Panel Admin interactúa con el núcleo de usuarios para la gestión de comunidades y progreso, manteniendo la integridad a través del esquema de datos de Roble.
+
+#### 6.4.3 Diagramas de Secuencia
+##### 6.4.3.1 Login con API Roble
+<img width="918" height="1013" alt="image" src="https://github.com/user-attachments/assets/080991e6-dfc4-4e30-a893-0e2481164265" />
+
+**Descripción:** Detalla el flujo de autenticación y autorización desde que el usuario ingresa sus credenciales hasta la obtención de un JWT. Incluye la validación externa con la API de Roble, el proceso de sincronización de perfiles (UPSERT) y el flujo alternativo para el acceso en modo invitado mediante un UUID anónimo.
+
+**Propósito:** Explicar la lógica de seguridad y persistencia detrás del inicio de sesión, garantizando que el sistema identifique correctamente el rol del usuario antes de habilitar las funciones del backend.
+
+##### 6.4.3.2 Check-in Diario y Actualización de Progreso
+<img width="897" height="1294" alt="image" src="https://github.com/user-attachments/assets/6a9d9c14-011b-4edb-a35e-e619b1f1f204" />
+
+**Descripción:** Expone el flujo de registro emocional y cálculo de sobriedad. Detalla la comunicación entre la App Móvil y el Backend para la validación de registros, el cálculo de rachas y la activación de la gamificación mediante la verificación de hitos y el envío de notificaciones push vía Firebase FCM.
+
+**Propósito:** Ilustrar cómo el sistema procesa los datos diarios para generar retroalimentación inmediata, asegurando que la persistencia en ROBLE y el servicio de notificaciones estén sincronizados con la experiencia del usuario.
+
+##### 6.4.3.3 Invitación y Unión a Comunidad
+<img width="1240" height="1434" alt="image" src="https://github.com/user-attachments/assets/1f33eabd-784b-4f51-9b95-94bb063bcfc1" />
+
+**Descripción:** Describe el ciclo de vida de una comunidad desde su creación administrativa hasta la integración de nuevos miembros. Detalla la generación de tokens únicos, la validación de expiración en el Backend y la actualización de membresías en ROBLE con roles específicos.
+
+**Propósito:** Demostrar la interoperabilidad entre las plataformas Web y Móvil, evidenciando la gestión de acceso controlado a las comunidades cerradas del sistema.
+
+#### 6.4.4 Diagrama de Despliegue
+<img width="752" height="789" alt="image" src="https://github.com/user-attachments/assets/37b3d441-5c8b-490b-9d99-5e0b1bcdaa68" />
+
+**Descripción:** Expone la topología física y de red del sistema, detallando el uso de contenedores Docker en el servidor MyOpenLab para el Backend y el Frontend Web, así como la integración con Sentry para monitoreo y la distribución de la App Móvil.
+
+**Propósito:** Ilustrar el entorno de producción y el flujo de despliegue, garantizando que los componentes estén orquestados y comunicados mediante protocolos seguros, manteniendo la redundancia entre los datos locales y la base de datos central.
 
 ## 7. Implementación
 
