@@ -1,4 +1,5 @@
 import { AdminModule } from './modules/admin/admin.module';
+import { MotivationModule } from './modules/motivation/motivation.module';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -30,10 +31,11 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('Admin — Auth')
+    .addTag('Admin — Frases del Día') // Opcional: añade el tag para que se vea más ordenado
     .build();
 
   const webDocument = SwaggerModule.createDocument(app, webConfig, {
-    include: [AdminModule],
+    include: [AdminModule, MotivationModule], // <-- ¡Añadimos MotivationModule aquí!
   });
 
   SwaggerModule.setup('api/docs/web', app, webDocument);

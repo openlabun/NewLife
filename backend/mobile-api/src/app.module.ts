@@ -7,6 +7,7 @@ import { CareModule } from './modules/care/care.module';
 import { HomeModule } from './modules/home/home.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { CommunitiesModule } from './modules/communities/communities.module';
+import { MotivationModule } from './modules/motivation/motivation.module'; // <-- Añadido aquí
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CommunitiesModule } from './modules/communities/communities.module';
     HomeModule,
     ProgressModule,
     CommunitiesModule,
+    MotivationModule, // <-- Añadido aquí
   ],
 })
 export class AppModule { }

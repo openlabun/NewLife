@@ -17,6 +17,7 @@ async function bootstrap() {
     .setDescription('Backend para el proyecto NewLife - Apoyo Post-Rehabilitación')
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('Motivación') // <-- Opcional: Agregamos el tag para que agrupe los endpoints
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
