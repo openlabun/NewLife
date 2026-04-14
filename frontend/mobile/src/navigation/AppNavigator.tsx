@@ -84,7 +84,8 @@ import CategoryScreen from '../modules/care/screens/CategoryScreen';
 import FavoritesScreen from '../modules/care/screens/FavoritesScreen';
 import AgendaScreen from '../modules/care/screens/AgendaScreen';
 import AddEventScreen from '../modules/care/screens/AddEventScreen';
-
+import SocialScreen from '../modules/social/screens/SocialScreen';
+import CreatePostScreen from '../modules/social/screens/CreatePostScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -180,6 +181,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
           <Stack.Screen name="AgendaScreen" component={AgendaScreen} />
           <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
+          <Stack.Screen name="CreatePost" component={CreatePostScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>
