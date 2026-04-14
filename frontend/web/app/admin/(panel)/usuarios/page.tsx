@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Plus, Shield, Loader2 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { getUsers, changeUserRole, changeUserStatus, createAdmin, User } from "@/lib/users"
+import api from "@/lib/axios"
 
 const roleColors: Record<string, string> = {
   USUARIO: "bg-blue-100 text-blue-700 border-blue-200",
@@ -34,6 +35,9 @@ export default function UsuariosPage() {
   const [admins, setAdmins] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+
+  const [selectedAdmin, setSelectedAdmin] = useState<User | null>(null)
+  const [showDeleteAdminModal, setShowDeleteAdminModal] = useState(false)
 
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -131,6 +135,20 @@ export default function UsuariosPage() {
       setAdminForm({ nombre: "", email: "", password: "" })
     } catch (err: any) {
       setError(err?.response?.data?.message || "Error al crear administrador")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteAdmin = async () => {
+    if (!selectedAdmin) return
+    setIsSubmitting(true)
+    try {
+      await api.delete(`/api/web/admin/users/${selectedAdmin.id}`)
+      await fetchUsers()
+      setShowDeleteAdminModal(false)
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Error al eliminar administrador.")
     } finally {
       setIsSubmitting(false)
     }
@@ -235,10 +253,6 @@ export default function UsuariosPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => openRoleModal(user)}
-                          className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3]">
-                          Rol
-                        </Button>
                         <Button size="sm" variant="outline" onClick={() => openStatusModal(user)}
                           className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3]">
                           Estado
@@ -291,10 +305,19 @@ export default function UsuariosPage() {
                       <Badge className={roleColors[admin.rol]}>{admin.rol.toLowerCase()}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50">
-                        Revocar
-                      </Button>
+                      {admin.rol !== 'SUPERADMIN' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedAdmin(admin)
+                            setShowDeleteAdminModal(true)
+                          }}
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          Eliminar
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -373,6 +396,42 @@ export default function UsuariosPage() {
             <Button onClick={handleChangeStatus} disabled={isSubmitting}
               className="bg-[#d4854a] hover:bg-[#c07842] text-white">
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showDeleteAdminModal} onOpenChange={setShowDeleteAdminModal}>
+        <DialogContent className="bg-white border-[#e5e5e5]">
+          <DialogHeader>
+            <DialogTitle className="text-[#1a1a1a]">Eliminar administrador</DialogTitle>
+            <DialogDescription className="text-[#737373]">
+              ¿Estás seguro de que deseas eliminar a{" "}
+              <strong className="text-[#1a1a1a]">{selectedAdmin?.nombre}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-sm text-red-700">
+                El administrador perderá acceso al panel inmediatamente.
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteAdminModal(false)}
+              className="border-[#e5e5e5] text-[#737373]"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteAdmin}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Eliminar administrador"}
             </Button>
           </DialogFooter>
         </DialogContent>

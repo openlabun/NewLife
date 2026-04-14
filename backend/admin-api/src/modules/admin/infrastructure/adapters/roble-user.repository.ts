@@ -117,4 +117,8 @@ export class RobleUserRepository implements IAdminUserRepository {
 
     return this.mapRow(updated);
   }
+
+  async delete(id: string): Promise<void> {
+    await this.roble.dbDelete(USERS_TABLE, '_id', id)
+  }
 }

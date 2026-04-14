@@ -3,12 +3,14 @@ import {
   Inject,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import type { ICommunityRepository } from '../../domain/ports/community.repository.port';
 import { COMMUNITY_REPOSITORY } from '../../domain/ports/community.repository.port';
 import type { IAdminUserRepository } from '../../domain/ports/admin-user.repository.port';
 import { ADMIN_USER_REPOSITORY } from '../../domain/ports/admin-user.repository.port';
 import { TipoAcceso } from '../../domain/entities/community.entity';
+import { UserRole, UserStatus } from '../../domain/entities/admin-user.entity';
 
 export interface AddMemberInput {
   comunidadId: string;
@@ -24,7 +26,7 @@ export class AddMemberUseCase {
     private readonly communityRepo: ICommunityRepository,
     @Inject(ADMIN_USER_REPOSITORY)
     private readonly userRepo: IAdminUserRepository,
-  ) {}
+  ) { }
 
   async execute(input: AddMemberInput) {
     // 1. Verificar que la comunidad existe
@@ -52,22 +54,38 @@ export class AddMemberUseCase {
       );
     }
 
-    // 4. Agregar
     const member = await this.communityRepo.addMember({
       comunidad_id: input.comunidadId,
-      usuario_id:   user._id,
-      tipo_acceso:  input.tipoAcceso,
+      usuario_id: user._id,
+      tipo_acceso: input.tipoAcceso,
       es_moderador: input.esModerador,
     });
 
+    // ← NUEVO: si se agrega como moderador, actualizar rol en tabla usuarios
+    if (input.esModerador && user.rol === UserRole.USUARIO) {
+      await this.userRepo.update(user._id, { rol: UserRole.MODERADOR });
+    }
+
+    // Después de encontrar el usuario:
+    if (user.estado === UserStatus.BANEADO || user.estado === UserStatus.ELIMINADO) {
+      throw new BadRequestException(
+        `No se puede agregar a un usuario ${user.estado.toLowerCase()} a una comunidad.`
+      );
+    }
+    if (user.estado === UserStatus.SUSPENDIDO) {
+      throw new BadRequestException(
+        `No se puede agregar a un usuario suspendido a una comunidad.`
+      );
+    }
+
     return {
-      id:           member._id,
-      usuario_id:   member.usuario_id,
-      email:        user.email,
-      nombre:       user.nombre,
-      tipo_acceso:  member.tipo_acceso,
+      id: member._id,
+      usuario_id: member.usuario_id,
+      email: user.email,
+      nombre: user.nombre,
+      tipo_acceso: member.tipo_acceso,
       es_moderador: member.es_moderador,
-      joined_at:    member.joined_at,
+      joined_at: member.joined_at,
     };
   }
 }

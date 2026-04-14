@@ -40,4 +40,5 @@ export interface ICommunityRepository {
   addMember(data: AddMemberInput): Promise<ComunidadUsuario>;
   updateMember(memberId: string, data: UpdateMemberInput): Promise<ComunidadUsuario>;
   removeMember(memberId: string): Promise<void>;
+  findAllMembershipsByUsuarioId(usuarioId: string): Promise<ComunidadUsuario[]>;
 }

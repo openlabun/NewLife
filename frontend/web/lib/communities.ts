@@ -1,5 +1,19 @@
 import api from './axios';
 
+export interface Member {
+  id: string;
+  usuario_id: string;
+  tipo_acceso: 'SOLO_VER' | 'POSTEAR_COMENTAR' | 'CHAT_COMPLETO';
+  es_moderador: boolean;
+  joined_at: string | undefined;
+}
+
+export interface MemberEnriched extends Member {
+  nombre?: string;
+  email?: string;
+  estado?: string;
+}
+
 export interface Community {
   id: string;
   nombre: string;
@@ -7,17 +21,17 @@ export interface Community {
   activa: boolean;
   created_at: string | undefined;
   creado_por: string;
+  creado_por_nombre?: string;
   total_miembros?: number;
   total_moderadores?: number;
-  miembros?: Member[];
+  miembros?: MemberEnriched[];
 }
 
-export interface Member {
-  id: string;
-  usuario_id: string;
-  tipo_acceso: 'SOLO_VER' | 'POSTEAR_COMENTAR' | 'CHAT_COMPLETO';
-  es_moderador: boolean;
-  joined_at: string | undefined;
+
+export interface MemberWithUser extends Member {
+  nombre?: string;
+  email?: string;
+  estado?: string;
 }
 
 export async function getCommunities(): Promise<Community[]> {
