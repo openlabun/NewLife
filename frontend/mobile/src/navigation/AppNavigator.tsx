@@ -86,6 +86,17 @@ import AgendaScreen from '../modules/care/screens/AgendaScreen';
 import AddEventScreen from '../modules/care/screens/AddEventScreen';
 import SocialScreen from '../modules/social/screens/SocialScreen';
 import CreatePostScreen from '../modules/social/screens/CreatePostScreen';
+import SocialProfileScreen from '../modules/social/screens/SocialProfileScreen';
+import EditProfileMenuScreen from '../modules/social/screens/EditProfileMenuScreen';
+import EditProfileScreen from '../modules/social/screens/EditProfileScreen';
+import SettingsScreen from '../modules/social/screens/SettingsScreen';
+import LegalScreen from '../modules/social/screens/LegalScreen';
+import ForumsScreen from '../modules/social/screens/ForumsScreen';
+import ForumDetailScreen from '../modules/social/screens/ForumDetailScreen';
+import MyCommunitiesScreen from '../modules/social/screens/MyCommunitiesScreen';
+import CommunityDetailScreen from '../modules/social/screens/CommunityDetailScreen';
+import CommunityChatScreen from '../modules/social/screens/CommunityChatScreen';
+import CreatePostCommunityScreen from '../modules/social/screens/CreatePostCommunityScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -182,6 +193,18 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="AgendaScreen" component={AgendaScreen} />
           <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
           <Stack.Screen name="CreatePost" component={CreatePostScreen} />
+          <Stack.Screen name="SocialProfile" component={SocialProfileScreen} />
+          <Stack.Screen name="UserProfile" component={SocialProfileScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileMenuScreen} />
+          <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+          <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+          <Stack.Screen name="LegalScreen" component={LegalScreen} />
+          <Stack.Screen name="DailyForum" component={ForumsScreen} />
+          <Stack.Screen name="ForumDetail" component={ForumDetailScreen} />
+          <Stack.Screen name="MyCommunities" component={MyCommunitiesScreen} />
+          <Stack.Screen name="CommunityDetail" component={CommunityDetailScreen} />
+          <Stack.Screen name="CommunityChat" component={CommunityChatScreen} />
+          <Stack.Screen name="CreatePostCommunity" component={CreatePostCommunityScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>

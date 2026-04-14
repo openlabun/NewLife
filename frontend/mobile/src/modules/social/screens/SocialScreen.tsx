@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 
-const { width } = Dimensions.get('window');
-
 type Post = {
   id: string;
   author: string;
-  authorAvatar?: any;
   community: string;
   timeAgo: string;
   title: string;
@@ -39,51 +35,46 @@ const MOCK_POSTS: Post[] = [
     author: 'Juan Perez',
     community: 'Fundación Shalom',
     timeAgo: '3d',
-    title: 'Compartiendo mi progreso esta semana',
-    body: 'Esta semana logré mantenerme firme en varias situaciones difíciles. Quería compartirlo con la comunidad...',
+    title: '',
+    body: '',
     image: require('../../../assets/images/contenido1.png'),
     likes: 45,
-    comments: 32,
-  },
-  {
-    id: '3',
-    author: 'María García',
-    community: 'AA Barranquilla',
-    timeAgo: '1d',
-    title: '¿Cómo manejan el estrés laboral sin recurrir al alcohol?',
-    body: 'El trabajo ha estado muy pesado últimamente y siento que necesito estrategias nuevas...',
-    likes: 67,
-    comments: 89,
+    comments: 12,
   },
 ];
 
-const hasCommities = USER_COMMUNITIES.length > 0;
+const DAILY_FORUM = {
+  question: '¿Qué podrías hacer solo por hoy para cuidarte y mantener tu paz interior?',
+};
 
-function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
+function PostCard({
+  post,
+  onPress,
+  onPressAuthor,
+}: {
+  post: Post;
+  onPress: () => void;
+  onPressAuthor: () => void;
+}) {
   return (
     <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.9}>
-      {/* Author row */}
-      <View style={styles.postHeader}>
-        <View style={styles.authorAvatar}>
+      <TouchableOpacity style={styles.postHeader} onPress={onPressAuthor} activeOpacity={0.7}>
+        <View style={styles.postAvatar}>
           <Feather name="user" size={18} color={colors.textMuted} />
         </View>
-        <View style={styles.authorInfo}>
-          <Text style={styles.authorName}>{post.author}</Text>
-          <Text style={styles.authorCommunity}>Comunidad: {post.community}</Text>
+        <View style={styles.postAuthorInfo}>
+          <Text style={styles.postAuthor}>{post.author}</Text>
+          <Text style={styles.postCommunity}>Comunidad: {post.community}</Text>
         </View>
-        <Text style={styles.timeAgo}>{post.timeAgo}</Text>
-      </View>
+        <Text style={styles.postTime}>{post.timeAgo}</Text>
+      </TouchableOpacity>
 
-      {/* Content */}
-      <Text style={styles.postTitle}>{post.title}</Text>
-      {!post.image && (
-        <Text style={styles.postBody} numberOfLines={3}>{post.body}</Text>
-      )}
+      {post.title ? <Text style={styles.postTitle}>{post.title}</Text> : null}
+      {post.body ? <Text style={styles.postBody}>{post.body}</Text> : null}
       {post.image && (
         <Image source={post.image} style={styles.postImage} resizeMode="cover" />
       )}
 
-      {/* Actions */}
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.postAction}>
           <Feather name="heart" size={18} color={colors.textMuted} />
@@ -102,6 +93,23 @@ function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
 }
 
 export default function SocialScreen({ navigation }: any) {
+  const hasCommunities = USER_COMMUNITIES.length > 0;
+
+  const getOtherUserProfile = (post: Post) => ({
+    name: post.author,
+    username: '@' + post.author.toLowerCase().replace(' ', ''),
+    bio: 'Miembro de la comunidad.',
+    publications: 15,
+    communities: ['AA Barranquilla'],
+    medals: ['🥇', '🥇', '🥇', '🥇'],
+    totalMedals: 4,
+    level: 3,
+    levelName: 'Entregar',
+    daysClean: 42,
+    medalsAchieved: 4,
+    isOwn: false,
+  });
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -109,21 +117,21 @@ export default function SocialScreen({ navigation }: any) {
         <Text style={styles.title}>Social</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={[styles.headerButton, !hasCommities && styles.headerButtonDisabled]}
-            onPress={() => hasCommities && navigation.navigate('CreatePost')}
-            disabled={!hasCommities}
+            style={[styles.headerButton, !hasCommunities && styles.headerButtonDisabled]}
+            onPress={() => hasCommunities && navigation.navigate('CreatePost')}
+            disabled={!hasCommunities}
           >
-            <Feather name="plus" size={20} color={hasCommities ? colors.text : colors.border} />
+            <Feather name="plus" size={22} color={hasCommunities ? colors.text : colors.border} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => navigation.navigate('MyCommunities')}
           >
-            <Feather name="users" size={20} color={colors.text} />
+            <Feather name="users" size={22} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.profileButton}
-            onPress={() => navigation.navigate('SocialProfile')}
+            onPress={() => navigation.navigate('SocialProfile', { isOwn: true })}
           >
             <View style={styles.profileAvatar}>
               <Feather name="user" size={18} color={colors.white} />
@@ -137,32 +145,24 @@ export default function SocialScreen({ navigation }: any) {
         {/* Foro del día */}
         <TouchableOpacity
           style={styles.forumCard}
-          onPress={() => navigation.navigate('ForumOfDay')}
+          onPress={() => navigation.navigate('DailyForum')}
           activeOpacity={0.9}
         >
           <Text style={styles.forumEmoji}>✏️</Text>
           <View style={styles.forumContent}>
             <Text style={styles.forumTitle}>Foro del día</Text>
-            <Text style={styles.forumQuestion}>
-              ¿Qué podrías hacer solo por hoy para cuidarte y mantener tu paz interior?
-            </Text>
+            <Text style={styles.forumQuestion}>{DAILY_FORUM.question}</Text>
           </View>
         </TouchableOpacity>
 
         {/* Posts */}
-        {!hasCommities ? (
+        {!hasCommunities ? (
           <View style={styles.emptyState}>
             <Feather name="users" size={48} color={colors.border} />
-            <Text style={styles.emptyTitle}>Sin publicaciones disponibles</Text>
+            <Text style={styles.emptyTitle}>Sin publicaciones</Text>
             <Text style={styles.emptySubtitle}>
-              No perteneces a ninguna comunidad. Únete a una para ver publicaciones.
+              No tienes ninguna publicación disponible porque no perteneces a ninguna comunidad.
             </Text>
-            <TouchableOpacity
-              style={styles.joinButton}
-              onPress={() => navigation.navigate('MyCommunities')}
-            >
-              <Text style={styles.joinButtonText}>Ver comunidades</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           MOCK_POSTS.map((post) => (
@@ -170,6 +170,10 @@ export default function SocialScreen({ navigation }: any) {
               key={post.id}
               post={post}
               onPress={() => navigation.navigate('PostDetail', { post })}
+              onPressAuthor={() => navigation.navigate('UserProfile', {
+                isOwn: false,
+                profile: getOtherUserProfile(post),
+              })}
             />
           ))
         )}
@@ -206,35 +210,26 @@ const styles = StyleSheet.create({
   headerButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
   },
   headerButtonDisabled: {
     opacity: 0.4,
   },
   profileButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: 'hidden',
+    marginLeft: spacing.xs,
   },
   profileAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scroll: {
     paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   forumCard: {
@@ -258,14 +253,14 @@ const styles = StyleSheet.create({
   },
   forumTitle: {
     fontSize: fontSizes.md,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
   },
   forumQuestion: {
     fontSize: fontSizes.sm,
     color: colors.textMuted,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   postCard: {
     backgroundColor: colors.white,
@@ -283,7 +278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  authorAvatar: {
+  postAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -291,32 +286,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  authorInfo: {
+  postAuthorInfo: {
     flex: 1,
   },
-  authorName: {
+  postAuthor: {
     fontSize: fontSizes.sm,
     fontWeight: '700',
     color: colors.text,
   },
-  authorCommunity: {
+  postCommunity: {
     fontSize: fontSizes.xs,
     color: colors.textMuted,
   },
-  timeAgo: {
+  postTime: {
     fontSize: fontSizes.xs,
     color: colors.textMuted,
   },
   postTitle: {
     fontSize: fontSizes.md,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.text,
     lineHeight: 22,
   },
   postBody: {
     fontSize: fontSizes.sm,
     color: colors.textLight,
-    lineHeight: 22,
+    lineHeight: 20,
   },
   postImage: {
     width: '100%',
@@ -327,9 +322,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    marginTop: spacing.xs,
   },
   postAction: {
     flexDirection: 'row',
@@ -350,24 +343,11 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.lg,
     fontWeight: '700',
     color: colors.text,
-    textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.md,
     color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
-  },
-  joinButton: {
-    backgroundColor: colors.accent,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    marginTop: spacing.sm,
-  },
-  joinButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.md,
-    fontWeight: '700',
   },
 });
