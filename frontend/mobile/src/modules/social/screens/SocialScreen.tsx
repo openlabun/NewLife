@@ -1,51 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getMyCommunities, getPosts, getForums } from '../../../services/communityService';
 
 type Post = {
   id: string;
-  author: string;
-  community: string;
-  timeAgo: string;
-  title: string;
-  body: string;
-  image?: any;
-  likes: number;
-  comments: number;
+  titulo?: string;
+  autor: { id: string; nombre: string };
+  comunidad_id: string;
+  comunidad_nombre?: string;
+  created_at: string;
+  contenido: string;
+  total_comentarios: number;
+  total_reacciones: number;
+  mis_reacciones: string[];
+  es_mio: boolean;
 };
 
-const USER_COMMUNITIES = ['AA Barranquilla', 'Fundación Shalom'];
-
-const MOCK_POSTS: Post[] = [
-  {
-    id: '1',
-    author: 'Carlos Amador',
-    community: 'AA Barranquilla',
-    timeAgo: '4h',
-    title: 'Hombres sean sinceros... como hacen para no ceder a la tentación cuando sus novias les invitan tomar un traguito',
-    body: 'Hola chicos, hace una semana me pasó una situación que no supe muy bien cómo manejar. Mi novia me invitó a tomar "solo un traguito" para...',
-    likes: 100,
-    comments: 120,
-  },
-  {
-    id: '2',
-    author: 'Juan Perez',
-    community: 'Fundación Shalom',
-    timeAgo: '3d',
-    title: '',
-    body: '',
-    image: require('../../../assets/images/contenido1.png'),
-    likes: 45,
-    comments: 12,
-  },
-];
-
-const DAILY_FORUM = {
-  question: '¿Qué podrías hacer solo por hoy para cuidarte y mantener tu paz interior?',
-};
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
 
 function PostCard({
   post,
@@ -63,26 +47,30 @@ function PostCard({
           <Feather name="user" size={18} color={colors.textMuted} />
         </View>
         <View style={styles.postAuthorInfo}>
-          <Text style={styles.postAuthor}>{post.author}</Text>
-          <Text style={styles.postCommunity}>Comunidad: {post.community}</Text>
+          <Text style={styles.postAuthor}>{post.autor.nombre}</Text>
+          {post.comunidad_nombre && (
+            <Text style={styles.postCommunity}>Comunidad: {post.comunidad_nombre}</Text>
+          )}
         </View>
-        <Text style={styles.postTime}>{post.timeAgo}</Text>
-      </TouchableOpacity>
+        <Text style={styles.postTime}>{timeAgo(post.created_at)}</Text>
 
-      {post.title ? <Text style={styles.postTitle}>{post.title}</Text> : null}
-      {post.body ? <Text style={styles.postBody}>{post.body}</Text> : null}
-      {post.image && (
-        <Image source={post.image} style={styles.postImage} resizeMode="cover" />
-      )}
+      </TouchableOpacity>
+      {post.titulo ? (
+        <Text style={styles.postTitle}>{post.titulo}</Text>
+      ) : null}
+      
+      <Text style={styles.postBody}>{post.contenido}</Text>
 
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.postAction}>
-          <Feather name="heart" size={18} color={colors.textMuted} />
-          <Text style={styles.postActionText}>{post.likes}</Text>
+          <Feather name="heart" size={18} color={
+            post.mis_reacciones?.includes('LIKE') ? colors.primary : colors.textMuted
+          } />
+          <Text style={styles.postActionText}>{post.total_reacciones}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
           <Feather name="message-circle" size={18} color={colors.textMuted} />
-          <Text style={styles.postActionText}>{post.comments}</Text>
+          <Text style={styles.postActionText}>{post.total_comentarios}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.postAction, { marginLeft: 'auto' }]}>
           <Feather name="share" size={18} color={colors.textMuted} />
@@ -93,22 +81,76 @@ function PostCard({
 }
 
 export default function SocialScreen({ navigation }: any) {
-  const hasCommunities = USER_COMMUNITIES.length > 0;
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [dailyForum, setDailyForum] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const getOtherUserProfile = (post: Post) => ({
-    name: post.author,
-    username: '@' + post.author.toLowerCase().replace(' ', ''),
-    bio: 'Miembro de la comunidad.',
-    publications: 15,
-    communities: ['AA Barranquilla'],
-    medals: ['🥇', '🥇', '🥇', '🥇'],
-    totalMedals: 4,
-    level: 3,
-    levelName: 'Entregar',
-    daysClean: 42,
-    medalsAchieved: 4,
-    isOwn: false,
-  });
+  const fetchData = useCallback(async () => {
+    try {
+      const comms = await getMyCommunities();
+      setCommunities(comms);
+
+      if (comms.length === 0) {
+        setAllPosts([]);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      // Traer posts y foros de todas las comunidades en paralelo
+      const postsResults = await Promise.all(
+        comms.map((c: any) =>
+          getPosts(c.id)
+            .then((posts: Post[]) =>
+              posts.map(p => ({ ...p, comunidad_nombre: c.nombre }))
+            )
+            .catch(() => [])
+        )
+      );
+
+      const forumsResults = await Promise.all(
+        comms.map((c: any) =>
+          getForums(c.id).catch(() => [])
+        )
+      );
+
+      // Aplanar y ordenar posts por más reciente
+      const flatPosts = postsResults
+        .flat()
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setAllPosts(flatPosts);
+
+      // Tomar el primer foro activo encontrado como foro del día
+      const firstForum = forumsResults.flat()[0] || null;
+      setDailyForum(firstForum);
+
+    } catch (err) {
+      console.log('Error cargando feed social:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Recargar cada vez que la pantalla toma foco
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
+  const hasCommunities = communities.length > 0;
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -118,14 +160,14 @@ export default function SocialScreen({ navigation }: any) {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={[styles.headerButton, !hasCommunities && styles.headerButtonDisabled]}
-            onPress={() => hasCommunities && navigation.navigate('CreatePost')}
+            onPress={() => hasCommunities && navigation.navigate('CreatePost', { communities })}
             disabled={!hasCommunities}
           >
             <Feather name="plus" size={22} color={hasCommunities ? colors.text : colors.border} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => navigation.navigate('MyCommunities')}
+            onPress={() => navigation.navigate('MyCommunities', { communities })}
           >
             <Feather name="users" size={22} color={colors.text} />
           </TouchableOpacity>
@@ -140,18 +182,32 @@ export default function SocialScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchData(); }}
+            colors={[colors.primary]}
+          />
+        }
+      >
         {/* Foro del día */}
         <TouchableOpacity
           style={styles.forumCard}
-          onPress={() => navigation.navigate('DailyForum')}
+          onPress={() => dailyForum && navigation.navigate('DailyForum', {
+            communities,
+            initialForum: dailyForum,
+          })}
           activeOpacity={0.9}
         >
           <Text style={styles.forumEmoji}>✏️</Text>
           <View style={styles.forumContent}>
             <Text style={styles.forumTitle}>Foro del día</Text>
-            <Text style={styles.forumQuestion}>{DAILY_FORUM.question}</Text>
+            <Text style={styles.forumQuestion}>
+              {dailyForum?.pregunta || 'No hay foro activo hoy'}
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -164,15 +220,41 @@ export default function SocialScreen({ navigation }: any) {
               No tienes ninguna publicación disponible porque no perteneces a ninguna comunidad.
             </Text>
           </View>
+        ) : allPosts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="edit-3" size={48} color={colors.border} />
+            <Text style={styles.emptyTitle}>Sin posts aún</Text>
+            <Text style={styles.emptySubtitle}>
+              Sé el primero en publicar algo en tu comunidad.
+            </Text>
+          </View>
         ) : (
-          MOCK_POSTS.map((post) => (
+          allPosts.map((post) => (
             <PostCard
-              key={post.id}
+              key={`${post.comunidad_id}-${post.id}`}
               post={post}
-              onPress={() => navigation.navigate('PostDetail', { post })}
+              onPress={() => navigation.navigate('PostDetail', {
+                post,
+                communityId: post.comunidad_id,
+                // Buscar el objeto community para saber tipo_acceso y es_moderador
+                community: communities.find((c: any) => c.id === post.comunidad_id),
+              })}
               onPressAuthor={() => navigation.navigate('UserProfile', {
                 isOwn: false,
-                profile: getOtherUserProfile(post),
+                profile: {
+                  name: post.autor.nombre,
+                  username: '@' + post.autor.nombre.toLowerCase().replace(' ', ''),
+                  bio: 'Miembro de la comunidad.',
+                  publications: 0,
+                  communities: [post.comunidad_nombre],
+                  medals: [],
+                  totalMedals: 0,
+                  level: 1,
+                  levelName: '',
+                  daysClean: 0,
+                  medalsAchieved: 0,
+                  isOwn: false,
+                },
               })}
             />
           ))

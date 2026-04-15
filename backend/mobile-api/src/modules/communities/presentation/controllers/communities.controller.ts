@@ -52,7 +52,7 @@ export class CommunitiesController {
     private readonly modRequestBanUseCase: ModRequestBanUseCase,
     private readonly modRemoveMemberUseCase: ModRemoveMemberUseCase,
     private readonly modAddMemberUseCase: ModAddMemberUseCase,
-  ) {}
+  ) { }
 
   // ── Comunidades ────────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ export class CommunitiesController {
   @Post(':id/posts')
   @ApiOperation({ summary: 'Crear post' })
   async createPost(@Param('id') id: string, @Body() dto: CreatePostDto, @Request() req: any) {
-    return this.createPostUseCase.execute(id, req.user.uid, dto.contenido);
+    return this.createPostUseCase.execute(id, req.user.uid, dto.contenido, dto.titulo);
   }
 
   @Delete(':id/posts/:postId')

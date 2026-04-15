@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { DatabaseModule } from '../database/database.module';
 import { CommunitiesController } from './presentation/controllers/communities.controller';
+import { ResolveUserIdHelper } from './application/helpers/resolve-user-id.helper';
 import { GetMyCommunitiesUseCase } from './application/use-cases/get-my-communities.use-case';
 import { GetCommunityDetailUseCase } from './application/use-cases/get-community-detail.use-case';
 import { GetPostsUseCase } from './application/use-cases/get-posts.use-case';
@@ -25,6 +26,7 @@ import { ModAddMemberUseCase } from './application/use-cases/moderator/add-membe
   imports: [AuthModule, DatabaseModule],
   controllers: [CommunitiesController],
   providers: [
+    ResolveUserIdHelper,
     GetMyCommunitiesUseCase,
     GetCommunityDetailUseCase,
     GetPostsUseCase,

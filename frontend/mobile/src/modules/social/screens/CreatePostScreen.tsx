@@ -1,46 +1,58 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, Modal, Image,
+  ScrollView, Modal, Image, ActivityIndicator, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { createPost } from '../../../services/communityService';
 
-const USER_COMMUNITIES = [
-  { id: '1', name: 'AA Barranquilla' },
-  { id: '2', name: 'Fundación Shalom' },
-];
+export default function CreatePostScreen({ navigation, route }: any) {
+  const { communities = [] } = route.params || {};
 
-export default function CreatePostScreen({ navigation }: any) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
   const [showCommunityPicker, setShowCommunityPicker] = useState(false);
-  const [image, setImage] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const toggleCommunity = (id: string) => {
-    setSelectedCommunities((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    setSelectedCommunities(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
   };
 
   const toggleAll = () => {
-    if (selectedCommunities.length === USER_COMMUNITIES.length) {
+    if (selectedCommunities.length === communities.length) {
       setSelectedCommunities([]);
     } else {
-      setSelectedCommunities(USER_COMMUNITIES.map((c) => c.id));
+      setSelectedCommunities(communities.map((c: any) => c.id));
     }
   };
 
-  const selectedNames = USER_COMMUNITIES
-    .filter((c) => selectedCommunities.includes(c.id))
-    .map((c) => c.name)
+  const selectedNames = communities
+    .filter((c: any) => selectedCommunities.includes(c.id))
+    .map((c: any) => c.nombre)
     .join(', ');
 
   const canPublish = title.trim().length > 0 && selectedCommunities.length > 0;
 
-  const handlePublish = () => {
-    navigation.goBack();
+  const handlePublish = async () => {
+    if (!canPublish) return;
+    setLoading(true);
+    try {
+      // Publicar en cada comunidad seleccionada en paralelo
+      await Promise.all(
+        selectedCommunities.map(communityId =>
+          createPost(communityId, body.trim(), title.trim())
+        )
+      );
+      navigation.goBack();
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'No se pudo publicar.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +71,10 @@ export default function CreatePostScreen({ navigation }: any) {
           onPress={() => setShowCommunityPicker(true)}
         >
           <View style={styles.communityDot} />
-          <Text style={[styles.communitySelectorText, selectedCommunities.length > 0 && styles.communitySelectorTextSelected]}>
+          <Text style={[
+            styles.communitySelectorText,
+            selectedCommunities.length > 0 && styles.communitySelectorTextSelected,
+          ]}>
             {selectedCommunities.length > 0 ? selectedNames : 'Seleccionar comunidad'}
           </Text>
           <Feather name="chevron-down" size={16} color={colors.textMuted} />
@@ -86,39 +101,32 @@ export default function CreatePostScreen({ navigation }: any) {
           textAlignVertical="top"
         />
 
-        {/* Imagen */}
-        <TouchableOpacity style={styles.imageUpload}>
-          {image ? (
-            <Image source={image} style={styles.uploadedImage} resizeMode="cover" />
-          ) : (
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderText}>Cargar imagen</Text>
-              <View style={styles.imagePlaceholderIcon}>
-                <Feather name="image" size={32} color={colors.border} />
-              </View>
+        {/* Imagen — pendiente */}
+        <TouchableOpacity style={styles.imageUpload} disabled>
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.imagePlaceholderText}>Cargar imagen</Text>
+            <View style={styles.imagePlaceholderIcon}>
+              <Feather name="image" size={32} color={colors.border} />
             </View>
-          )}
+          </View>
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Botón publicar */}
       <TouchableOpacity
-        style={[styles.publishButton, !canPublish && styles.publishButtonDisabled]}
+        style={[styles.publishButton, (!canPublish || loading) && styles.publishButtonDisabled]}
         onPress={handlePublish}
-        disabled={!canPublish}
+        disabled={!canPublish || loading}
       >
-        <Text style={styles.publishButtonText}>Publicar</Text>
+        {loading
+          ? <ActivityIndicator color={colors.white} />
+          : <Text style={styles.publishButtonText}>Publicar</Text>
+        }
       </TouchableOpacity>
 
       {/* Modal selector comunidades */}
-      <Modal
-        visible={showCommunityPicker}
-        transparent
-        animationType="slide"
-        statusBarTranslucent
-      >
+      <Modal visible={showCommunityPicker} transparent animationType="slide" statusBarTranslucent>
         <TouchableOpacity
           style={styles.modalOverlay}
           onPress={() => setShowCommunityPicker(false)}
@@ -128,15 +136,12 @@ export default function CreatePostScreen({ navigation }: any) {
             <Text style={styles.modalTitle}>Publicar en</Text>
 
             {/* Todas */}
-            <TouchableOpacity
-              style={styles.communityOption}
-              onPress={toggleAll}
-            >
+            <TouchableOpacity style={styles.communityOption} onPress={toggleAll}>
               <View style={[
                 styles.checkbox,
-                selectedCommunities.length === USER_COMMUNITIES.length && styles.checkboxSelected,
+                selectedCommunities.length === communities.length && styles.checkboxSelected,
               ]}>
-                {selectedCommunities.length === USER_COMMUNITIES.length && (
+                {selectedCommunities.length === communities.length && (
                   <Feather name="check" size={12} color={colors.white} />
                 )}
               </View>
@@ -145,7 +150,7 @@ export default function CreatePostScreen({ navigation }: any) {
 
             <View style={styles.divider} />
 
-            {USER_COMMUNITIES.map((community) => (
+            {communities.map((community: any) => (
               <TouchableOpacity
                 key={community.id}
                 style={styles.communityOption}
@@ -161,7 +166,7 @@ export default function CreatePostScreen({ navigation }: any) {
                 </View>
                 <View style={styles.communityOptionInfo}>
                   <Feather name="users" size={16} color={colors.textMuted} />
-                  <Text style={styles.communityOptionText}>{community.name}</Text>
+                  <Text style={styles.communityOptionText}>{community.nombre}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -182,17 +187,20 @@ export default function CreatePostScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.background
   },
+
   header: {
     paddingTop: 60,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.lg
   },
+
   scroll: {
     paddingHorizontal: spacing.xl,
-    gap: spacing.md,
+    gap: spacing.md
   },
+
   communitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -206,33 +214,39 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     elevation: 1,
   },
+
   communityDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.accent
   },
+
   communitySelectorText: {
     fontSize: fontSizes.sm,
     color: colors.textMuted,
-    fontWeight: '500',
+    fontWeight: '500'
   },
+
   communitySelectorTextSelected: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: '600'
   },
+
   titleInput: {
     fontSize: fontSizes.xxl,
     fontWeight: '800',
     color: colors.text,
     paddingVertical: spacing.sm,
   },
+
   bodyInput: {
     fontSize: fontSizes.md,
     color: colors.textLight,
     minHeight: 80,
-    lineHeight: 24,
+    lineHeight: 24
   },
+
   imageUpload: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.md,
@@ -243,16 +257,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 3,
   },
+
   imagePlaceholder: {
     padding: spacing.xl,
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.md
   },
+
   imagePlaceholderText: {
     fontSize: fontSizes.md,
     color: colors.textMuted,
-    fontWeight: '500',
+    fontWeight: '500'
   },
+
   imagePlaceholderIcon: {
     width: 80,
     height: 80,
@@ -261,10 +278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  uploadedImage: {
-    width: '100%',
-    height: 200,
-  },
+
   publishButton: {
     position: 'absolute',
     bottom: 32,
@@ -276,19 +290,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 4,
   },
+
   publishButtonDisabled: {
-    opacity: 0.4,
+    opacity: 0.4
   },
+
   publishButtonText: {
     color: colors.white,
     fontSize: fontSizes.lg,
-    fontWeight: '700',
+    fontWeight: '700'
   },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-end'
   },
+
   modalContent: {
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
@@ -297,18 +315,21 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: 48,
   },
+
   modalTitle: {
     fontSize: fontSizes.lg,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm
   },
+
   communityOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm
   },
+
   checkbox: {
     width: 22,
     height: 22,
@@ -318,24 +339,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   checkboxSelected: {
     backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    borderColor: colors.accent
   },
+
   communityOptionInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.sm
   },
+
   communityOptionText: {
     fontSize: fontSizes.md,
     color: colors.text,
-    fontWeight: '500',
+    fontWeight: '500'
   },
+
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F0F0F0'
   },
+
   modalConfirmButton: {
     backgroundColor: colors.primary,
     borderRadius: borderRadius.full,
@@ -343,9 +369,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
   },
+
   modalConfirmText: {
     color: colors.white,
     fontSize: fontSizes.md,
-    fontWeight: '700',
+    fontWeight: '700'
   },
 });
