@@ -1,205 +1,242 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getProfile } from '../../../services/authService';
+import { getUserPosts } from '../../../services/communityService';
 
-type Post = {
-    id: string;
-    author: string;
-    community: string;
-    timeAgo: string;
-    title: string;
-    body: string;
-    image?: any;
-    likes: number;
-    comments: number;
-};
-
-const MY_PROFILE = {
-    name: 'Rodilia',
-    username: '@Rodi',
-    bio: 'Aprendiendo a superar conflictos sin tragos de por medio.',
-    publications: 15,
-    communities: ['AA Barranquilla', 'Fundación Shalom'],
-    medals: ['🥇', '🥇', '🥇', '🥇'],
-    totalMedals: 7,
-    level: 9,
-    levelName: 'Actuar',
-    daysClean: 400,
-    medalsAchieved: 7,
-    isOwn: true,
-};
-
-const MOCK_POSTS: Post[] = [
-    {
-        id: '1',
-        author: 'Rodilia',
-        community: 'AA',
-        timeAgo: '4h',
-        title: 'Hombres sean sinceros... como hacen para no ceder a la tentación cuando sus novias les invitan tomar un traguito',
-        body: 'Hola chicos, hace una semana me pasó una situación que no supe muy bien cómo manejar. Mi novia me invitó a tomar "solo un traguito" para...',
-        likes: 100,
-        comments: 120,
-    },
-    {
-        id: '2',
-        author: 'Rodilia',
-        community: 'Fundacion',
-        timeAgo: '3d',
-        title: '',
-        body: '',
-        image: require('../../../assets/images/contenido2.png'),
-        likes: 45,
-        comments: 12,
-    },
-];
-
-function PostCard({ post, onPress }: { post: Post; onPress: () => void }) {
-    return (
-        <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.9}>
-            <View style={styles.postHeader}>
-                <View style={styles.postAvatar}>
-                    <Feather name="user" size={16} color={colors.textMuted} />
-                </View>
-                <View style={styles.postAuthorInfo}>
-                    <Text style={styles.postAuthor}>{post.author}</Text>
-                    <Text style={styles.postCommunity}>Comunidad: {post.community}</Text>
-                </View>
-                <Text style={styles.postTime}>{post.timeAgo}</Text>
-            </View>
-            {post.title ? <Text style={styles.postTitle}>{post.title}</Text> : null}
-            {post.body ? <Text style={styles.postBody}>{post.body}</Text> : null}
-            {post.image && (
-                <Image source={post.image} style={styles.postImage} resizeMode="cover" />
-            )}
-            <View style={styles.postActions}>
-                <TouchableOpacity style={styles.postAction}>
-                    <Feather name="heart" size={18} color={colors.textMuted} />
-                    <Text style={styles.postActionText}>{post.likes}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.postAction}>
-                    <Feather name="message-circle" size={18} color={colors.textMuted} />
-                    <Text style={styles.postActionText}>{post.comments}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.postAction, { marginLeft: 'auto' }]}>
-                    <Feather name="share" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-            </View>
-        </TouchableOpacity>
-    );
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
 }
 
-type Props = {
-    navigation: any;
-    isOwn?: boolean;
-    profile?: typeof MY_PROFILE;
-};
+function PostCard({ post, onPress }: { post: any; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.9}>
+      <View style={styles.postHeader}>
+        <View style={styles.postAvatar}>
+          <Feather name="user" size={16} color={colors.textMuted} />
+        </View>
+        <View style={styles.postAuthorInfo}>
+          <Text style={styles.postAuthor}>{post.autor_nombre}</Text>
+          {post.comunidad_nombre && (
+            <Text style={styles.postCommunity}>Comunidad: {post.comunidad_nombre}</Text>
+          )}
+        </View>
+        <Text style={styles.postTime}>{timeAgo(post.created_at)}</Text>
+      </View>
+      {post.titulo ? <Text style={styles.postTitle}>{post.titulo}</Text> : null}
+      {post.contenido ? <Text style={styles.postBody}>{post.contenido}</Text> : null}
+      <View style={styles.postActions}>
+        <TouchableOpacity style={styles.postAction}>
+          <Feather name="heart" size={18} color={colors.textMuted} />
+          <Text style={styles.postActionText}>{post.total_reacciones}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.postAction}>
+          <Feather name="message-circle" size={18} color={colors.textMuted} />
+          <Text style={styles.postActionText}>{post.total_comentarios}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.postAction, { marginLeft: 'auto' }]}>
+          <Feather name="share" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function SocialProfileScreen({ navigation, route }: any) {
-    const isOwn = route?.params?.isOwn !== false;
-    const profile = route?.params?.profile || MY_PROFILE;
+  const isOwn = route?.params?.isOwn !== false;
+  const externalProfile = route?.params?.profile;
 
+  const [profile, setProfile] = useState<any>(externalProfile || null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      if (isOwn) {
+        const [profileData, postsData] = await Promise.all([
+          getProfile(),
+          getUserPosts(),
+        ]);
+        setProfile({
+          ...profileData,
+          publications: postsData.length,
+        });
+        setPosts(postsData.map((p: any) => ({
+          ...p,
+          autor_nombre: profileData.nombre,
+        })));
+      } else {
+        // Perfil externo — solo mostramos los datos que llegan por params
+        setProfile(externalProfile);
+        setPosts([]);
+      }
+    } catch (err) {
+      console.log('Error cargando perfil:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [isOwn, externalProfile]);
+
+  useFocusEffect(
+    useCallback(() => { fetchData(); }, [fetchData])
+  );
+
+  if (loading) {
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Feather name="chevron-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <View style={styles.headerCenter}>
-                    <View style={styles.avatarLarge}>
-                        <Feather name="user" size={32} color={colors.white} />
-                    </View>
-                    <Text style={styles.profileName}>{profile.name}</Text>
-                    <Text style={styles.profileUsername}>{profile.username}</Text>
-                </View>
-                {isOwn ? (
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('EditProfile')}
-                    >
-                        <Text style={styles.editButtonText}>Editar</Text>
-                    </TouchableOpacity>
-                ) : <View style={{ width: 40 }} />}
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
-                {/* Bio */}
-                <Text style={styles.bio}>{profile.bio}</Text>
-
-                {/* Stats */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{profile.publications}</Text>
-                        <Text style={styles.statLabel}>Publicaciones</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{profile.communities.length}</Text>
-                        <Text style={styles.statLabel}>Comunidades</Text>
-                    </View>
-                </View>
-
-                {/* Medallas */}
-                <TouchableOpacity
-                    style={styles.medalsRow}
-                    onPress={() => navigation.navigate('Medals')}
-                >
-                    {profile.medals.map((medal: string, i: number) => (
-                        <Text key={i} style={styles.medalEmoji}>{medal}</Text>
-                    ))}
-                    <Text style={styles.medalsCount}>{profile.totalMedals} logros</Text>
-                    <Feather name="chevron-right" size={16} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Card nivel */}
-                <View style={styles.levelCard}>
-                    <View style={styles.levelHeader}>
-                        <Text style={styles.levelTitle}>Nivel {profile.level} - {profile.levelName}</Text>
-                        <Feather name="eye" size={18} color={colors.textMuted} />
-                    </View>
-                    <View style={styles.levelStats}>
-                        <View style={styles.levelStat}>
-                            <Text style={styles.levelStatIcon}>🎯</Text>
-                            <View>
-                                <Text style={styles.levelStatNumber}>{profile.daysClean} días sin</Text>
-                                <Text style={styles.levelStatLabel}>consumo</Text>
-                            </View>
-                        </View>
-                        <View style={styles.levelStatDivider} />
-                        <View style={styles.levelStat}>
-                            <Text style={styles.levelStatIcon}>🏅</Text>
-                            <View>
-                                <Text style={styles.levelStatNumber}>{profile.medalsAchieved} logros</Text>
-                                <Text style={styles.levelStatLabel}>alcanzados</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Tab publicaciones */}
-                <View style={styles.tabBar}>
-                    <View style={styles.tabActive}>
-                        <Text style={styles.tabActiveText}>Publicaciones</Text>
-                    </View>
-                </View>
-
-                {/* Posts */}
-                {MOCK_POSTS.map((post) => (
-                    <PostCard
-                        key={post.id}
-                        post={post}
-                        onPress={() => navigation.navigate('PostDetail', { post })}
-                    />
-                ))}
-
-                <View style={{ height: spacing.xl }} />
-            </ScrollView>
-        </View>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
     );
+  }
+
+  const displayName     = profile?.nombre   || profile?.name     || 'Usuario';
+  const displayUsername = profile?.apodo    || profile?.username || `@${displayName.toLowerCase().replace(' ', '')}`;
+  const displayBio      = profile?.motivo_sobrio || profile?.bio || '';
+  const communities     = profile?.communities || [];
+  const medals          = profile?.medals      || [];
+  const totalMedals     = profile?.totalMedals || medals.length;
+  const level           = profile?.level       || 1;
+  const levelName       = profile?.levelName   || '';
+  const daysClean       = profile?.daysClean   || 0;
+  const medalsAchieved  = profile?.medalsAchieved || 0;
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <View style={styles.avatarLarge}>
+            <Feather name="user" size={32} color={colors.white} />
+          </View>
+          <Text style={styles.profileName}>{displayName}</Text>
+          <Text style={styles.profileUsername}>{displayUsername}</Text>
+        </View>
+        {isOwn ? (
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Text style={styles.editButtonText}>Editar</Text>
+          </TouchableOpacity>
+        ) : <View style={{ width: 40 }} />}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          isOwn ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => { setRefreshing(true); fetchData(); }}
+              colors={[colors.primary]}
+            />
+          ) : undefined
+        }
+      >
+        {/* Bio */}
+        {displayBio ? <Text style={styles.bio}>{displayBio}</Text> : null}
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{posts.length}</Text>
+            <Text style={styles.statLabel}>Publicaciones</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{communities.length}</Text>
+            <Text style={styles.statLabel}>Comunidades</Text>
+          </View>
+        </View>
+
+        {/* Medallas */}
+        {medals.length > 0 && (
+          <TouchableOpacity
+            style={styles.medalsRow}
+            onPress={() => navigation.navigate('Medals')}
+          >
+            {medals.map((medal: string, i: number) => (
+              <Text key={i} style={styles.medalEmoji}>{medal}</Text>
+            ))}
+            <Text style={styles.medalsCount}>{totalMedals} logros</Text>
+            <Feather name="chevron-right" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+
+        {/* Card nivel */}
+        {(daysClean > 0 || medalsAchieved > 0) && (
+          <View style={styles.levelCard}>
+            <View style={styles.levelHeader}>
+              <Text style={styles.levelTitle}>
+                {level > 0 ? `Nivel ${level}${levelName ? ` - ${levelName}` : ''}` : 'Sin nivel aún'}
+              </Text>
+              <Feather name="eye" size={18} color={colors.textMuted} />
+            </View>
+            <View style={styles.levelStats}>
+              <View style={styles.levelStat}>
+                <Text style={styles.levelStatIcon}>🎯</Text>
+                <View>
+                  <Text style={styles.levelStatNumber}>{daysClean} días sin</Text>
+                  <Text style={styles.levelStatLabel}>consumo</Text>
+                </View>
+              </View>
+              <View style={styles.levelStatDivider} />
+              <View style={styles.levelStat}>
+                <Text style={styles.levelStatIcon}>🏅</Text>
+                <View>
+                  <Text style={styles.levelStatNumber}>{medalsAchieved} logros</Text>
+                  <Text style={styles.levelStatLabel}>alcanzados</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Tab publicaciones */}
+        <View style={styles.tabBar}>
+          <View style={styles.tabActive}>
+            <Text style={styles.tabActiveText}>Publicaciones</Text>
+          </View>
+        </View>
+
+        {/* Posts */}
+        {posts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="edit-3" size={36} color={colors.border} />
+            <Text style={styles.emptyText}>
+              {isOwn ? 'Aún no has publicado nada' : 'Sin publicaciones'}
+            </Text>
+          </View>
+        ) : (
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onPress={() => navigation.navigate('PostDetail', { post })}
+            />
+          ))
+        )}
+
+        <View style={{ height: spacing.xl }} />
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

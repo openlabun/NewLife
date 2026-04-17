@@ -29,6 +29,11 @@ export const deletePost = async (communityId: string, postId: string) => {
   return res.data;
 };
 
+export const getUserPosts = async () => {
+  const res = await api.get('/user/posts');
+  return res.data;
+};
+
 // ── Comentarios ───────────────────────────────────────────────────────────────
 
 export const getComments = async (communityId: string, postId: string) => {

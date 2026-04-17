@@ -1,18 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Modal,
+  View, Text, StyleSheet, TouchableOpacity, TextInput,
+  ScrollView, Modal, ActivityIndicator, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getProfile } from '../../../services/authService';
+import api from '../../../services/api';
 
-const GENDERS = ['Masculino', 'Femenino', 'No binario', 'Prefiero no decir'];
+const PRONOMBRES = ['él/his', 'ella/her', 'elle/they', 'Prefiero no decir'];
 
 export default function EditProfileScreen({ navigation }: any) {
-  const [name, setName] = useState('Jesús Rodrigues');
-  const [nickname, setNickname] = useState('Rodi');
-  const [gender, setGender] = useState('Masculino');
-  const [description, setDescription] = useState('');
-  const [showGenderPicker, setShowGenderPicker] = useState(false);
+  const [apodo, setApodo]           = useState('');
+  const [pronombre, setPronombre]   = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [showPronPicker, setShowPronPicker] = useState(false);
+  const [loading, setLoading]       = useState(true);
+  const [saving, setSaving]         = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const data = await getProfile();
+      setApodo(data.apodo || '');
+      setPronombre(data.pronombre || '');
+      setDescripcion(data.motivo_sobrio || '');
+    } catch (err) {
+      console.log('Error cargando perfil:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => { fetchProfile(); }, [fetchProfile])
+  );
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.patch('/user/profile', {
+        apodo:         apodo.trim()      || undefined,
+        pronombre:     pronombre.trim()  || undefined,
+        motivo_sobrio: descripcion.trim() || undefined,
+      });
+      navigation.goBack();
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'No se pudo guardar.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -25,39 +71,32 @@ export default function EditProfileScreen({ navigation }: any) {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={styles.label}>Nombre</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Jesús Rodrigues"
-          placeholderTextColor={colors.border}
-        />
-
         <Text style={styles.label}>Apodo</Text>
         <TextInput
           style={styles.input}
-          value={nickname}
-          onChangeText={setNickname}
-          placeholder="Rodi"
+          value={apodo}
+          onChangeText={setApodo}
+          placeholder="Tu apodo..."
           placeholderTextColor={colors.border}
         />
 
-        <Text style={styles.label}>Genero</Text>
+        <Text style={styles.label}>Pronombre</Text>
         <TouchableOpacity
-          style={styles.input}
-          onPress={() => setShowGenderPicker(true)}
+          style={styles.inputRow}
+          onPress={() => setShowPronPicker(true)}
         >
-          <Text style={styles.inputText}>{gender}</Text>
+          <Text style={[styles.inputText, !pronombre && { color: colors.border }]}>
+            {pronombre || 'Seleccionar pronombre...'}
+          </Text>
           <Feather name="chevron-down" size={18} color={colors.textMuted} />
         </TouchableOpacity>
 
-        <Text style={styles.label}>Descripcion</Text>
+        <Text style={styles.label}>Descripción / Motivación</Text>
         <TextInput
           style={styles.textArea}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Añade aquí tu descripcion..."
+          value={descripcion}
+          onChangeText={setDescripcion}
+          placeholder="¿Qué te motiva a mantenerte sobrio?"
           placeholderTextColor={colors.border}
           multiline
           textAlignVertical="top"
@@ -66,29 +105,36 @@ export default function EditProfileScreen({ navigation }: any) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.saveButtonText}>Guardar</Text>
+      <TouchableOpacity
+        style={[styles.saveButton, saving && { opacity: 0.7 }]}
+        onPress={handleSave}
+        disabled={saving}
+      >
+        {saving
+          ? <ActivityIndicator color={colors.white} />
+          : <Text style={styles.saveButtonText}>Guardar</Text>
+        }
       </TouchableOpacity>
 
-      {/* Gender picker */}
-      <Modal visible={showGenderPicker} transparent animationType="slide" statusBarTranslucent>
+      {/* Pronombre picker */}
+      <Modal visible={showPronPicker} transparent animationType="slide" statusBarTranslucent>
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowGenderPicker(false)}
+          onPress={() => setShowPronPicker(false)}
         >
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Género</Text>
-            {GENDERS.map((g) => (
+            <Text style={styles.modalTitle}>Pronombre</Text>
+            {PRONOMBRES.map((p) => (
               <TouchableOpacity
-                key={g}
+                key={p}
                 style={styles.modalOption}
-                onPress={() => { setGender(g); setShowGenderPicker(false); }}
+                onPress={() => { setPronombre(p); setShowPronPicker(false); }}
               >
-                <Text style={[styles.modalOptionText, gender === g && styles.modalOptionSelected]}>
-                  {g}
+                <Text style={[styles.modalOptionText, pronombre === p && styles.modalOptionSelected]}>
+                  {p}
                 </Text>
-                {gender === g && <Feather name="check" size={16} color={colors.primary} />}
+                {pronombre === p && <Feather name="check" size={16} color={colors.primary} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -97,7 +143,6 @@ export default function EditProfileScreen({ navigation }: any) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {

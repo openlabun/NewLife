@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView,
+  ActivityIndicator, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { createPost } from '../../../services/communityService';
 
 export default function CreatePostCommunityScreen({ navigation, route }: any) {
   const { community } = route.params;
+  const communityName = community.nombre || community.name || '';
+
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const canPublish = title.trim().length > 0;
+
+  const handlePublish = async () => {
+    if (!canPublish) return;
+    setLoading(true);
+    try {
+      await createPost(community.id, body.trim(), title.trim());
+      navigation.goBack();
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'No se pudo publicar.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -25,7 +43,7 @@ export default function CreatePostCommunityScreen({ navigation, route }: any) {
         {/* Comunidad fija */}
         <View style={styles.communityBadge}>
           <View style={styles.communityDot} />
-          <Text style={styles.communityBadgeText}>{community.name}</Text>
+          <Text style={styles.communityBadgeText}>{communityName}</Text>
         </View>
 
         {/* Título */}
@@ -50,8 +68,8 @@ export default function CreatePostCommunityScreen({ navigation, route }: any) {
           textAlignVertical="top"
         />
 
-        {/* Cargar imagen */}
-        <TouchableOpacity style={styles.imageUpload}>
+        {/* Cargar imagen — pendiente */}
+        <TouchableOpacity style={styles.imageUpload} disabled>
           <Feather name="image" size={32} color={colors.border} />
           <Text style={styles.imageUploadText}>Cargar imagen</Text>
         </TouchableOpacity>
@@ -60,11 +78,14 @@ export default function CreatePostCommunityScreen({ navigation, route }: any) {
       </ScrollView>
 
       <TouchableOpacity
-        style={[styles.publishButton, !canPublish && styles.publishButtonDisabled]}
-        disabled={!canPublish}
-        onPress={() => navigation.goBack()}
+        style={[styles.publishButton, (!canPublish || loading) && styles.publishButtonDisabled]}
+        disabled={!canPublish || loading}
+        onPress={handlePublish}
       >
-        <Text style={styles.publishButtonText}>Publicar</Text>
+        {loading
+          ? <ActivityIndicator color={colors.white} />
+          : <Text style={styles.publishButtonText}>Publicar</Text>
+        }
       </TouchableOpacity>
     </View>
   );

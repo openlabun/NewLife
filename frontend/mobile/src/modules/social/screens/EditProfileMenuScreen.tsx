@@ -1,17 +1,48 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getProfile } from '../../../services/authService';
 
 const MENU_ITEMS = [
-  { key: 'edit', label: 'Editar perfil', route: 'EditProfileScreen' },
-  { key: 'settings', label: 'Configuración', route: 'SettingsScreen' },
-  { key: 'legal', label: 'Legal / Seguridad', route: 'LegalScreen' },
+  { key: 'edit',     label: 'Editar perfil',      route: 'EditProfileScreen' },
+  { key: 'settings', label: 'Configuración',       route: 'SettingsScreen' },
+  { key: 'legal',    label: 'Legal / Seguridad',   route: 'LegalScreen' },
 ];
 
 export default function EditProfileMenuScreen({ navigation }: any) {
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const data = await getProfile();
+      setProfile(data);
+    } catch (err) {
+      console.log('Error cargando perfil:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => { fetchProfile(); }, [fetchProfile])
+  );
+
+  const nombre = profile?.nombre || 'Usuario';
+  const apodo  = profile?.apodo  ? `@${profile.apodo}` : `@${nombre.toLowerCase().replace(' ', '')}`;
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -32,9 +63,9 @@ export default function EditProfileMenuScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
         <Text style={styles.profileIdentity}>
-          <Text style={styles.username}>@Rodi</Text>
+          <Text style={styles.username}>{apodo}</Text>
           {'  |  '}
-          <Text style={styles.name}>Rodilia</Text>
+          <Text style={styles.name}>{nombre}</Text>
         </Text>
       </View>
 

@@ -1,261 +1,407 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getPosts, getForums, reactToPost, deletePost } from '../../../services/communityService';
 
 type Post = {
-    id: string;
-    author: string;
-    timeAgo: string;
-    title: string;
-    body: string;
-    image?: any;
-    likes: number;
-    comments: number;
+  id: string;
+  titulo?: string;
+  autor: { id: string; nombre: string };
+  comunidad_id: string;
+  created_at: string;
+  contenido: string;
+  total_comentarios: number;
+  total_reacciones: number;
+  mis_reacciones: string[];
+  es_mio: boolean;
 };
 
-const MOCK_POSTS: Post[] = [
-    {
-        id: '1',
-        author: 'Carlos Santos',
-        timeAgo: '4h',
-        title: 'Hombres sean sinceros... como hacen para no ceder a la tentación cuando sus novias les invitan tomar un traguito',
-        body: 'Hola chicos, hace una semana me pasó una situación que no supe muy bien cómo manejar. Mi novia me invitó a tomar "solo un traguito" para...',
-        likes: 100,
-        comments: 120,
-    },
-    {
-        id: '2',
-        author: 'Juan Perez',
-        timeAgo: '3d',
-        title: '',
-        body: '',
-        image: require('../../../assets/images/contenido3.png'),
-        likes: 45,
-        comments: 12,
-    },
-];
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
 
-const DAILY_FORUM = {
-    question: '¿Qué podrías hacer solo por hoy para cuidarte y mantener tu paz interior?',
-};
-
-function PostCard({ post, onPress, onPressAuthor }: {
-    post: Post;
-    onPress: () => void;
-    onPressAuthor: () => void;
+function PostCard({ post, onPress, onPressAuthor, onDelete, onReact, esModerador }: {
+  post: Post;
+  onPress: () => void;
+  onPressAuthor: () => void;
+  onDelete: () => void;
+  onReact: (tipo: string) => void;
+  esModerador: boolean;
 }) {
-    return (
-        <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.9}>
-            <TouchableOpacity style={styles.postHeader} onPress={onPressAuthor} activeOpacity={0.7}>
-                <View style={styles.postAvatar}>
-                    <Feather name="user" size={18} color={colors.textMuted} />
-                </View>
-                <Text style={styles.postAuthor}>{post.author}</Text>
-                <Text style={styles.postTime}>{post.timeAgo}</Text>
-            </TouchableOpacity>
-            {post.title ? <Text style={styles.postTitle}>{post.title}</Text> : null}
-            {post.body ? <Text style={styles.postBody}>{post.body}</Text> : null}
-            {post.image && (
-                <Image source={post.image} style={styles.postImage} resizeMode="cover" />
-            )}
-            <View style={styles.postActions}>
-                <TouchableOpacity style={styles.postAction}>
-                    <Feather name="heart" size={18} color={colors.textMuted} />
-                    <Text style={styles.postActionText}>{post.likes}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.postAction}>
-                    <Feather name="message-circle" size={18} color={colors.textMuted} />
-                    <Text style={styles.postActionText}>{post.comments}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.postAction, { marginLeft: 'auto' }]}>
-                    <Feather name="share" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-            </View>
+  return (
+    <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.9}>
+      <TouchableOpacity style={styles.postHeader} onPress={onPressAuthor} activeOpacity={0.7}>
+        <View style={styles.postAvatar}>
+          <Feather name="user" size={18} color={colors.textMuted} />
+        </View>
+        <Text style={styles.postAuthor}>{post.autor.nombre}</Text>
+        <Text style={styles.postTime}>{timeAgo(post.created_at)}</Text>
+        {(post.es_mio || esModerador) && (
+          <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Feather name="trash-2" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+
+      {post.titulo ? <Text style={styles.postTitle}>{post.titulo}</Text> : null}
+      {post.contenido ? <Text style={styles.postBody}>{post.contenido}</Text> : null}
+
+      <View style={styles.postActions}>
+        <TouchableOpacity
+          style={styles.postAction}
+          onPress={() => onReact('LIKE')}
+        >
+          <Feather
+            name="heart"
+            size={18}
+            color={post.mis_reacciones?.includes('LIKE') ? colors.primary : colors.textMuted}
+          />
+          <Text style={styles.postActionText}>{post.total_reacciones}</Text>
         </TouchableOpacity>
-    );
+        <TouchableOpacity style={styles.postAction} onPress={onPress}>
+          <Feather name="message-circle" size={18} color={colors.textMuted} />
+          <Text style={styles.postActionText}>{post.total_comentarios}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.postAction, { marginLeft: 'auto' }]}>
+          <Feather name="share" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
 }
 
 export default function CommunityDetailScreen({ navigation, route }: any) {
-    const { community } = route.params;
+  const { community } = route.params;
+  const communityName = community.nombre || community.name || '';
 
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [dailyForum, setDailyForum] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [postsData, forumsData] = await Promise.all([
+        getPosts(community.id),
+        getForums(community.id).catch(() => []),
+      ]);
+      setPosts(postsData);
+      setDailyForum(forumsData[0] || null);
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'Error al cargar la comunidad.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [community.id]);
+
+  useFocusEffect(
+    useCallback(() => { fetchData(); }, [fetchData])
+  );
+
+  const handleReact = async (postId: string, tipo: string) => {
+    try {
+      await reactToPost(community.id, postId, tipo);
+      await fetchData();
+    } catch {}
+  };
+
+  const handleDelete = (postId: string) => {
+    Alert.alert('Eliminar post', '¿Estás seguro?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar', style: 'destructive',
+        onPress: async () => {
+          try {
+            await deletePost(community.id, postId);
+            await fetchData();
+          } catch (err: any) {
+            Alert.alert('Error', err.response?.data?.message || 'No se pudo eliminar.');
+          }
+        },
+      },
+    ]);
+  };
+
+  if (loading) {
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Feather name="chevron-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>{community.name}</Text>
-                <View style={styles.headerActions}>
-                    <TouchableOpacity
-                        style={styles.headerButton}
-                        onPress={() => navigation.navigate('CommunityChat', { community })}
-                    >
-                        <Feather name="more-horizontal" size={22} color={colors.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.headerButton}
-                        onPress={() => navigation.navigate('CreatePostCommunity', { community })}
-                    >
-                        <Feather name="plus" size={22} color={colors.text} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
-                {/* Foro del día */}
-                <TouchableOpacity
-                    style={styles.forumCard}
-                    onPress={() => navigation.navigate('DailyForum')}
-                    activeOpacity={0.9}
-                >
-                    <Text style={styles.forumEmoji}>✏️</Text>
-                    <View style={styles.forumContent}>
-                        <Text style={styles.forumTitle}>Foro del día</Text>
-                        <Text style={styles.forumQuestion}>{DAILY_FORUM.question}</Text>
-                    </View>
-                </TouchableOpacity>
-
-                {/* Posts */}
-                {MOCK_POSTS.map((post) => (
-                    <PostCard
-                        key={post.id}
-                        post={post}
-                        onPress={() => navigation.navigate('PostDetail', { post })}
-                        onPressAuthor={() => navigation.navigate('UserProfile', {
-                            isOwn: false,
-                            profile: {
-                                name: post.author,
-                                username: '@' + post.author.toLowerCase().replace(' ', ''),
-                                bio: 'Miembro de la comunidad.',
-                                publications: 15,
-                                communities: [community.name],
-                                medals: ['🥇', '🥇'],
-                                totalMedals: 2,
-                                level: 3,
-                                levelName: 'Entregar',
-                                daysClean: 42,
-                                medalsAchieved: 2,
-                            },
-                        })}
-                    />
-                ))}
-
-                <View style={{ height: spacing.xl }} />
-            </ScrollView>
-        </View>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
     );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{communityName}</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('CommunityChat', { community })}
+          >
+            <Feather name="more-horizontal" size={22} color={colors.text} />
+          </TouchableOpacity>
+          {community.tipo_acceso !== 'SOLO_VER' && (
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => navigation.navigate('CreatePostCommunity', { community })}
+            >
+              <Feather name="plus" size={22} color={colors.text} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchData(); }}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        {/* Foro del día */}
+        <TouchableOpacity
+          style={styles.forumCard}
+          onPress={() => dailyForum && navigation.navigate('DailyForum', {
+            communities: [community],
+            initialForum: dailyForum,
+          })}
+          activeOpacity={0.9}
+        >
+          <Text style={styles.forumEmoji}>✏️</Text>
+          <View style={styles.forumContent}>
+            <Text style={styles.forumTitle}>Foro del día</Text>
+            <Text style={styles.forumQuestion}>
+              {dailyForum?.pregunta || 'No hay foro activo hoy'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Posts */}
+        {posts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="edit-3" size={40} color={colors.border} />
+            <Text style={styles.emptyTitle}>Sin posts aún</Text>
+            <Text style={styles.emptySubtitle}>Sé el primero en publicar algo.</Text>
+          </View>
+        ) : (
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              esModerador={community.es_moderador === true}
+              onPress={() => navigation.navigate('PostDetail', {
+                post,
+                communityId: community.id,
+                community,
+              })}
+              onPressAuthor={() => navigation.navigate('UserProfile', {
+                isOwn: false,
+                profile: {
+                  name: post.autor.nombre,
+                  username: '@' + post.autor.nombre.toLowerCase().replace(' ', ''),
+                  bio: 'Miembro de la comunidad.',
+                  publications: 0,
+                  communities: [communityName],
+                  medals: [],
+                  totalMedals: 0,
+                  level: 1,
+                  levelName: '',
+                  daysClean: 0,
+                  medalsAchieved: 0,
+                  isOwn: false,
+                },
+              })}
+              onDelete={() => handleDelete(post.id)}
+              onReact={(tipo) => handleReact(post.id, tipo)}
+            />
+          ))
+        )}
+
+        <View style={{ height: spacing.xl }} />
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: 60,
-        paddingHorizontal: spacing.xl,
-        paddingBottom: spacing.lg,
-    },
-    headerTitle: { fontSize: fontSizes.xxl, fontWeight: '800', color: colors.text },
-    headerActions: { flexDirection: 'row', gap: spacing.sm },
-    headerButton: {
-        width: 36,
-        height: 36,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    scroll: {
-        paddingHorizontal: spacing.xl,
-        gap: spacing.md,
-        paddingBottom: spacing.xl,
-    },
-    forumCard: {
-        backgroundColor: colors.white,
-        borderRadius: borderRadius.md,
-        padding: spacing.lg,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.md,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-    },
-    forumEmoji: { fontSize: 32 },
-    forumContent: { flex: 1 },
-    forumTitle: {
-        fontSize: fontSizes.md,
-        fontWeight: '700',
-        color: colors.text,
-        marginBottom: 4,
-    },
-    forumQuestion: {
-        fontSize: fontSizes.sm,
-        color: colors.textMuted,
-        lineHeight: 18,
-    },
-    postCard: {
-        backgroundColor: colors.white,
-        borderRadius: borderRadius.md,
-        padding: spacing.lg,
-        gap: spacing.sm,
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-    },
-    postHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.sm,
-    },
-    postAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F0F0F0',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    postAuthor: {
-        flex: 1,
-        fontSize: fontSizes.sm,
-        fontWeight: '700',
-        color: colors.text,
-    },
-    postTime: { fontSize: fontSizes.xs, color: colors.textMuted },
-    postTitle: {
-        fontSize: fontSizes.md,
-        fontWeight: '700',
-        color: colors.text,
-        lineHeight: 22,
-    },
-    postBody: {
-        fontSize: fontSizes.sm,
-        color: colors.textLight,
-        lineHeight: 20,
-    },
-    postImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: borderRadius.sm,
-    },
-    postActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.lg,
-        marginTop: spacing.xs,
-    },
-    postAction: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: spacing.xs,
-    },
-    postActionText: { fontSize: fontSizes.sm, color: colors.textMuted },
+  container: { 
+    flex: 1, 
+    backgroundColor: colors.background 
+  },
+
+  header: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    paddingTop: 60, 
+    paddingHorizontal: spacing.xl, 
+    paddingBottom: spacing.lg,
+  },
+
+  headerTitle: { 
+    fontSize: fontSizes.xxl, 
+    fontWeight: '800', 
+    color: colors.text 
+  },
+
+  headerActions: { 
+    flexDirection: 'row', 
+    gap: spacing.sm 
+  },
+
+  headerButton: { 
+    width: 36, 
+    height: 36, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+
+  scroll: { 
+    paddingHorizontal: spacing.xl, 
+    gap: spacing.md, 
+    paddingBottom: spacing.xl 
+  },
+
+  forumCard: {
+    backgroundColor: colors.white, 
+    borderRadius: borderRadius.md, 
+    padding: spacing.lg,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: spacing.md, 
+    elevation: 2,
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.06, 
+    shadowRadius: 4,
+  },
+
+  forumEmoji: { 
+    fontSize: 32 
+  },
+
+  forumContent: { 
+    flex: 1 
+  },
+
+  forumTitle: { 
+    fontSize: fontSizes.md, 
+    fontWeight: '700', 
+    color: colors.text, 
+    marginBottom: 4 
+  },
+
+  forumQuestion: { 
+    fontSize: fontSizes.sm, 
+    color: colors.textMuted, 
+    lineHeight: 18 
+  },
+
+  postCard: {
+    backgroundColor: colors.white, 
+    borderRadius: borderRadius.md, 
+    padding: spacing.lg,
+    gap: spacing.sm, 
+    elevation: 2, 
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.06, 
+    shadowRadius: 4,
+  },
+
+  postHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: spacing.sm 
+  },
+
+  postAvatar: {
+    width: 40, 
+    height: 40, 
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+  },
+
+  postAuthor: { 
+    flex: 1, 
+    fontSize: fontSizes.sm, 
+    fontWeight: '700', 
+    color: colors.text 
+  },
+
+  postTime: { 
+    fontSize: fontSizes.xs, 
+    color: colors.textMuted 
+  },
+
+  postTitle: { 
+    fontSize: fontSizes.md, 
+    fontWeight: '700', 
+    color: colors.text, 
+    lineHeight: 22 
+  },
+
+  postBody: { 
+    fontSize: fontSizes.sm, 
+    color: colors.textLight, 
+    lineHeight: 20 
+  },
+
+  postActions: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: spacing.lg, 
+    marginTop: spacing.xs,
+  },
+
+  postAction: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: spacing.xs 
+  },
+
+  postActionText: { 
+    fontSize: fontSizes.sm, 
+    color: colors.textMuted 
+  },
+
+  emptyState: {
+    alignItems: 'center', 
+    paddingTop: spacing.xl * 2, 
+    gap: spacing.md, 
+    paddingHorizontal: spacing.xl,
+  },
+
+  emptyTitle: { 
+    fontSize: fontSizes.lg, 
+    fontWeight: '700', 
+    color: colors.text 
+  },
+
+  emptySubtitle: { 
+    fontSize: fontSizes.md, 
+    color: colors.textMuted, 
+    textAlign: 'center' 
+  },
 });

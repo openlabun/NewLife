@@ -1,120 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput,
+  TextInput, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { getForumDetail, replyForum } from '../../../services/communityService';
 
 type Reply = {
   id: string;
-  author: string;
-  community: string;
-  timeAgo: string;
-  text: string;
-  likes: number;
-  comments: number;
-  replies?: Reply[];
+  autor: { id: string; nombre: string };
+  contenido: string;
+  created_at: string;
+  es_mio: boolean;
 };
 
-const MOCK_REPLIES: Reply[] = [
-  {
-    id: '1',
-    author: '@Rodi',
-    community: 'Sobriedad en pareja',
-    timeAgo: '3d',
-    text: 'Hace unas semanas le conté a mi novia que estoy dejando el alcohol. Me da miedo que no entienda del todo lo importante que es esto para mí...',
-    likes: 100,
-    comments: 120,
-    replies: [
-      {
-        id: '1-1',
-        author: '@Rodi',
-        community: '',
-        timeAgo: '2d',
-        text: 'Te entiendo totalmente, bro. A mí me pasó igual con mi pareja. Al principio no comprendía que para mí "una copa" podía ser una recaída. Lo...',
-        likes: 0,
-        comments: 0,
-      },
-      {
-        id: '1-2',
-        author: '@Rodi',
-        community: '',
-        timeAgo: '2d',
-        text: 'Te entiendo totalmente, bro. A mí me pasó igual con mi pareja. Al principio no comprendía que para mí "una copa" podía ser una recaída. Lo...',
-        likes: 0,
-        comments: 0,
-      },
-    ],
-  },
-  {
-    id: '2',
-    author: '@Carlos',
-    community: 'AA Barranquilla',
-    timeAgo: '2d',
-    text: 'Hoy me propuse dar una caminata de 20 minutos antes del trabajo. Fue el mejor comienzo de día que he tenido en semanas.',
-    likes: 45,
-    comments: 8,
-    replies: [],
-  },
-];
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
 
-function ReplyCard({ reply, isNested = false }: { reply: Reply; isNested?: boolean }) {
-  const [liked, setLiked] = useState(false);
-  const [showReplies, setShowReplies] = useState(false);
-
+function ReplyCard({ reply }: { reply: Reply }) {
   return (
-    <View style={[styles.replyCard, isNested && styles.replyCardNested]}>
+    <View style={styles.replyCard}>
       <View style={styles.replyHeader}>
         <View style={styles.replyAvatar}>
           <Feather name="user" size={14} color={colors.textMuted} />
         </View>
         <View style={styles.replyAuthorInfo}>
-          <Text style={styles.replyAuthor}>{reply.author}</Text>
-          {reply.community ? (
-            <Text style={styles.replyCommunity}>{reply.community}</Text>
-          ) : null}
+          <Text style={styles.replyAuthor}>{reply.autor.nombre}</Text>
         </View>
-        <Text style={styles.replyTime}>{reply.timeAgo}</Text>
+        <Text style={styles.replyTime}>{timeAgo(reply.created_at)}</Text>
       </View>
-
-      <Text style={styles.replyText}>{reply.text}</Text>
-
-      {!isNested && (
-        <View style={styles.replyActions}>
-          <TouchableOpacity style={styles.replyAction} onPress={() => setLiked(!liked)}>
-            <Feather name="heart" size={16} color={liked ? '#FF6B6B' : colors.textMuted} />
-            <Text style={styles.replyActionText}>{reply.likes}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.replyAction}
-            onPress={() => setShowReplies(!showReplies)}
-          >
-            <Feather name="message-circle" size={16} color={colors.textMuted} />
-            <Text style={styles.replyActionText}>{reply.comments}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.replyAction, { marginLeft: 'auto' }]}>
-            <Feather name="share" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Respuestas anidadas */}
-      {showReplies && reply.replies && reply.replies.length > 0 && (
-        <View style={styles.nestedReplies}>
-          {reply.replies.map((r) => (
-            <ReplyCard key={r.id} reply={r} isNested />
-          ))}
-        </View>
-      )}
+      <Text style={styles.replyText}>{reply.contenido}</Text>
     </View>
   );
 }
 
 export default function ForumDetailScreen({ navigation, route }: any) {
-  const { forum } = route.params;
+  const { forum, community } = route.params;
+
+  const [detail, setDetail] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [reflection, setReflection] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const canReply = community?.tipo_acceso !== 'SOLO_VER';
   const isToday = forum.isToday;
+
+  const fetchDetail = useCallback(async () => {
+    try {
+      const data = await getForumDetail(community.id, forum.id);
+      setDetail(data);
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'Error al cargar el foro.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [community?.id, forum.id]);
+
+  useFocusEffect(
+    useCallback(() => { fetchDetail(); }, [fetchDetail])
+  );
+
+  const handleSend = async () => {
+    if (!reflection.trim()) return;
+    setSending(true);
+    try {
+      await replyForum(community.id, forum.id, reflection.trim());
+      setReflection('');
+      await fetchDetail();
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.message || 'No se pudo enviar la respuesta.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const replies: Reply[] = detail?.respuestas || [];
+  const forumDate = forum.isToday
+    ? 'Foro del día'
+    : forum.fecha || new Date(forum.created_at).toLocaleDateString('es-CO');
 
   return (
     <View style={styles.container}>
@@ -125,19 +106,28 @@ export default function ForumDetailScreen({ navigation, route }: any) {
         <Text style={styles.headerTitle}>Foros</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchDetail(); }}
+            colors={[colors.primary]}
+          />
+        }
+      >
         {/* Card del foro */}
         <View style={styles.forumCard}>
           <Text style={styles.forumEmoji}>✏️</Text>
           <View style={styles.forumContent}>
-            <Text style={styles.forumDate}>{forum.date}</Text>
-            <Text style={styles.forumQuestion}>{forum.question}</Text>
+            <Text style={styles.forumDate}>{forumDate}</Text>
+            <Text style={styles.forumQuestion}>{detail?.pregunta || forum.pregunta}</Text>
           </View>
         </View>
 
-        {/* Input reflexión — solo foro del día */}
-        {isToday && (
+        {/* Input reflexión */}
+        {canReply && (
           <View style={styles.inputRow}>
             <TextInput
               style={styles.reflectionInput}
@@ -147,18 +137,29 @@ export default function ForumDetailScreen({ navigation, route }: any) {
               onChangeText={setReflection}
             />
             <TouchableOpacity
-              style={[styles.sendButton, !reflection.trim() && styles.sendButtonDisabled]}
-              disabled={!reflection.trim()}
+              style={[styles.sendButton, (!reflection.trim() || sending) && styles.sendButtonDisabled]}
+              disabled={!reflection.trim() || sending}
+              onPress={handleSend}
             >
-              <Feather name="play" size={18} color={colors.white} />
+              {sending
+                ? <ActivityIndicator size="small" color={colors.white} />
+                : <Feather name="play" size={18} color={colors.white} />
+              }
             </TouchableOpacity>
           </View>
         )}
 
         {/* Respuestas */}
-        {MOCK_REPLIES.map((reply) => (
-          <ReplyCard key={reply.id} reply={reply} />
-        ))}
+        {replies.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather name="message-circle" size={36} color={colors.border} />
+            <Text style={styles.emptyText}>Sé el primero en responder</Text>
+          </View>
+        ) : (
+          replies.map((reply) => (
+            <ReplyCard key={reply.id} reply={reply} />
+          ))
+        )}
 
         <View style={{ height: spacing.xl }} />
       </ScrollView>
@@ -167,141 +168,153 @@ export default function ForumDetailScreen({ navigation, route }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { 
+    flex: 1, 
+    backgroundColor: colors.background 
+  },
+
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', 
+    alignItems: 'center', 
     gap: spacing.md,
-    paddingTop: 60,
-    paddingHorizontal: spacing.xl,
+    paddingTop: 60, 
+    paddingHorizontal: spacing.xl, 
     paddingBottom: spacing.lg,
   },
-  headerTitle: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
-  scroll: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+
+  headerTitle: { 
+    fontSize: fontSizes.lg, 
+    fontWeight: '700', 
+    color: colors.text 
   },
+
+  scroll: { 
+    paddingHorizontal: spacing.xl, 
+    gap: spacing.md, 
+    paddingBottom: spacing.xl 
+  },
+
   forumCard: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primary, 
     borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: spacing.lg, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
     gap: spacing.md,
   },
-  forumEmoji: { fontSize: 36 },
-  forumContent: { flex: 1, gap: 4 },
-  forumDate: {
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.white,
+
+  forumEmoji: { 
+    fontSize: 36 
   },
-  forumQuestion: {
-    fontSize: fontSizes.sm,
-    color: 'rgba(255,255,255,0.8)',
-    lineHeight: 18,
+
+  forumContent: { 
+    flex: 1, 
+    gap: 4 
   },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+
+  forumDate: { 
+    fontSize: fontSizes.sm, 
+    fontWeight: '700', 
+    color: colors.white 
   },
+
+  forumQuestion: { 
+    fontSize: fontSizes.sm, 
+    color: 'rgba(255,255,255,0.8)', 
+    lineHeight: 18 
+  },
+
+  inputRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: spacing.sm 
+  },
+
   reflectionInput: {
-    flex: 1,
-    backgroundColor: colors.white,
+    flex: 1, 
+    backgroundColor: colors.white, 
     borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.lg, 
     paddingVertical: spacing.md,
-    fontSize: fontSizes.md,
-    color: colors.text,
+    fontSize: fontSizes.md, 
+    color: colors.text, 
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.04, 
     shadowRadius: 3,
   },
+
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', 
+    justifyContent: 'center', 
     elevation: 2,
   },
-  sendButtonDisabled: {
-    opacity: 0.4,
+
+  sendButtonDisabled: { 
+    opacity: 0.4 
   },
+
   replyCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.white, 
+    borderRadius: borderRadius.md, 
     padding: spacing.lg,
-    gap: spacing.sm,
-    elevation: 2,
+    gap: spacing.sm, 
+    elevation: 2, 
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.06, 
     shadowRadius: 4,
   },
-  replyCardNested: {
-    backgroundColor: colors.background,
-    elevation: 0,
-    shadowOpacity: 0,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.border,
-    borderRadius: 0,
-    paddingLeft: spacing.md,
+
+  replyHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: spacing.sm 
   },
-  replyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+
   replyAvatar: {
-    width: 32,
-    height: 32,
+    width: 32, 
+    height: 32, 
     borderRadius: 16,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
+    backgroundColor: '#F0F0F0', 
+    alignItems: 'center', 
     justifyContent: 'center',
   },
-  replyAuthorInfo: { flex: 1 },
-  replyAuthor: {
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.text,
+
+  replyAuthorInfo: { 
+    flex: 1 
   },
-  replyCommunity: {
-    fontSize: fontSizes.xs,
-    color: colors.textMuted,
+
+  replyAuthor: { 
+    fontSize: fontSizes.sm, 
+    fontWeight: '700', 
+    color: colors.text 
   },
-  replyTime: {
-    fontSize: fontSizes.xs,
-    color: colors.textMuted,
+
+  replyTime: { 
+    fontSize: fontSizes.xs, 
+    color: colors.textMuted 
   },
-  replyText: {
-    fontSize: fontSizes.sm,
-    color: colors.textLight,
-    lineHeight: 20,
+
+  replyText: { 
+    fontSize: fontSizes.sm, 
+    color: colors.textLight, 
+    lineHeight: 20 
   },
-  replyActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    marginTop: spacing.xs,
+
+  emptyState: { 
+    alignItems: 'center', 
+    paddingTop: spacing.xl * 2, 
+    gap: spacing.md 
   },
-  replyAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  replyActionText: {
-    fontSize: fontSizes.sm,
-    color: colors.textMuted,
-  },
-  nestedReplies: {
-    marginTop: spacing.sm,
-    gap: spacing.sm,
+
+  emptyText: { 
+    fontSize: fontSizes.md, 
+    color: colors.textMuted 
   },
 });
