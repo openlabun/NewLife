@@ -11,7 +11,7 @@ export class DailyCheckinUseCase {
     @Inject('IProgressProviderPort')
     private readonly progressProvider: IProgressProviderPort,
     private readonly systemAuth: SystemAuthService,
-  ) { }
+  ) {}
 
   async execute(uid: string, dto: DailyCheckinDto, userToken: string) {
     this.logger.log(`📝 Iniciando registro diario para usuario: ${uid}`);
@@ -24,17 +24,24 @@ export class DailyCheckinUseCase {
       }
     }
 
+    // ✨ GENERAR FECHA EN UTC-5
+    const ahora = new Date();
+    const fechaUTC5 = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
+    const fechaFormato = fechaUTC5.toISOString().slice(0, 19) + '-05:00';
+
     const data = {
       usuario_id: uid,
       emocion: dto.emocion,
       consumo: dto.consumo,
       gratitud: dto.gratitud,
+      fecha: fechaFormato, // ✨ AGREGAR FECHA
       ubicacion: dto.consumo ? dto.ubicacion : null,
       social: dto.consumo ? dto.social : null,
       reflexion: dto.consumo ? dto.reflexion : null,
     };
 
-    this.logger.log(`📤 Creando nuevo registro diario (permite múltiples por día)`);
+    this.logger.log(`📤 Creando nuevo registro diario`);
+    this.logger.log(`⏰ Fecha con timezone: ${fechaFormato}`);
 
     const checkin = await this.progressProvider.createDailyCheckin(data, userToken);
 

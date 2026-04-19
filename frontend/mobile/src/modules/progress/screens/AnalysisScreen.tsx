@@ -11,18 +11,21 @@ import { colors } from '../../../constants/theme';
 import { useAnalysisData } from './analysis/hooks/useAnalysisData';
 import { EmotionBarChart } from './analysis/charts/EmotionBarChart';
 import { HorizontalBarChart } from './analysis/charts/HorizontalBarChart';
+import { ConsumptionByDayChart } from './analysis/charts/ConsumptionByDayChart';
 import { PieChart } from './analysis/charts/PieChart';
 import { EmptyStateEmotions } from './analysis/components/EmptyStateEmotions';
 import { getColorByIndex, getColorByZone } from './analysis/utils/colorHelpers';
 import { styles } from './analysis/styles/analysisStyles';
 import { shortenVinculoLabel, shortenZonaLabel } from './analysis/utils/labelMappers';
 import { useEmotionStats } from './analysis/hooks/useEmotionStats';
+import { useConsumptionByDay } from './analysis/hooks/useConsumptionByDay';
 
 export default function AnalysisScreen({ navigation }: any) {
   const { summary, riskCharts, loading, error } = useAnalysisData();
   const { emotionStats, loading: emotionLoading } = useEmotionStats();
+  const { consumptionByDay, loading: consumptionLoading } = useConsumptionByDay();
 
-  if (loading || emotionLoading) {    
+  if (loading || emotionLoading || consumptionLoading) {    
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -119,6 +122,11 @@ export default function AnalysisScreen({ navigation }: any) {
           {/* Vínculos de Riesgo - SOLO SI HAY CONSUMO */}
           {hasConsumption && (
             <HorizontalBarChart data={risksLinksData} />
+          )}
+
+          {/* Consumo por Día - SOLO SI HAY CONSUMO */}
+          {hasConsumption && (
+            <ConsumptionByDayChart data={consumptionByDay} />
           )}
 
           {/* Zonas de Mayor Riesgo - SOLO SI HAY CONSUMO */}

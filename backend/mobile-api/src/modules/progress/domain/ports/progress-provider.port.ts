@@ -16,7 +16,7 @@ export interface SobrietyRecord {
 
 export interface IProgressProviderPort {
   createDailyCheckin(data: Partial<DailyCheckinEntity>, token: string): Promise<any>;
-  updateSobrietyDate(usuarioId: string, fechaUTC: string, masterToken: string): Promise<void>;  // ✅ AGREGAR fechaUTC
+  updateSobrietyDate(usuarioId: string, fechaUTC: string, masterToken: string): Promise<void>;
   getGratitudeHistory(usuarioId: string, token: string): Promise<GratitudeEntryResult[]>;
   getCamino(usuarioId: string, masterToken: string): Promise<CaminoEntity | null>;
   upsertCamino(data: Partial<CaminoEntity>, masterToken: string): Promise<void>;
@@ -26,4 +26,5 @@ export interface IProgressProviderPort {
   getMonthCheckins(usuarioId: string, month: number, year: number, token: string): Promise<any[]>;
   getSobrietyRecord(usuarioId: string, masterToken: string): Promise<SobrietyRecord | null>;
   getAllRegistrosDiario(usuarioId: string, token: string): Promise<Array<{ fecha: string; emocion: string }>>;
+  getConsumptionDates(usuarioId: string, token: string): Promise<Array<{ fecha: string; consumo: boolean }>>; // ✨ NUEVO
 }

@@ -15,6 +15,7 @@ import { InitCaminoUseCase } from '../../application/use-cases/init-camino.use-c
 import { InitSobrietyUseCase } from '../../application/use-cases/init-sobriety.use-case';
 import { GetAllRegistrosDiarioUseCase } from '../../application/use-cases/get-all-registros-diario.use-case';
 import { Logger } from '@nestjs/common';
+import { GetConsumptionDatesUseCase } from '../../application/use-cases/get-consumption-dates.use-case';
 
 @ApiTags('Progress')
 @ApiBearerAuth()
@@ -36,6 +37,7 @@ export class ProgressController {
     private readonly initCaminoUseCase: InitCaminoUseCase,
     private readonly initSobrietyUseCase: InitSobrietyUseCase,
     private readonly getAllRegistrosDiarioUseCase: GetAllRegistrosDiarioUseCase,
+    private readonly getConsumptionDatesUseCase: GetConsumptionDatesUseCase,
   ) {}
 
   @Post('init')
@@ -52,11 +54,28 @@ export class ProgressController {
     return this.initSobrietyUseCase.execute(req.user.uid, body.fecha_ultimo_consumo, masterToken);
   }
 
-  @Post('daily-checkin')
-  @ApiOperation({ summary: 'Registro diario del usuario (emoción, gratitud, consumo)' })
+@Post('daily-checkin')
   async dailyCheckin(@Req() req, @Body() dto: DailyCheckinDto) {
-    const userToken = req.headers.authorization.split(' ')[1];
-    return this.dailyCheckinUseCase.execute(req.user.uid, dto, userToken);
+    try {
+      console.log('📤 Body recibido:', dto);
+
+      // ✨ GENERAR FECHA ACTUAL Y CONVERTIR A UTC-5
+      const ahora = new Date();
+      const fechaUTC5 = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
+      
+      const dataWithTimezone = {
+        ...dto,
+        fecha: fechaUTC5.toISOString().slice(0, 19) + '-05:00', // "2026-04-19T01:10:19-05:00"
+      };
+
+      console.log('📤 Data con timezone:', dataWithTimezone);
+
+      const userToken = req.headers.authorization.split(' ')[1];
+      return this.dailyCheckinUseCase.execute(req.user.uid, dataWithTimezone, userToken);
+    } catch (error) {
+      this.logger.error('Error guardando daily checkin:', error);
+      throw error;
+    }
   }
 
   @Get('gratitude-history')
@@ -139,6 +158,28 @@ export class ProgressController {
       };
     } catch (error) {
       this.logger.error('Error obteniendo registros:', error);
+      throw error;
+    }
+  }
+
+  @Get('daily-checkin/consumption-dates')
+  @ApiOperation({ summary: 'Obtener fechas y estado de consumo del usuario' })
+  async getConsumptionDates(@Req() req: any) {
+    try {
+      const usuarioId = req.user.uid;
+      const token = req.headers.authorization?.split(' ')[1];
+
+      const registros = await this.getConsumptionDatesUseCase.execute(
+        usuarioId,
+        token,
+      );
+
+      return {
+        registros,
+        total: registros.length,
+      };
+    } catch (error) {
+      this.logger.error('Error obteniendo fechas de consumo:', error);
       throw error;
     }
   }

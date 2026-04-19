@@ -11,9 +11,22 @@ export class RobleProgressAdapter implements IProgressProviderPort {
   constructor(private readonly dbService: DatabaseService) {}
 
   async createDailyCheckin(data: Partial<DailyCheckinEntity>, token: string): Promise<any> {
+    // ✨ SI VIENE FECHA, USARLA. SI NO, GENERAR CON UTC-5
+    let fecha: string;
+    
+    if (data.fecha) {
+      // Ya viene con UTC-5 del backend
+      fecha = data.fecha;
+    } else {
+      // Generar ahora en UTC-5
+      const ahora = new Date();
+      const fechaUTC5 = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
+      fecha = fechaUTC5.toISOString().slice(0, 19) + '-05:00';
+    }
+
     const record = {
       usuario_id: data.usuario_id,
-      fecha: new Date().toISOString(),
+      fecha: fecha, // ✨ USAR LA FECHA
       emocion: data.emocion,
       consumo: data.consumo,
       gratitud: data.gratitud,
@@ -21,6 +34,9 @@ export class RobleProgressAdapter implements IProgressProviderPort {
       social: data.social ?? null,
       reflexion: data.reflexion ?? null,
     };
+
+    console.log('📤 Guardando registro con fecha:', fecha);
+    
     return await this.dbService.insert('registro_diario', [record], token);
   }
 
@@ -171,6 +187,27 @@ export class RobleProgressAdapter implements IProgressProviderPort {
     } catch (error) {
       this.logger.error('Error obteniendo registros diarios:', error);
       throw new Error('No se pudieron obtener los registros');
+    }
+  }
+  
+  async getConsumptionDates(
+    usuarioId: string,
+    token: string,
+  ): Promise<Array<{ fecha: string; consumo: boolean }>> {
+    try {
+      // Obtener todos los registros (incluye consumo)
+      const registros = await this.getAllCheckins(usuarioId, token);
+
+      console.log('📊 Registros RAW getConsumptionDates:', registros);
+
+      // Mapear SOLO fecha y consumo
+      return registros.map((r: any) => ({
+        fecha: r.fecha,
+        consumo: r.consumo || false,
+      }));
+    } catch (error) {
+      this.logger.error('Error en getConsumptionDates:', error);
+      throw new Error('No se pudieron obtener las fechas de consumo');
     }
   }
 }

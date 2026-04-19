@@ -205,7 +205,7 @@ export const getSobrietyTime = async () => {
       contador: { dias: 0, horas: 0, minutos: 0 },
     };
   }
-}
+};
 
 /**
  * Obtiene resumen para home: apodo, pronombre, gasto semanal, tiempo sobrio

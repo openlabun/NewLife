@@ -208,6 +208,23 @@ export const initCamino = async () => {
   }
 };
 
+
+/**
+ * Obtiene fechas y estado de consumo
+ */
+export const getConsumptionRecords = async () => {
+  try {
+    const response = await api.get('/progress/daily-checkin/consumption-dates');
+    const registros = response.data.registros || [];
+    
+    // Filtrar solo registros donde consumo es true
+    return registros.filter((r: any) => r.consumo === true);
+  } catch (error: any) {
+    console.error('❌ Error obteniendo registros de consumo:', error);
+    throw error;
+  }
+};
+
 /**
  * Export default para facilitar imports
  */
@@ -223,5 +240,6 @@ export default {
   getCaminoProgress,
   advanceCaminoProgress,
   initCamino,
-  getAllRegistros, // ✨ AGREGA ESTO
+  getAllRegistros,
+  getConsumptionRecords,
 };
