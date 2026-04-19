@@ -7,7 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { HomeModule } from '../home/home.module';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
-import { GetUserPostsUseCase } from './application/use-cases/get-user-posts.use-case';
+import { GetUserPostsUseCase } from '../communities/application/use-cases/get-user-posts.use-case';
 
 @Module({
   imports: [
