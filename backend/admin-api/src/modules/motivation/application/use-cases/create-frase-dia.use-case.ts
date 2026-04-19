@@ -17,7 +17,6 @@ export class CreateFraseDiaUseCase {
   ) {}
 
   async execute(input: CreateFraseUseCaseInput): Promise<FraseDia> {
-    // Validar unicidad por día
     const existing = await this.fraseDiaRepo.findByDate(input.dia);
     if (existing) {
       throw new ConflictException(`Ya existe una frase del día para la fecha ${input.dia}`);
@@ -26,7 +25,7 @@ export class CreateFraseDiaUseCase {
     return this.fraseDiaRepo.create({
       frase: input.frase,
       dia: input.dia,
-      frase_id: uuidv4(), // Generamos el UUID aquí para enviarlo a Roble
+      frase_id: uuidv4(),
     });
   }
 }

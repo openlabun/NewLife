@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './modules/admin/admin.module';
 import { MotivationModule } from './modules/motivation/motivation.module';
+import { CareModule } from './modules/care/care.module';
 
 @Module({
   imports: [
@@ -10,7 +11,8 @@ import { MotivationModule } from './modules/motivation/motivation.module';
       envFilePath: '.env',
     }),
     AdminModule,
-    MotivationModule, // <-- ¡Lo añadimos aquí!
+    MotivationModule,
+    CareModule,
   ],
 })
 export class AppModule {}

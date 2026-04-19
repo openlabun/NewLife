@@ -17,8 +17,6 @@ const FRASES_DIA_TABLE = 'frases_dia';
 export class RobleFraseDiaRepository implements IFraseDiaRepository {
   constructor(private readonly roble: RobleHttpService) {}
 
-  // ── Mappers ───────────────────────────────────────────────────────────────
-
   private mapFraseDia(row: Record<string, unknown>): FraseDia {
     return new FraseDia({
       _id: row._id as string,
@@ -28,8 +26,6 @@ export class RobleFraseDiaRepository implements IFraseDiaRepository {
       fecha_actualiz: row.fecha_actualiz as string,
     });
   }
-
-  // ── Métodos del repositorio ───────────────────────────────────────────────
 
   async findAll(): Promise<FraseDia[]> {
     const rows = await this.roble.dbRead<unknown[]>(FRASES_DIA_TABLE, {});
@@ -76,7 +72,6 @@ export class RobleFraseDiaRepository implements IFraseDiaRepository {
     if (data.frase !== undefined) updates.frase = data.frase;
     if (data.dia !== undefined) updates.dia = data.dia;
     
-    // Siempre actualizamos la fecha de modificación
     updates.fecha_actualiz = new Date().toISOString();
 
     const updated = await this.roble.dbUpdate<Record<string, unknown>>(

@@ -1,29 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiOkResponse,
-  ApiCreatedResponse,
-  ApiNotFoundResponse,
-  ApiBadRequestResponse,
-  ApiConflictResponse,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AdminJwtGuard } from '../../../admin/presentation/guards/admin-jwt.guard';
 import { RolesGuard, Roles } from '../../../admin/presentation/guards/roles.guard';
 import { UserRole } from '../../../admin/domain/entities/admin-user.entity';
 import { GetAllFrasesUseCase } from '../../application/use-cases/get-all-frases.use-case';
-import { GetFraseDiaByIdUseCase } from '../../application/use-cases/get-frase-dia-by-id.use-case';
+import { GetFraseDiaByDateUseCase } from '../../application/use-cases/get-frase-dia-by-date.use-case';
 import { CreateFraseDiaUseCase } from '../../application/use-cases/create-frase-dia.use-case';
 import { UpdateFraseDiaUseCase } from '../../application/use-cases/update-frase-dia.use-case';
 import { CreateFraseDiaDto, UpdateFraseDiaDto } from '../dtos/frase-dia.dto';
@@ -36,37 +17,25 @@ import { CreateFraseDiaDto, UpdateFraseDiaDto } from '../dtos/frase-dia.dto';
 export class FraseDiaController {
   constructor(
     private readonly getAllFrasesUseCase: GetAllFrasesUseCase,
-    private readonly getFraseDiaByIdUseCase: GetFraseDiaByIdUseCase,
+    private readonly getFraseDiaByDateUseCase: GetFraseDiaByDateUseCase,
     private readonly createFraseDiaUseCase: CreateFraseDiaUseCase,
     private readonly updateFraseDiaUseCase: UpdateFraseDiaUseCase,
-  ) {}
-
-  // ── Listar todas las frases ───────────────────────────────────────────────
+  ) { }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todas las frases del día' })
-  @ApiOkResponse({ description: 'Listado de todas las frases del día registradas.' })
+  @ApiOperation({ summary: 'Listar todas las frases del día registradas' })
   async getAll() {
     return this.getAllFrasesUseCase.execute();
   }
 
-  // ── Obtener una frase por ID ──────────────────────────────────────────────
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Obtener una frase del día por su ID' })
-  @ApiOkResponse({ description: 'Frase del día encontrada.' })
-  @ApiNotFoundResponse({ description: 'Frase del día no encontrada.' })
-  async getOne(@Param('id') id: string) {
-    return this.getFraseDiaByIdUseCase.execute(id);
+  @Get('fecha/:dia')
+  @ApiOperation({ summary: 'Obtener la frase de una fecha específica (YYYY-MM-DD)' })
+  async getByDate(@Param('dia') dia: string) {
+    return this.getFraseDiaByDateUseCase.execute(dia);
   }
 
-  // ── Crear una nueva frase ─────────────────────────────────────────────────
-
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Crear una nueva frase del día' })
-  @ApiCreatedResponse({ description: 'Frase del día creada exitosamente.' })
-  @ApiConflictResponse({ description: 'Ya existe una frase para esa fecha.' })
+  @ApiOperation({ summary: 'Programar una nueva frase para un día específico' })
   async create(@Body() dto: CreateFraseDiaDto) {
     return this.createFraseDiaUseCase.execute({
       frase: dto.frase,
@@ -74,20 +43,13 @@ export class FraseDiaController {
     });
   }
 
-  // ── Actualizar una frase ──────────────────────────────────────────────────
-
-  @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Editar una frase del día existente' })
-  @ApiOkResponse({ description: 'Frase del día actualizada.' })
-  @ApiNotFoundResponse({ description: 'Frase del día no encontrada.' })
-  @ApiConflictResponse({ description: 'Ya existe una frase para esa fecha.' })
-  @ApiBadRequestResponse({ description: 'No se envió ningún campo para actualizar.' })
+  @Patch('fecha/:dia')
+  @ApiOperation({ summary: 'Modificar el texto o la fecha de una frase buscándola por su fecha actual' })
   async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateFraseDiaDto,
+    @Param('dia') diaActual: string,
+    @Body() dto: UpdateFraseDiaDto
   ) {
-    return this.updateFraseDiaUseCase.execute(id, {
+    return this.updateFraseDiaUseCase.execute(diaActual, {
       frase: dto.frase,
       dia: dto.dia,
     });

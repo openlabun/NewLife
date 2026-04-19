@@ -1,29 +1,23 @@
-import {
-  Injectable,
-  Inject,
-  NotFoundException,
-} from '@nestjs/common';
-import { IFRASE_GUARDADA_PROVIDER_PORT } from '../../domain/ports/frase-dia.port';
-import type { IFraseGuardadaProviderPort } from '../../domain/ports/frase-dia.port';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { IMotivationProviderPort } from '../../domain/ports/motivation-provider.port';
 
 @Injectable()
 export class DesguardarFraseUseCase {
   constructor(
-    @Inject(IFRASE_GUARDADA_PROVIDER_PORT)
-    private readonly fraseGuardadaProvider: IFraseGuardadaProviderPort,
+    @Inject('IMotivationProviderPort')
+    private readonly motivationProvider: IMotivationProviderPort,
   ) {}
 
-  async execute(usuarioId: string, fraseId: string): Promise<void> {
-    // Verificar si la frase está guardada
-    const isGuardada = await this.fraseGuardadaProvider.isFraseGuardada(
-      usuarioId,
-      fraseId,
-    );
+  async execute(usuarioId: string, fraseId: string, userToken: string) {
+    const frasesGuardadas = await this.motivationProvider.getFrasesGuardadas(usuarioId, userToken);
+    const fraseAEliminar = frasesGuardadas.find(f => f.frase_id === fraseId);
 
-    if (!isGuardada) {
+    if (!fraseAEliminar) {
       throw new NotFoundException('La frase no está guardada por el usuario');
     }
 
-    await this.fraseGuardadaProvider.desguardarFrase(usuarioId, fraseId);
+    await this.motivationProvider.desguardarFrase(fraseAEliminar._id, userToken);
+
+    return { message: 'Frase removida de tus guardados exitosamente.' };
   }
 }

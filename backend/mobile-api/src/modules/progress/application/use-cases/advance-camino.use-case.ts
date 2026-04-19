@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IProgressProviderPort } from '../../domain/ports/progress-provider.port';
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 
@@ -8,9 +9,10 @@ export class AdvanceCaminoUseCase {
         @Inject('IProgressProviderPort')
         private readonly progressProvider: IProgressProviderPort,
         private readonly systemAuth: SystemAuthService,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
-    async execute(uid: string) {
+    async execute(uid: string, userToken: string) { 
         const masterToken = await this.systemAuth.getMasterToken();
         const camino = await this.progressProvider.getCamino(uid, masterToken);
 
@@ -19,6 +21,7 @@ export class AdvanceCaminoUseCase {
                 { _id: camino?._id, usuario_id: uid, nivel: 1, subnivel: 1 },
                 masterToken,
             );
+            this.eventEmitter.emit('progress.checkin.created', { usuarioId: uid, userToken });
             return { nivel: 1, subnivel: 1 };
         }
 
@@ -40,6 +43,8 @@ export class AdvanceCaminoUseCase {
             { _id: camino._id, usuario_id: uid, nivel: nuevoNivel, subnivel: nuevoSubnivel },
             masterToken,
         );
+
+        this.eventEmitter.emit('progress.checkin.created', { usuarioId: uid, userToken });
 
         return { nivel: nuevoNivel, subnivel: nuevoSubnivel };
     }

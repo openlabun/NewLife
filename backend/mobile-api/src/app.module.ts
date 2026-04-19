@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from './modules/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -7,13 +8,12 @@ import { CareModule } from './modules/care/care.module';
 import { HomeModule } from './modules/home/home.module';
 import { ProgressModule } from './modules/progress/progress.module';
 import { CommunitiesModule } from './modules/communities/communities.module';
-import { MotivationModule } from './modules/motivation/motivation.module'; // <-- Añadido aquí
+import { MotivationModule } from './modules/motivation/motivation.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot(),
     DatabaseModule,
     AuthModule,
     UsersModule,
@@ -21,7 +21,7 @@ import { MotivationModule } from './modules/motivation/motivation.module'; // <-
     HomeModule,
     ProgressModule,
     CommunitiesModule,
-    MotivationModule, // <-- Añadido aquí
+    MotivationModule,
   ],
 })
 export class AppModule { }

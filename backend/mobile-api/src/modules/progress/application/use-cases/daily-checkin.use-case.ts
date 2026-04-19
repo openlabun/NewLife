@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IProgressProviderPort } from '../../domain/ports/progress-provider.port';
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 import { DailyCheckinDto } from '../../presentation/dtos/daily-checkin.dto';
@@ -9,14 +10,13 @@ export class DailyCheckinUseCase {
     @Inject('IProgressProviderPort')
     private readonly progressProvider: IProgressProviderPort,
     private readonly systemAuth: SystemAuthService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async execute(uid: string, dto: DailyCheckinDto, userToken: string) {
     if (dto.consumo) {
       if (!dto.ubicacion || !dto.social || !dto.reflexion) {
-        throw new BadRequestException(
-          'Si hubo consumo, ubicacion, social y reflexion son obligatorios',
-        );
+        throw new BadRequestException('Si hubo consumo, ubicacion, social y reflexion son obligatorios');
       }
     }
 
@@ -31,7 +31,6 @@ export class DailyCheckinUseCase {
     };
 
     const existing = await this.progressProvider.getTodayCheckin(uid, userToken);
-
     let checkin: any;
     let isUpdate = false;
 
@@ -47,10 +46,10 @@ export class DailyCheckinUseCase {
       await this.progressProvider.updateSobrietyDate(uid, masterToken);
     }
 
+    this.eventEmitter.emit('progress.checkin.created', { usuarioId: uid, userToken });
+
     return {
-      message: isUpdate
-        ? 'Registro diario actualizado exitosamente.'
-        : 'Registro diario guardado exitosamente.',
+      message: isUpdate ? 'Registro diario actualizado exitosamente.' : 'Registro diario guardado exitosamente.',
       data: checkin,
     };
   }

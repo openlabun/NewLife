@@ -4,16 +4,16 @@ import { FRASE_DIA_REPOSITORY } from '../../domain/ports/frase-dia.repository.po
 import type { IFraseDiaRepository } from '../../domain/ports/frase-dia.repository.port';
 
 @Injectable()
-export class GetFraseDiaByIdUseCase {
+export class GetFraseDiaByDateUseCase {
   constructor(
     @Inject(FRASE_DIA_REPOSITORY)
     private readonly fraseDiaRepo: IFraseDiaRepository,
   ) {}
 
-  async execute(id: string): Promise<FraseDia> {
-    const frase = await this.fraseDiaRepo.findById(id);
+  async execute(dia: string): Promise<FraseDia> {
+    const frase = await this.fraseDiaRepo.findByDate(dia);
     if (!frase) {
-      throw new NotFoundException(`Frase del día con ID ${id} no encontrada`);
+      throw new NotFoundException(`No hay frase registrada para la fecha ${dia}`);
     }
     return frase;
   }

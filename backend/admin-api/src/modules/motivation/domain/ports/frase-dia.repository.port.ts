@@ -3,7 +3,7 @@ import { FraseDia } from '../entities/frase-dia.entity';
 export interface CreateFraseDiaInput {
   frase: string;
   dia: string;
-  frase_id: string; // Lo obligamos aquí para que el Caso de Uso lo genere
+  frase_id: string;
 }
 
 export interface UpdateFraseDiaInput {

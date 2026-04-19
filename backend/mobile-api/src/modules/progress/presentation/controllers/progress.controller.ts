@@ -44,7 +44,8 @@ export class ProgressController {
   @Post('camino/advance')
   @ApiOperation({ summary: 'Avanza al siguiente subnivel/nivel en los 12 pasos' })
   async advanceCamino(@Req() req) {
-    return this.advanceCaminoUseCase.execute(req.user.uid);
+    const userToken = req.headers.authorization.split(' ')[1];
+    return this.advanceCaminoUseCase.execute(req.user.uid, userToken);
   }
 
   @Get('camino')
