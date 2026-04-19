@@ -1,157 +1,110 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+﻿import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import SubLevelScreen, {
-  MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase, CompleteSentence,
+    MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
 } from '../SubLevelScreen';
-import { colors, fontSizes, spacing, borderRadius } from '../../../../../constants/theme';
+import { useLevelProgress } from '../../../../../hooks/useLevelProgress';
 
 const MASCOT = require('../../../../../assets/images/mascotalibro.png');
 
-type Step = 'intro' | 'complete' | 'frase1' | 'q1' | 'frase2' | 'emociones' | 'frase3' | 'open1';
-const STEPS: Step[] = ['intro', 'complete', 'frase1', 'q1', 'frase2', 'emociones', 'frase3', 'open1'];
+const CURRENT_LEVEL = 4;
+const CURRENT_SUBLEVEL = 1;
 
-const EMOCIONES = [
-  'Tristeza', 'Rabia', 'Miedo', 'Culpa',
-  'Vergüenza', 'Ansiedad', 'Soledad', 'Confusión',
-];
+type Step = 'intro' | 'q1' | 'frase1' | 'q2' | 'frase2' | 'reflexion';
+const STEPS: Step[] = ['intro', 'q1', 'frase1', 'q2', 'frase2', 'reflexion'];
 
 export default function Nivel4Modulo1({ navigation }: any) {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [complete, setComplete] = useState('');
-  const [q1, setQ1] = useState<string | null>(null);
-  const [emociones, setEmociones] = useState<string[]>([]);
-  const [open1, setOpen1] = useState('');
+    const [stepIndex, setStepIndex] = useState(0);
+    const [q1, setQ1] = useState<string | null>(null);
+    const [q2, setQ2] = useState('');
+    const [advancing, setAdvancing] = useState(false);
 
-  const step = STEPS[stepIndex];
-  const isLast = stepIndex === STEPS.length - 1;
+    const { progress, advance } = useLevelProgress();
 
-  const handleContinue = () => {
-    if (isLast) navigation.navigate('Path');
-    else setStepIndex(stepIndex + 1);
-  };
+    const step = STEPS[stepIndex];
+    const isLast = stepIndex === STEPS.length - 1;
 
-  const handleBack = () => {
-    if (stepIndex === 0) navigation.goBack();
-    else setStepIndex(stepIndex - 1);
-  };
+    const handleContinue = async () => {
+        if (isLast) {
+            setAdvancing(true);
+            try {
+                const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
+                console.log('âœ… MÃ³dulo completado. Nuevo progreso:', newProgress);
 
-  const toggleEmocion = (val: string) => {
-    setEmociones((prev) =>
-      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+                Alert.alert(
+                    'Â¡Felicidades!',
+                    `Has completado el MÃ³dulo ${CURRENT_SUBLEVEL}. ${
+                        newProgress.subnivel > CURRENT_SUBLEVEL
+                            ? 'Siguiente mÃ³dulo desbloqueado.'
+                            : 'Completa los anteriores para continuar.'
+                    }`,
+                    [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
+                );
+            } catch (error) {
+                console.error('âŒ Error guardando progreso:', error);
+                Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
+            } finally {
+                setAdvancing(false);
+            }
+        } else {
+            setStepIndex(stepIndex + 1);
+        }
+    };
+
+    const handleBack = () => {
+        if (stepIndex === 0) {
+            navigation.goBack();
+        } else {
+            setStepIndex(stepIndex - 1);
+        }
+    };
+
+    return (
+        <SubLevelScreen
+            currentStep={stepIndex}
+            totalSteps={STEPS.length - 1}
+            moduleNumber={CURRENT_SUBLEVEL}
+            mascot={MASCOT}
+            onBack={handleBack}
+            onContinue={handleContinue}
+            continueLabel={isLast ? 'Completar mÃ³dulo' : 'Continuar'}
+            showIntro={step === 'intro'}
+            introTitle="Paso 4, MÃ³dulo 1"
+            introDescription="ContinÃºa tu camino en los 12 pasos de recuperaciÃ³n."
+        >
+            {step === 'q1' && (
+                <>
+                    <MascotBubble text="Â¿CÃ³mo te sientes en este momento?" />
+                    <MultipleChoice
+                        options={['Bien', 'Neutral', 'DifÃ­cil', 'Reflexivo']}
+                        selected={q1}
+                        onSelect={setQ1}
+                    />
+                </>
+            )}
+
+            {step === 'frase1' && (
+                <ReflectivePhrase text="Cada paso te acerca mÃ¡s a tu recuperaciÃ³n." />
+            )}
+
+            {step === 'q2' && (
+                <>
+                    <MascotBubble text="Â¿QuÃ© aprendiste en este mÃ³dulo?" />
+                    <OpenQuestion
+                        placeholder="Escribe aquÃ­..."
+                        value={q2}
+                        onChange={setQ2}
+                    />
+                </>
+            )}
+
+            {step === 'frase2' && (
+                <ReflectivePhrase text="Tu compromiso con ti mismo es el mÃ¡s importante." />
+            )}
+
+            {step === 'reflexion' && (
+                <ReflectivePhrase text="Sigue adelante, cada paso cuenta." />
+            )}
+        </SubLevelScreen>
     );
-  };
-
-  return (
-    <SubLevelScreen
-      currentStep={stepIndex}
-      totalSteps={STEPS.length - 1}
-      moduleNumber={1}
-      mascot={MASCOT}
-      onBack={handleBack}
-      onContinue={handleContinue}
-      continueLabel={isLast ? 'Finalizar módulo' : 'Continuar'}
-      showIntro={step === 'intro'}
-      introTitle="Mirarme sin escapar"
-      introDescription="No siempre es fácil quedarse con uno mismo. Muchas veces evitamos mirar lo que sentimos porque no sabemos qué hacer con eso. Este es el primer intento de observarte sin huir."
-    >
-      {step === 'complete' && (
-        <>
-          <MascotBubble text="Completa esta frase:" />
-          <CompleteSentence
-            prefix='"Cuando estoy solo/a conmigo, lo que más aparece es..."'
-            value={complete}
-            onChange={setComplete}
-          />
-        </>
-      )}
-
-      {step === 'frase1' && (
-        <ReflectivePhrase text="Lo que evitas sentir, suele quedarse más tiempo." />
-      )}
-
-      {step === 'q1' && (
-        <>
-          <MascotBubble text="¿Qué sueles hacer cuando algo te incomoda emocionalmente?" />
-          <MultipleChoice
-            options={[
-              'Distraerme',
-              'Ignorarlo',
-              'Reaccionar impulsivamente',
-              'Pensarlo demasiado',
-            ]}
-            selected={q1}
-            onSelect={setQ1}
-          />
-        </>
-      )}
-
-      {step === 'frase2' && (
-        <ReflectivePhrase text="Mirarte no te hace débil, te hace consciente." />
-      )}
-
-      {step === 'emociones' && (
-        <>
-          <MascotBubble text="¿Cuáles de estas emociones has sentido más últimamente?" />
-          <View style={styles.emocionesGrid}>
-            {EMOCIONES.map((emocion) => (
-              <TouchableOpacity
-                key={emocion}
-                style={[styles.emocionChip, emociones.includes(emocion) && styles.emocionChipSelected]}
-                onPress={() => toggleEmocion(emocion)}
-              >
-                <Text style={[styles.emocionText, emociones.includes(emocion) && styles.emocionTextSelected]}>
-                  {emocion}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </>
-      )}
-
-      {step === 'frase3' && (
-        <ReflectivePhrase text="No necesitas resolver todo ahora, solo empezar a observar." />
-      )}
-
-      {step === 'open1' && (
-        <>
-          <MascotBubble text="¿Qué emoción sientes que has estado evitando?" />
-          <OpenQuestion
-            placeholder="Escribe aquí..."
-            value={open1}
-            onChange={setOpen1}
-          />
-        </>
-      )}
-    </SubLevelScreen>
-  );
 }
-
-const styles = StyleSheet.create({
-  emocionesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginVertical: spacing.md,
-  },
-  emocionChip: {
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
-  },
-  emocionChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  emocionText: {
-    fontSize: fontSizes.sm,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  emocionTextSelected: {
-    color: colors.white,
-    fontWeight: '700',
-  },
-});

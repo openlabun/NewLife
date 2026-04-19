@@ -4,85 +4,224 @@ import { getGuestDataForMigration, clearGuestData } from './guestService';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Login con email y password
+ */
 export const loginUser = async (email: string, password: string) => {
   const response = await api.post('/auth/login', { email, password });
-  const { accessToken, refreshToken } = response.data;
+  const { accessToken, refreshToken, user } = response.data;
+  
   await AsyncStorage.multiSet([
     ['accessToken', accessToken],
     ['refreshToken', refreshToken],
     ['userEmail', email],
   ]);
+  
+  try {
+    console.log('🆕 Inicializando registro en camino...');
+    await api.post('/progress/init');
+    console.log('✅ Registro en camino inicializado');
+  } catch (error: any) {
+    console.warn('⚠️  Error inicializando camino:', error.message);
+  }
+  
   return response.data;
 };
 
-export const registerUser = async (nombre: string, email: string, password: string) => {
+/**
+ * Registro de nuevo usuario
+ */
+export const registerUser = async (
+  nombre: string,
+  email: string,
+  password: string,
+  fecha_ultimo_consumo?: string
+) => {
+  // 1️⃣ Registro
   await api.post('/auth/register', { nombre, email, password });
-  return loginUser(email, password);
+  
+  // 2️⃣ Login automático
+  const response = await loginUser(email, password);
+  
+  // 3️⃣ Guardar fecha de sobriedad DESPUÉS del login
+  if (fecha_ultimo_consumo) {
+    try {
+      console.log('📅 Guardando fecha de sobriedad:', fecha_ultimo_consumo);
+      await api.post('/progress/init-sobriety', { 
+        fecha_ultimo_consumo 
+      });
+      console.log('✅ Fecha de sobriedad guardada');
+    } catch (error: any) {
+      console.warn('⚠️ Error guardando fecha de sobriedad:', error.message);
+      // No es crítico si falla
+    }
+  }
+  
+  return response;
 };
 
+/**
+ * Logout del usuario
+ */
 export const logoutUser = async () => {
   await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'userEmail']);
 };
 
-// ─── Migración de invitado ────────────────────────────────────────────────────
+// ─── Migración de Invitado ────────────────────────────────────────────────────
 
+/**
+ * Migra datos de invitado al backend después de registrarse
+ */
 export const migrateGuestToUser = async (): Promise<void> => {
   try {
     const guestData = await getGuestDataForMigration();
 
-    // Solo migrar si hay datos reales
-    if (!guestData.guestId) return;
+    if (!guestData.guestId) {
+      console.log('ℹ️ No hay datos de invitado para migrar');
+      return;
+    }
+
+    console.log('📤 Migrando datos de invitado:', JSON.stringify(guestData, null, 2));
 
     await api.post('/auth/migrate-guest', guestData);
+
     await clearGuestData();
 
-    console.log('✅ Migración de invitado exitosa');
-  } catch (e) {
-    console.log('❌ Error en migración:', e);
-    throw e; // propagar para que el caller pueda manejar el error
+    console.log('✅ Migración de invitado completada');
+  } catch (error: any) {
+    console.error('❌ Error en migración:', error.response?.data || error.message);
+    throw error;
   }
 };
 
-// ─── User ─────────────────────────────────────────────────────────────────────
+// ─── User Profile ─────────────────────────────────────────────────────────────
 
+/**
+ * Obtiene el estado del onboarding del usuario
+ */
 export const getOnboardingStatus = async () => {
   const response = await api.get('/user/onboarding-status');
   return response.data;
 };
 
+/**
+ * Completa el perfil del usuario (10 preguntas)
+ */
 export const completeProfile = async (data: object) => {
   const response = await api.post('/user/complete-profile', data);
   return response.data;
 };
 
+/**
+ * Obtiene el perfil completo del usuario
+ */
 export const getProfile = async () => {
   const response = await api.get('/user/profile');
   return response.data;
 };
 
-export const getSobrietyTime = async () => {
-  const response = await api.get('/home/sobriety-time');
-  return response.data;
-};
-
 // ─── Contactos ────────────────────────────────────────────────────────────────
 
+/**
+ * Crea un nuevo contacto de emergencia
+ */
 export const createContact = async (nombre: string, telefono: string) => {
   const response = await api.post('/contacts', { nombre, telefono });
   return response.data;
 };
 
+/**
+ * Obtiene lista de contactos de emergencia
+ */
 export const getContacts = async () => {
   const response = await api.get('/contacts');
   return response.data;
 };
 
+/**
+ * Actualiza un contacto de emergencia
+ */
 export const updateContact = async (id: string, nombre: string, telefono: string) => {
   const response = await api.patch(`/contacts/${id}`, { nombre, telefono });
   return response.data;
 };
 
+/**
+ * Elimina un contacto de emergencia
+ */
 export const deleteContact = async (id: string) => {
   const response = await api.delete(`/contacts/${id}`);
   return response.data;
+};
+
+// ─── Sobriedad ────────────────────────────────────────────────────────────────
+
+/**
+ * Calcula tiempo sobrio considerando timezone local
+ */
+export const calculateSobrietyTime = (fechaUTCString: string | null) => {
+  if (!fechaUTCString) {
+    return { dias: 0, horas: 0, minutos: 0 };
+  }
+
+  try {
+    const fechaUTC = new Date(fechaUTCString);
+    const ahoraBrowserMs = Date.now();
+    const diffMs = Math.max(0, ahoraBrowserMs - fechaUTC.getTime());
+    
+    const totalMinutos = Math.floor(diffMs / (1000 * 60));
+    const totalHoras = Math.floor(totalMinutos / 60);
+    const dias = Math.floor(totalHoras / 24);
+    const horas = totalHoras % 24;
+    const minutos = totalMinutos % 60;
+
+    console.log(`📊 Tiempo sobrio: ${dias}d ${horas}h ${minutos}m (desde ${fechaUTCString})`);
+
+    return { dias, horas, minutos };
+  } catch (error) {
+    console.error('❌ Error calculando tiempo sobrio:', error);
+    return { dias: 0, horas: 0, minutos: 0 };
+  }
+};
+
+/**
+ * Obtiene tiempo sobrio actual del usuario
+ */
+export const getSobrietyTime = async () => {
+  try {
+    const response = await api.get('/progress/sobriety-time');
+    const contador = response.data?.contador;
+    
+    console.log('✅ Tiempo sobrio obtenido:', contador);
+    
+    return {
+      message: response.data?.message,
+      contador: contador || { dias: 0, horas: 0, minutos: 0 },
+    };
+  } catch (error: any) {
+    console.error('❌ Error obteniendo tiempo sobrio:', error.message);
+    return {
+      message: 'Error',
+      contador: { dias: 0, horas: 0, minutos: 0 },
+    };
+  }
+}
+
+/**
+ * Obtiene resumen para home: apodo, pronombre, gasto semanal, tiempo sobrio
+ */
+export const getHomeSummary = async () => {
+  try {
+    const response = await api.get('/home/summary');
+    console.log('✅ Resumen home obtenido:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error obteniendo resumen home:', error.message);
+    return {
+      apodo: '...',
+      pronombre: '',
+      gasto_semanal: 0,
+      tiempo_sobrio: { dias: 0, horas: 0, minutos: 0 },
+    };
+  }
 };

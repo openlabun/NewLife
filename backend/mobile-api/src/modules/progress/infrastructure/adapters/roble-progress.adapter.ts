@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../../../database/infrastructure/database.service';
-import { IProgressProviderPort, GratitudeEntryResult } from '../../domain/ports/progress-provider.port';
+import { IProgressProviderPort, GratitudeEntryResult, SobrietyRecord } from '../../domain/ports/progress-provider.port';
 import { DailyCheckinEntity } from '../../domain/entities/daily-checkin.entity';
 import { CaminoEntity } from '../../domain/entities/camino.entity';
 
 @Injectable()
 export class RobleProgressAdapter implements IProgressProviderPort {
+  private logger = new Logger(RobleProgressAdapter.name);
+
   constructor(private readonly dbService: DatabaseService) {}
 
   async createDailyCheckin(data: Partial<DailyCheckinEntity>, token: string): Promise<any> {
@@ -22,15 +24,34 @@ export class RobleProgressAdapter implements IProgressProviderPort {
     return await this.dbService.insert('registro_diario', [record], token);
   }
 
-  async updateSobrietyDate(usuarioId: string, masterToken: string): Promise<void> {
-    const now = new Date().toISOString();
-    await this.dbService.update(
-      'sobriedad',
-      'usuario_id',
-      usuarioId,
-      { fecha_ultimo_consumo: now, updated_at: now },
-      masterToken,
-    );
+  async updateSobrietyDate(usuarioId: string, fechaUTC: string, masterToken: string): Promise<void> {
+    this.logger.log(`🔄 Actualizando sobriedad a: ${fechaUTC}`);
+    
+    try {
+      const existing = await this.dbService.find('sobriedad', { usuario_id: usuarioId }, masterToken);
+      const rows = Array.isArray(existing) ? existing : (existing?.rows ?? []);
+
+      if (rows.length > 0) {
+        await this.dbService.update(
+          'sobriedad',
+          'usuario_id',
+          usuarioId,
+          { fecha_ultimo_consumo: fechaUTC, updated_at: new Date().toISOString() },
+          masterToken,
+        );
+        this.logger.log(`✅ Sobriedad actualizada (UPDATE)`);
+      } else {
+        await this.dbService.insert('sobriedad', [{
+          usuario_id: usuarioId,
+          fecha_ultimo_consumo: fechaUTC,
+          updated_at: new Date().toISOString(),
+        }], masterToken);
+        this.logger.log(`✅ Sobriedad creada (INSERT)`);
+      }
+    } catch (error) {
+      this.logger.error('❌ Error en updateSobrietyDate:', error);
+      throw error;
+    }
   }
 
   async getGratitudeHistory(usuarioId: string, token: string): Promise<GratitudeEntryResult[]> {
@@ -56,21 +77,33 @@ export class RobleProgressAdapter implements IProgressProviderPort {
   async upsertCamino(data: Partial<CaminoEntity>, masterToken: string): Promise<void> {
     const now = new Date().toISOString();
 
-    if (data._id) {
-      await this.dbService.update(
-        'camino',
-        'usuario_id',
-        data.usuario_id,
-        { nivel: data.nivel, subnivel: data.subnivel, updated_at: now },
-        masterToken,
-      );
-    } else {
-      await this.dbService.insert('camino', [{
-        usuario_id: data.usuario_id,
-        nivel: 1,
-        subnivel: 1,
-        updated_at: now,
-      }], masterToken);
+    try {
+      const existing = await this.dbService.find('camino', { usuario_id: data.usuario_id }, masterToken);
+      const rows = Array.isArray(existing) ? existing : (existing?.rows ?? []);
+
+      if (rows.length > 0) {
+        await this.dbService.update(
+          'camino',
+          'usuario_id',
+          data.usuario_id,
+          { 
+            nivel: data.nivel, 
+            subnivel: data.subnivel, 
+            updated_at: now 
+          },
+          masterToken,
+        );
+      } else {
+        await this.dbService.insert('camino', [{
+          usuario_id: data.usuario_id,
+          nivel: data.nivel,
+          subnivel: data.subnivel,
+          updated_at: now,
+        }], masterToken);
+      }
+    } catch (error) {
+      this.logger.error('Error en upsertCamino:', error);
+      throw error;
     }
   }
 
@@ -111,5 +144,33 @@ export class RobleProgressAdapter implements IProgressProviderPort {
       const fecha = new Date(r.fecha);
       return fecha.getMonth() + 1 === month && fecha.getFullYear() === year;
     });
+  }
+
+  async getSobrietyRecord(usuarioId: string, masterToken: string): Promise<SobrietyRecord | null> {
+    try {
+      const result = await this.dbService.find('sobriedad', { usuario_id: usuarioId }, masterToken);
+      const rows = Array.isArray(result) ? result : (result?.rows ?? []);
+      return rows[0] ?? null;
+    } catch (error) {
+      this.logger.error('Error en getSobrietyRecord:', error);
+      return null;
+    }
+  }
+
+  async getAllRegistrosDiario(
+    usuarioId: string,
+    token: string,
+  ): Promise<Array<{ fecha: string; emocion: string }>> {
+    try {
+      const registros = await this.getAllCheckins(usuarioId, token);
+      
+      return registros.map((r: any) => ({
+        fecha: r.fecha,
+        emocion: r.emocion,
+      }));
+    } catch (error) {
+      this.logger.error('Error obteniendo registros diarios:', error);
+      throw new Error('No se pudieron obtener los registros');
+    }
   }
 }

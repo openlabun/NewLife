@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import BottomTabNavigator from '../../../navigation/BottomTabNavigator';
 import HomeScreen from './HomeScreen';
@@ -15,8 +15,9 @@ const SCREENS: Record<string, (navigation: any) => React.ReactNode> = {
   Social: () => <View style={{ flex: 1, backgroundColor: colors.background }} />,
 };
 
-export default function MainScreen({ navigation }: any) {
-  const [activeTab, setActiveTab] = useState('Home');
+export default function MainScreen({ navigation, route }: any) {
+  // ✅ Obtener initialTab del parámetro, si no está usa 'Home'
+  const [activeTab, setActiveTab] = useState(route?.params?.initialTab || 'Home');
 
   return (
     <View style={styles.container}>
@@ -37,4 +38,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

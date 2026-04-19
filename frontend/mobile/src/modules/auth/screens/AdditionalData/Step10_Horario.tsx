@@ -8,8 +8,8 @@ import { useOnboarding } from '../../../../context/OnboardingContext';
 import { completeProfile, createContact } from '../../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Agrega estos imports arriba
-import { isGuestMode, saveGuestProfile, saveGuestSobrietyStart, createGuestContact  } from '../../../../services/guestService';
-
+import { isGuestMode, saveGuestProfile, saveGuestSobrietyStart, createGuestContact, markGuestProfileCompleted  } from '../../../../services/guestService';
+import { markOnboardingProfileCompleted } from '../../../../services/onboarding-storage';
 
 const { width } = Dimensions.get('window');
 const CLOCK_SIZE = width * 0.7;
@@ -70,20 +70,23 @@ export default function Step10_Horario({ navigation }: any) {
         await saveGuestProfile({ ...profileData, moment_motiv });
         await saveGuestSobrietyStart(data.ult_fecha_consumo);
         
-        // ✅ Guardar contacto de emergencia del onboarding
         if (nombre_contacto && profileData.telefono) {
             await createGuestContact(nombre_contacto, profileData.telefono.toString());
         }
 
+        // ✅ NUEVO: Marcar que el guest completó Story
+        await markGuestProfileCompleted();
+        
         navigation.navigate('Congratulations');
         } else {
-        // Registrado → enviar al backend como antes
+        // Registrado → enviar al backend
         const { nombre_contacto, ...profileData } = data;
         await completeProfile({ ...profileData, moment_motiv });
 
         if (nombre_contacto && profileData.telefono) {
             await createContact(nombre_contacto, profileData.telefono.toString());
         }
+
         navigation.navigate('Congratulations');
         }
     } catch (err: any) {

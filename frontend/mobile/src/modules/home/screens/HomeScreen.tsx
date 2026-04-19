@@ -6,7 +6,7 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { Animated } from 'react-native';
-import { getProfile, getSobrietyTime } from '../../../services/authService';
+import { getProfile, getSobrietyTime, getHomeSummary } from '../../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { authEventEmitter } from '../../../services/api';
 import {
@@ -15,6 +15,7 @@ import {
   getGuestProfile,
   getGuestSobrietyTime,
 } from '../../../services/guestService';
+
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = 72;
@@ -74,10 +75,12 @@ function Ring({ value, label, max }: RingProps) {
 }
 
 export default function HomeScreen({ navigation }: any) {
+  // ✅ TODOS los useState AQUÍ al inicio
   const [apodo, setApodo] = useState('');
   const [sobriety, setSobriety] = useState({ dias: 0, horas: 0, minutos: 0 });
+  const [gastoSemanal, setGastoSemanal] = useState(0);  // ✅ AQUÍ
   const [isGuest, setIsGuest] = useState(false);
-
+  
   // Detectar si es invitado
   useEffect(() => {
     const checkGuest = async () => {
@@ -146,6 +149,21 @@ export default function HomeScreen({ navigation }: any) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const fetchGastoSemanal = async () => {
+      try {
+        const guest = await isGuestMode();
+        if (!guest) {
+          const data = await getHomeSummary();
+          setGastoSemanal(data.gasto_semanal || 0);
+        }
+      } catch (e) {
+        console.log('Error obteniendo gasto semanal:', e);
+      }
+    };
+    fetchGastoSemanal();
+  }, []);
+
   const handleLogout = async () => {
     try {
       if (isGuest) {
@@ -206,8 +224,8 @@ export default function HomeScreen({ navigation }: any) {
             <Icon name="dollar-sign" size={22} color="#F5A623" />
           </View>
           <View>
-            <Text style={styles.moneyAmount}>$200,000</Text>
-            <Text style={styles.moneySub}>Ya vas por el 20%</Text>
+            <Text style={styles.moneyAmount}>${gastoSemanal.toLocaleString()}</Text>
+            <Text style={styles.moneySub}>Ahorro semanal promedio</Text>
           </View>
         </View>
       </View>

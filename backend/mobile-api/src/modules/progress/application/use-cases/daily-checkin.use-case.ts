@@ -1,10 +1,12 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { IProgressProviderPort } from '../../domain/ports/progress-provider.port';
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 import { DailyCheckinDto } from '../../presentation/dtos/daily-checkin.dto';
 
 @Injectable()
 export class DailyCheckinUseCase {
+  private logger = new Logger(DailyCheckinUseCase.name);
+
   constructor(
     @Inject('IProgressProviderPort')
     private readonly progressProvider: IProgressProviderPort,
@@ -12,6 +14,8 @@ export class DailyCheckinUseCase {
   ) { }
 
   async execute(uid: string, dto: DailyCheckinDto, userToken: string) {
+    this.logger.log(`📝 Iniciando registro diario para usuario: ${uid}`);
+
     if (dto.consumo) {
       if (!dto.ubicacion || !dto.social || !dto.reflexion) {
         throw new BadRequestException(
@@ -30,27 +34,34 @@ export class DailyCheckinUseCase {
       reflexion: dto.consumo ? dto.reflexion : null,
     };
 
-    const existing = await this.progressProvider.getTodayCheckin(uid, userToken);
+    this.logger.log(`📤 Creando nuevo registro diario (permite múltiples por día)`);
 
-    let checkin: any;
-    let isUpdate = false;
+    const checkin = await this.progressProvider.createDailyCheckin(data, userToken);
 
-    if (existing) {
-      checkin = await this.progressProvider.updateTodayCheckin(existing._id, data, userToken);
-      isUpdate = true;
-    } else {
-      checkin = await this.progressProvider.createDailyCheckin(data, userToken);
-    }
+    this.logger.log(`✅ Registro diario creado exitosamente`);
 
+    // ✅ Si hay consumo, actualizar sobriedad a AHORA
     if (dto.consumo) {
-      const masterToken = await this.systemAuth.getMasterToken();
-      await this.progressProvider.updateSobrietyDate(uid, masterToken);
+      try {
+        this.logger.log(`🔄 Actualizando fecha de sobriedad a: ${new Date().toISOString()}`);
+        const masterToken = await this.systemAuth.getMasterToken();
+        
+        // ✅ PASAR LA FECHA ACTUAL EN UTC
+        await this.progressProvider.updateSobrietyDate(
+          uid,
+          new Date().toISOString(),  // ← FECHA AHORA en UTC
+          masterToken,
+        );
+        
+        this.logger.log(`✅ Sobriedad actualizada`);
+      } catch (error: any) {
+        this.logger.error(`⚠️  Error actualizando sobriedad:`, error.message);
+        // No es crítico si falla, continuamos
+      }
     }
 
     return {
-      message: isUpdate
-        ? 'Registro diario actualizado exitosamente.'
-        : 'Registro diario guardado exitosamente.',
+      message: 'Registro diario guardado exitosamente.',
       data: checkin,
     };
   }

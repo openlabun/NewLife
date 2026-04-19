@@ -5,6 +5,7 @@ import { OnboardingProvider } from '../context/OnboardingContext';
 
 import SplashScreen1 from '../modules/onboarding/screens/SplashScreen1';
 import SplashScreen2 from '../modules/onboarding/screens/SplashScreen2';
+import LoaderScreen from './LoaderScreen';
 import OnboardingScreen from '../modules/onboarding/screens/OnboardingScreen';
 import WelcomeScreen from '../modules/auth/screens/WelcomeScreen';
 import LoginScreen from '../modules/auth/screens/LoginScreen';
@@ -84,7 +85,8 @@ import CategoryScreen from '../modules/care/screens/CategoryScreen';
 import FavoritesScreen from '../modules/care/screens/FavoritesScreen';
 import AgendaScreen from '../modules/care/screens/AgendaScreen';
 import AddEventScreen from '../modules/care/screens/AddEventScreen';
-
+import LockedLevelScreen from '../modules/progress/screens/index/LockedLevelScreen';
+import LevelsIndexScreen from '../modules/progress/screens/index/LevelsIndexScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -102,6 +104,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
         >
           <Stack.Screen name="Splash1" component={SplashScreen1} />
           <Stack.Screen name="Splash2" component={SplashScreen2} />
+          <Stack.Screen name="LoaderScreen" component={LoaderScreen} />
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -180,6 +183,8 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
           <Stack.Screen name="AgendaScreen" component={AgendaScreen} />
           <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
+          <Stack.Screen name="LockedLevel" component={LockedLevelScreen} />
+          <Stack.Screen name="LevelsIndex" component={LevelsIndexScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>

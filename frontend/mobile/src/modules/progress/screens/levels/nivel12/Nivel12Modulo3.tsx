@@ -1,135 +1,110 @@
-import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+﻿import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import SubLevelScreen, {
-  MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase, CompleteSentence,
+    MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
 } from '../SubLevelScreen';
-import { colors, fontSizes, spacing, borderRadius } from '../../../../../constants/theme';
+import { useLevelProgress } from '../../../../../hooks/useLevelProgress';
 
-const MASCOT = require('../../../../../assets/images/mascotacorazon.png');
+const MASCOT = require('../../../../../assets/images/mascotalibro.png');
 
-type Step = 'intro' | 'complete1' | 'frase1' | 'open1' | 'frase2' | 'q1' | 'frase3' | 'boton' | 'reflexion';
-const STEPS: Step[] = ['intro', 'complete1', 'frase1', 'open1', 'frase2', 'q1', 'frase3', 'boton', 'reflexion'];
+const CURRENT_LEVEL = 12;
+const CURRENT_SUBLEVEL = 3;
+
+type Step = 'intro' | 'q1' | 'frase1' | 'q2' | 'frase2' | 'reflexion';
+const STEPS: Step[] = ['intro', 'q1', 'frase1', 'q2', 'frase2', 'reflexion'];
 
 export default function Nivel12Modulo3({ navigation }: any) {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [complete1, setComplete1] = useState('');
-  const [open1, setOpen1] = useState('');
-  const [q1, setQ1] = useState<string | null>(null);
-  const [reflexion, setReflexion] = useState('');
+    const [stepIndex, setStepIndex] = useState(0);
+    const [q1, setQ1] = useState<string | null>(null);
+    const [q2, setQ2] = useState('');
+    const [advancing, setAdvancing] = useState(false);
 
-  const step = STEPS[stepIndex];
-  const isLast = stepIndex === STEPS.length - 1;
+    const { progress, advance } = useLevelProgress();
 
-  const handleContinue = () => {
-    if (isLast) navigation.navigate('LevelComplete', {
-      levelNumber: 12,
-      message: 'No eres la misma persona que empezó este proceso.',
-    });
-    else setStepIndex(stepIndex + 1);
-  };
+    const step = STEPS[stepIndex];
+    const isLast = stepIndex === STEPS.length - 1;
 
-  const handleBack = () => {
-    if (stepIndex === 0) navigation.goBack();
-    else setStepIndex(stepIndex - 1);
-  };
+    const handleContinue = async () => {
+        if (isLast) {
+            setAdvancing(true);
+            try {
+                const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
+                console.log('âœ… MÃ³dulo completado. Nuevo progreso:', newProgress);
 
-  return (
-    <SubLevelScreen
-      currentStep={stepIndex}
-      totalSteps={STEPS.length - 1}
-      moduleNumber={3}
-      mascot={MASCOT}
-      onBack={handleBack}
-      onContinue={handleContinue}
-      continueLabel={isLast ? 'Finalizar proceso' : 'Continuar'}
-      showIntro={step === 'intro'}
-      introTitle="Integrar y continuar"
-      introDescription="Este no es un final, es una forma nueva de vivir. Integrar es llevar todo lo aprendido contigo, no como algo externo, sino como parte de quién eres ahora."
-    >
-      {step === 'complete1' && (
-        <>
-          <MascotBubble text="Completa esta frase:" />
-          <CompleteSentence
-            prefix='"Hoy soy alguien que..."'
-            value={complete1}
-            onChange={setComplete1}
-          />
-        </>
-      )}
+                Alert.alert(
+                    'Â¡Felicidades!',
+                    `Has completado el MÃ³dulo ${CURRENT_SUBLEVEL}. ${
+                        newProgress.subnivel > CURRENT_SUBLEVEL
+                            ? 'Siguiente mÃ³dulo desbloqueado.'
+                            : 'Completa los anteriores para continuar.'
+                    }`,
+                    [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
+                );
+            } catch (error) {
+                console.error('âŒ Error guardando progreso:', error);
+                Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
+            } finally {
+                setAdvancing(false);
+            }
+        } else {
+            setStepIndex(stepIndex + 1);
+        }
+    };
 
-      {step === 'frase1' && (
-        <ReflectivePhrase text="No eres la misma persona que empezó este proceso." />
-      )}
+    const handleBack = () => {
+        if (stepIndex === 0) {
+            navigation.goBack();
+        } else {
+            setStepIndex(stepIndex - 1);
+        }
+    };
 
-      {step === 'open1' && (
-        <>
-          <MascotBubble text="¿Qué cambió en ti desde el inicio hasta ahora?" />
-          <OpenQuestion
-            placeholder="Escribe aquí..."
-            value={open1}
-            onChange={setOpen1}
-          />
-        </>
-      )}
+    return (
+        <SubLevelScreen
+            currentStep={stepIndex}
+            totalSteps={STEPS.length - 1}
+            moduleNumber={CURRENT_SUBLEVEL}
+            mascot={MASCOT}
+            onBack={handleBack}
+            onContinue={handleContinue}
+            continueLabel={isLast ? 'Completar mÃ³dulo' : 'Continuar'}
+            showIntro={step === 'intro'}
+            introTitle="Paso 12, MÃ³dulo 3"
+            introDescription="ContinÃºa tu camino en los 12 pasos de recuperaciÃ³n."
+        >
+            {step === 'q1' && (
+                <>
+                    <MascotBubble text="Â¿CÃ³mo te sientes en este momento?" />
+                    <MultipleChoice
+                        options={['Bien', 'Neutral', 'DifÃ­cil', 'Reflexivo']}
+                        selected={q1}
+                        onSelect={setQ1}
+                    />
+                </>
+            )}
 
-      {step === 'frase2' && (
-        <ReflectivePhrase text="El cambio no termina aquí, se convierte en parte de tu vida." />
-      )}
+            {step === 'frase1' && (
+                <ReflectivePhrase text="Cada paso te acerca mÃ¡s a tu recuperaciÃ³n." />
+            )}
 
-      {step === 'q1' && (
-        <>
-          <MascotBubble text="¿Qué quieres seguir construyendo?" />
-          <MultipleChoice
-            options={['Bienestar', 'Relaciones sanas', 'Constancia', 'Propósito']}
-            selected={q1}
-            onSelect={setQ1}
-          />
-        </>
-      )}
+            {step === 'q2' && (
+                <>
+                    <MascotBubble text="Â¿QuÃ© aprendiste en este mÃ³dulo?" />
+                    <OpenQuestion
+                        placeholder="Escribe aquÃ­..."
+                        value={q2}
+                        onChange={setQ2}
+                    />
+                </>
+            )}
 
-      {step === 'frase3' && (
-        <ReflectivePhrase text="Seguir también es una forma de avanzar." />
-      )}
+            {step === 'frase2' && (
+                <ReflectivePhrase text="Tu compromiso con ti mismo es el mÃ¡s importante." />
+            )}
 
-      {step === 'boton' && (
-        <>
-          <MascotBubble text="¿Estás listo/a para continuar tu proceso?" />
-          <TouchableOpacity style={styles.finalButton} onPress={handleContinue}>
-            <Text style={styles.finalButtonText}>🌱 Continúo mi proceso</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      {step === 'reflexion' && (
-        <>
-          <MascotBubble text="¿Cómo te sientes al llegar hasta aquí?" />
-          <OpenQuestion
-            placeholder="Escribe aquí..."
-            value={reflexion}
-            onChange={setReflexion}
-          />
-        </>
-      )}
-    </SubLevelScreen>
-  );
+            {step === 'reflexion' && (
+                <ReflectivePhrase text="Sigue adelante, cada paso cuenta." />
+            )}
+        </SubLevelScreen>
+    );
 }
-
-const styles = StyleSheet.create({
-  finalButton: {
-    backgroundColor: colors.accent,
-    borderRadius: borderRadius.full,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.lg,
-    elevation: 3,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
-  finalButtonText: {
-    color: colors.white,
-    fontSize: fontSizes.lg,
-    fontWeight: '700',
-  },
-});
