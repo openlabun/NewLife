@@ -1,5 +1,10 @@
-import React from 'react';
-import { View, Dimensions, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Dimensions } from 'react-native';
+import Animated, {
+  useSharedValue,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { AnimatedHorizontalBar } from './AnimatedComponents';
 import { styles } from '../styles/analysisStyles';
 
@@ -14,22 +19,24 @@ export const HorizontalBarChart = ({
 }) => {
   const maxValue = Math.max(...data.map(d => d.value));
 
+  // ✨ FUNCIÓN PARA DIVIDIR LABELS
+  const splitLabel = (label: string) => {
+    if (label.includes('Compañeros')) {
+      return ['Compañeros', label.replace('Compañeros ', '')];
+    }
+    return [label, ''];
+  };
+
   return (
     <View style={styles.horizontalBarContainer}>
       {data.map((item, index) => {
         const barWidth = (item.value / maxValue) * maxWidth;
+        const [line1, line2] = splitLabel(item.label);
 
         return (
-          <View key={index}>
-            {/* Barra con ancho proporcional (a la IZQUIERDA) */}
-            <View
-              style={[
-                styles.horizontalBarRow,
-                {
-                  marginBottom: 8,
-                },
-              ]}
-            >
+          <View key={index} style={{ marginBottom: 40, flexDirection: 'row', alignItems: 'flex-start' }}>
+            {/* ✨ BARRA */}
+            <View style={[styles.horizontalBarRow, { flex: 1, marginRight: 10 }]}>
               <View
                 style={[
                   styles.horizontalBar,
@@ -45,10 +52,17 @@ export const HorizontalBarChart = ({
               </View>
             </View>
 
-            {/* Label FUERA, pegado a la derecha de la pantalla */}
-            <Text style={styles.horizontalBarRightLabel}>
-              {item.label}
-            </Text>
+            {/* ✨ LABEL EN 2 LÍNEAS, ALINEADO AL TOP DE LA BARRA */}
+            <View style={{ width: 100 }}>
+              <Text style={[styles.horizontalBarRightLabel, { marginBottom: 20 }]}>
+                {line1}
+              </Text>
+              {line2 && (
+                <Text style={[styles.horizontalBarRightLabel, { marginTop: 15 }]}>
+                  {line2}
+                </Text>
+              )}
+            </View>
           </View>
         );
       })}

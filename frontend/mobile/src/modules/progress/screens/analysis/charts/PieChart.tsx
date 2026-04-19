@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
-import Svg, { G } from 'react-native-svg';
+import Svg, { G, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   withTiming,
@@ -32,6 +32,32 @@ export const PieChart = ({
     });
   }, []);
 
+  // ✨ SI SOLO HAY UNA ZONA, MOSTRAR CÍRCULO COMPLETO
+  if (data.length === 1) {
+    return (
+      <View style={styles.pieContainer}>
+        <Svg width={size} height={size}>
+          <G>
+            <Circle
+              cx={center}
+              cy={center}
+              r={radius - 10}
+              fill={data[0].color}
+            />
+          </G>
+        </Svg>
+        {tooltipValue && (
+          <View style={styles.pieTooltip}>
+            <Text style={styles.pieTooltipText}>
+              {data[0].label}: 100%
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // ✨ MÚLTIPLES ZONAS: PASTEL NORMAL
   const total = data.reduce((sum, item) => sum + item.value, 0);
   let currentAngle = -90;
 

@@ -106,7 +106,7 @@ export default function AnalysisScreen({ navigation }: any) {
             <Text style={styles.cardTitle}>Tus emociones generales</Text>
           </View>
           <Text style={styles.cardDescription}>
-            Distribución de emociones en todos tus registros diarios.
+            Cómo te has sentido en tus últimos registros.
           </Text>
           <EmotionBarChart data={emotionStats} />
         </View>

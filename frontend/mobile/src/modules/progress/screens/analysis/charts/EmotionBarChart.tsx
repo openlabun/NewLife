@@ -26,31 +26,43 @@ export const EmotionBarChart = ({
     });
   }, []);
 
-  // Escalar al 100, no al máximo real
-  const MAX_SCALE = 100;
+  // ✨ FILTRAR: solo emociones con value > 0
+  const activeEmotions = data.filter(item => item.value > 0);
+
+  // ✨ Encontrar el valor máximo
+  const maxValue = Math.max(...activeEmotions.map(e => e.value));
 
   return (
     <View style={styles.emotionBarContainer}>
-      {data.map((item, index) => (
-        <View key={index} style={styles.emotionBarWrapper}>
-          <View style={[styles.emotionBarBackground, { height: maxHeight }]}>
-            <AnimatedEmotionBar
-              progress={animationProgress}
-              height={(item.value / MAX_SCALE) * maxHeight}
-              color={getEmotionColor(item.label)}
-              inactive={!item.active}
-              maxHeight={maxHeight}
-            />
-            {/* ✨ MOSTRAR PORCENTAJE DENTRO DE LA BARRA */}
-            {item.value > 0 && (
-              <Text style={styles.emotionPercentageLabel}>
-                {item.value}%
-              </Text>
-            )}
+      {activeEmotions.map((item, index) => {
+        // ✨ Altura proporcional: máximo = 100% del maxHeight disponible
+        const barHeight = (item.value / maxValue) * maxHeight;
+
+        return (
+          <View key={index} style={styles.emotionBarWrapper}>
+            {/* ✨ BARRA GRIS DE FONDO */}
+            <View style={[styles.emotionBarBackground, { height: barHeight }]}>
+              
+              {/* ✨ BARRA COLOREADA */}
+              <AnimatedEmotionBar
+                progress={animationProgress}
+                height={barHeight}
+                color={getEmotionColor(item.label)}
+                inactive={!item.active}
+                maxHeight={barHeight}
+              />
+              
+              {/* ✨ PORCENTAJE DENTRO DE LA BARRA */}
+              {item.value > 0 && (
+                <Text style={styles.emotionPercentageLabel}>
+                  {item.value}%
+                </Text>
+              )}
+            </View>
+            <Text style={styles.emotionLabel}>{item.label}</Text>
           </View>
-          <Text style={styles.emotionLabel}>{item.label}</Text>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 };

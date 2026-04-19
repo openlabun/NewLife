@@ -19,53 +19,60 @@ export function useEmotionStats() {
     fetchEmotionStats();
   }, []);
 
-  const fetchEmotionStats = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+const fetchEmotionStats = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      // Obtener todos los registros
-      const data = await progressService.getAllRegistros();
-      const registros = data.registros || [];
+    // Obtener todos los registros
+    const data = await progressService.getAllRegistros();
+    const registros = data.registros || [];
 
-      console.log('📊 Registros obtenidos:', registros);
+    console.log('📊 DATOS CRUDOS del backend:', data);
+    console.log('📊 Registros obtenidos (cantidad):', registros.length);
+    console.log('📊 Registros detallados:', JSON.stringify(registros, null, 2));
 
-      // Contar emociones
-      const emotionCounts: Record<string, number> = {};
-      registros.forEach((r: any) => {
-        const emotion = r.emocion?.toLowerCase().trim();
-        if (emotion) {
-          emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
-        }
-      });
+    // Contar emociones
+    const emotionCounts: Record<string, number> = {};
+    registros.forEach((r: any) => {
+      const emotion = r.emocion?.toLowerCase().trim();
+      console.log('🔍 Procesando registro - emoción:', emotion);
+      if (emotion) {
+        emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+      }
+    });
 
-      console.log('📈 Conteos:', emotionCounts);
+    console.log('📈 CONTEOS POR EMOCIÓN:', emotionCounts);
 
-      // Calcular porcentajes
-      const total = registros.length;
-      const stats: EmotionStat[] = EMOTION_ORDER.map((emotion) => {
-        const count = emotionCounts[emotion] || 0;
-        const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+    // Calcular porcentajes
+    const total = registros.length;
+    console.log('📊 TOTAL DE REGISTROS:', total);
 
-        return {
-          label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
-          value: percentage,
-          count,
-          active: count > 0,
-        };
-      });
+    const stats: EmotionStat[] = EMOTION_ORDER.map((emotion) => {
+      const count = emotionCounts[emotion] || 0;
+      const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
 
-      console.log('✅ Estadísticas procesadas:', stats);
+      console.log(`🎯 ${emotion}: count=${count}, porcentaje=${percentage}%`);
 
-      setEmotionStats(stats);
-      setTotalRegistros(total);
-    } catch (err: any) {
-      console.error('❌ Error procesando emociones:', err);
-      setError('No se pudieron cargar las emociones');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        label: emotion.charAt(0).toUpperCase() + emotion.slice(1),
+        value: percentage,
+        count,
+        active: count > 0,
+      };
+    });
+
+    console.log('✅ ESTADÍSTICAS FINALES:', JSON.stringify(stats, null, 2));
+
+    setEmotionStats(stats);
+    setTotalRegistros(total);
+  } catch (err: any) {
+    console.error('❌ Error procesando emociones:', err);
+    setError('No se pudieron cargar las emociones');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return {
     emotionStats,
