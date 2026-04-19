@@ -5,8 +5,9 @@ import Animated, {
   useSharedValue,
   withTiming,
   Easing,
-  type SharedValue,
 } from 'react-native-reanimated';
+import { Feather } from '@expo/vector-icons';
+import { colors } from '../../../../../constants/theme';
 import { AnimatedPieSlice } from './AnimatedComponents';
 import { styles } from '../styles/analysisStyles';
 
@@ -32,33 +33,13 @@ export const PieChart = ({
     });
   }, []);
 
-  // ✨ SI SOLO HAY UNA ZONA, MOSTRAR CÍRCULO COMPLETO
-  if (data.length === 1) {
-    return (
-      <View style={styles.pieContainer}>
-        <Svg width={size} height={size}>
-          <G>
-            <Circle
-              cx={center}
-              cy={center}
-              r={radius - 10}
-              fill={data[0].color}
-            />
-          </G>
-        </Svg>
-        {tooltipValue && (
-          <View style={styles.pieTooltip}>
-            <Text style={styles.pieTooltipText}>
-              {data[0].label}: 100%
-            </Text>
-          </View>
-        )}
-      </View>
-    );
+  // ✅ CONTROL TOTAL
+  if (!data || data.length === 0) {
+    return null;
   }
 
-  // ✨ MÚLTIPLES ZONAS: PASTEL NORMAL
   const total = data.reduce((sum, item) => sum + item.value, 0);
+
   let currentAngle = -90;
 
   const slices = data.map((item, index) => {
@@ -69,27 +50,58 @@ export const PieChart = ({
   });
 
   return (
-    <View style={styles.pieContainer}>
-      <Svg width={size} height={size}>
-        <G>
-          {slices.map((slice) => (
-            <AnimatedPieSlice
-              key={slice.index}
-              slice={slice}
-              radius={radius}
-              center={center}
-              progress={animationProgress}
-            />
-          ))}
-        </G>
-      </Svg>
-      {tooltipValue && (
-        <View style={styles.pieTooltip}>
-          <Text style={styles.pieTooltipText}>
-            {tooltipLabel}: {tooltipValue}%
-          </Text>
+    <View style={[styles.card, styles.lastCard]}>
+      
+      {/* HEADER */}
+      <View style={styles.cardHeader}>
+        <Feather name="map-pin" size={20} color={colors.primary} />
+        <Text style={styles.cardTitle}>Zonas de mayor riesgo</Text>
+      </View>
+
+      <Text style={styles.cardDescription}>
+        Puntos sensibles en espacios sociales.
+      </Text>
+
+      {/* CHART */}
+      <View style={styles.pieWrapper}>
+        <View style={styles.pieContainer}>
+          <Svg width={size} height={size}>
+            <G>
+              {data.length === 1 ? (
+                <Circle
+                  cx={center}
+                  cy={center}
+                  r={radius - 10}
+                  fill={data[0].color}
+                />
+              ) : (
+                slices.map((slice) => (
+                  <AnimatedPieSlice
+                    key={slice.index}
+                    slice={slice}
+                    radius={radius}
+                    center={center}
+                    progress={animationProgress}
+                  />
+                ))
+              )}
+            </G>
+          </Svg>
+
+          {tooltipValue && (
+            <View style={styles.pieTooltip}>
+              <Text style={styles.pieTooltipText}>
+                {data.length === 1
+                  ? `${data[0].label}: 100%`
+                  : `${tooltipLabel}: ${tooltipValue}%`}
+              </Text>
+            </View>
+          )}
         </View>
-      )}
+      </View>
+
+      {/* LEGEND */}
+      <PieLegend data={data} />
     </View>
   );
 };
@@ -99,6 +111,8 @@ export const PieLegend = ({
 }: {
   data: Array<{ label: string; value: number; color: string; porcentaje?: number }>;
 }) => {
+  if (!data || data.length === 0) return null;
+
   const rows = [];
   for (let i = 0; i < data.length; i += 2) {
     rows.push(data.slice(i, i + 2));

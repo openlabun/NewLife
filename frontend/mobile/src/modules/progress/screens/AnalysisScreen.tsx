@@ -11,7 +11,8 @@ import { colors } from '../../../constants/theme';
 import { useAnalysisData } from './analysis/hooks/useAnalysisData';
 import { EmotionBarChart } from './analysis/charts/EmotionBarChart';
 import { HorizontalBarChart } from './analysis/charts/HorizontalBarChart';
-import { PieChart, PieLegend } from './analysis/charts/PieChart';
+import { PieChart } from './analysis/charts/PieChart';
+import { EmptyStateEmotions } from './analysis/components/EmptyStateEmotions';
 import { getColorByIndex, getColorByZone } from './analysis/utils/colorHelpers';
 import { styles } from './analysis/styles/analysisStyles';
 import { shortenVinculoLabel, shortenZonaLabel } from './analysis/utils/labelMappers';
@@ -43,6 +44,9 @@ export default function AnalysisScreen({ navigation }: any) {
     );
   }
 
+  // ✨ DETECTAR SI HAY EMOCIONES CON VALUE > 0
+  const hasEmotions = emotionStats.some((e: any) => e.value > 0);
+
   // Preparar datos para vínculos de riesgo
   const risksLinksData =
     riskCharts?.vinculos_riesgo?.data?.map((p: any, idx: number) => ({
@@ -50,6 +54,9 @@ export default function AnalysisScreen({ navigation }: any) {
       value: p.porcentaje || p.value,
       color: getColorByIndex(idx),
     })) || [];
+
+  // ✨ DETECTAR SI HAY CONSUMO
+  const hasConsumption = risksLinksData.length > 0;
 
   // Preparar datos para zonas de riesgo (pastel)
   const pieData =
@@ -79,7 +86,7 @@ export default function AnalysisScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Resumen Final - PRIMERO */}
+      {/* Resumen Final - SIEMPRE */}
       {summary && (
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Resumen de tu progreso</Text>
@@ -98,49 +105,31 @@ export default function AnalysisScreen({ navigation }: any) {
         </View>
       )}
 
-      {/* Tus Emociones Generales */}
-      <EmotionBarChart data={emotionStats} />
-
-
-      {/* Vínculos de Riesgo */}
-      {risksLinksData.length > 0 && (
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Feather name="users" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>Vínculos de riesgo</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Según tus registros, estas son las personas que más te detonan.
-          </Text>
-          <View style={styles.listHeader}>
-            <Text style={styles.listHeaderText}>Lista de personas</Text>
-            <Text style={styles.listHeaderCount}>
-              {risksLinksData.length} personas registradas
-            </Text>
-          </View>
-          <HorizontalBarChart data={risksLinksData} />
-        </View>
+      {/* SI NO HAY EMOCIONES: MOSTRAR MENSAJE VACÍO */}
+      {!hasEmotions && (
+        <EmptyStateEmotions />
       )}
 
-      {/* Zonas de Mayor Riesgo */}
-      {pieData.length > 0 && (
-        <View style={[styles.card, styles.lastCard]}>
-          <View style={styles.cardHeader}>
-            <Feather name="map-pin" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>Zonas de mayor riesgo</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Puntos sensibles en espacios sociales.
-          </Text>
-          <View style={styles.pieWrapper}>
+      {/* SI HAY EMOCIONES: MOSTRAR TODO */}
+      {hasEmotions && (
+        <>
+          {/* Tus Emociones Generales */}
+          <EmotionBarChart data={emotionStats} />
+
+          {/* Vínculos de Riesgo - SOLO SI HAY CONSUMO */}
+          {hasConsumption && (
+            <HorizontalBarChart data={risksLinksData} />
+          )}
+
+          {/* Zonas de Mayor Riesgo - SOLO SI HAY CONSUMO */}
+          {hasConsumption && (
             <PieChart
               data={pieData}
               tooltipLabel={largestZone.label}
               tooltipValue={String(largestZone.porcentaje)}
             />
-          </View>
-          <PieLegend data={pieData} />
-        </View>
+          )}
+        </>
       )}
     </ScrollView>
   );
