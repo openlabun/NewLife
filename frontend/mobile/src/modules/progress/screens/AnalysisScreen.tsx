@@ -99,18 +99,8 @@ export default function AnalysisScreen({ navigation }: any) {
       )}
 
       {/* Tus Emociones Generales */}
-      {emotionStats.length > 0 && !emotionLoading && (
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Feather name="bar-chart-2" size={20} color={colors.primary} />
-            <Text style={styles.cardTitle}>Tus emociones generales</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Cómo te has sentido en tus últimos registros.
-          </Text>
-          <EmotionBarChart data={emotionStats} />
-        </View>
-      )}
+      <EmotionBarChart data={emotionStats} />
+
 
       {/* Vínculos de Riesgo */}
       {risksLinksData.length > 0 && (

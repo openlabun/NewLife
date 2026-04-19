@@ -54,7 +54,7 @@ export const HorizontalBarChart = ({
 
             {/* ✨ LABEL EN 2 LÍNEAS, ALINEADO AL TOP DE LA BARRA */}
             <View style={{ width: 100 }}>
-              <Text style={[styles.horizontalBarRightLabel, { marginBottom: 20 }]}>
+              <Text style={[styles.horizontalBarRightLabel, { marginBottom: 2 }]}>
                 {line1}
               </Text>
               {line2 && (
