@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { GRUPO_APOYO_REPOSITORY } from '../../domain/ports/grupo-apoyo.repository.port';
-import type { IGrupoApoyoRepository } from '../../domain/ports/grupo-apoyo.repository.port';
+import { GRUPO_APOYO_REPOSITORY } from '../../../domain/ports/grupo-apoyo.repository.port';
+import type { IGrupoApoyoRepository } from '../../../domain/ports/grupo-apoyo.repository.port';
 
 @Injectable()
 export class GetGrupoByIdUseCase {

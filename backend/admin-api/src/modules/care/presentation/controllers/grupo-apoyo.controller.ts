@@ -6,11 +6,11 @@ import { RolesGuard, Roles } from '../../../admin/presentation/guards/roles.guar
 import { UserRole } from '../../../admin/domain/entities/admin-user.entity';
 
 import { CreateGrupoApoyoDto, UpdateGrupoApoyoDto } from '../dtos/grupo-apoyo.dto';
-import { CreateGrupoUseCase } from '../../application/use-cases/create-grupo.use-case';
-import { UpdateGrupoUseCase } from '../../application/use-cases/update-grupo.use-case';
-import { DeleteGrupoUseCase } from '../../application/use-cases/delete-grupo.use-case';
-import { GetAllGruposUseCase } from '../../application/use-cases/get-all-grupos.use-case';
-import { GetGrupoByIdUseCase } from '../../application/use-cases/get-grupo-by-id.use-case';
+import { CreateGrupoUseCase } from '../../application/use-cases/grupos/create-grupo.use-case';
+import { UpdateGrupoUseCase } from '../../application/use-cases/grupos/update-grupo.use-case';
+import { DeleteGrupoUseCase } from '../../application/use-cases/grupos/delete-grupo.use-case';
+import { GetAllGruposUseCase } from '../../application/use-cases/grupos/get-all-grupos.use-case';
+import { GetGrupoByIdUseCase } from '../../application/use-cases/grupos/get-grupo-by-id.use-case';
 
 @ApiTags('Admin — Grupos de Apoyo')
 @ApiBearerAuth()
