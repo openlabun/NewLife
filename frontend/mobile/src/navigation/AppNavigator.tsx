@@ -87,6 +87,7 @@ import AgendaScreen from '../modules/care/screens/AgendaScreen';
 import AddEventScreen from '../modules/care/screens/AddEventScreen';
 import LockedLevelScreen from '../modules/progress/screens/index/LockedLevelScreen';
 import LevelsIndexScreen from '../modules/progress/screens/index/LevelsIndexScreen';
+import ZonesScreen from '../modules/care/screens/ZonesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -182,6 +183,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
           <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
           <Stack.Screen name="AgendaScreen" component={AgendaScreen} />
+          <Stack.Screen name="ZonesScreen" component={ZonesScreen} />
           <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
           <Stack.Screen name="LockedLevel" component={LockedLevelScreen} />
           <Stack.Screen name="LevelsIndex" component={LevelsIndexScreen} />

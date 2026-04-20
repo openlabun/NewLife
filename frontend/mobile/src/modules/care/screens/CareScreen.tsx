@@ -81,16 +81,17 @@ export default function CareScreen({ navigation }: any) {
                 </View>
 
                 {/* Mapa */}
-                <Text style={styles.sectionTitle}>Marcadores de apoyo (azul) y riesgo (rojo)</Text>
+                <Text style={styles.sectionTitle}>Marcadores de apoyo y riesgo</Text>
                 <View style={styles.mapCard}>
                     <WebView
                         source={{ html: MAP_HTML }}
                         style={styles.map}
                         scrollEnabled={false}
+                        javaScriptEnabled
                     />
                     <View style={styles.mapFooter}>
                         <Text style={styles.mapFooterText}>Encuentra tus zonas de apoyo y peligro</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate('ZonesScreen')}>
                             <Text style={styles.mapLink}>Ver más zonas</Text>
                         </TouchableOpacity>
                     </View>
