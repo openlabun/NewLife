@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Alert, ActivityIndicator,
+    View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, Alert, ActivityIndicator, Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { useLevelProgress } from '../../../hooks/useLevelProgress';
+import { performAnimatedScroll } from '../utils/pathScreenAnimation';
+import { setLevelHeight } from '../utils/levelHeights';
 
 const { width } = Dimensions.get('window');
 
@@ -88,7 +90,6 @@ function LevelCard({
     const getSubnodeState = (sublevelIndex: number): SubnodeProps['state'] => {
         if (isLockedLevel) return 'locked';
         if (isCompletedLevel) return 'completed';
-        // current level
         const completedSublevel = userProgress.sublevel - 1;
         if (sublevelIndex < completedSublevel) return 'completed';
         if (sublevelIndex === completedSublevel) return 'current';
@@ -116,13 +117,15 @@ function LevelCard({
     };
 
     return (
-        <TouchableOpacity
+        <View 
             style={styles.levelWrapper}
-            activeOpacity={0.8}
+            onLayout={(event) => {
+                const { height } = event.nativeEvent.layout;
+                setLevelHeight(level.id, height);
+                console.log(`📏 Nivel ${level.id} altura: ${height}px`);
+            }}
         >
-            {/* Card */}
             <View style={[styles.levelCard, isDisabled && styles.levelCardDisabled]}>
-                {/* Badge nivel */}
                 <View style={[styles.nivelBadge, isDisabled && styles.nivelBadgeDisabled]}>
                     <Text style={styles.nivelBadgeText}>Nivel {level.id}</Text>
                 </View>
@@ -134,7 +137,6 @@ function LevelCard({
                 </Text>
             </View>
 
-            {/* Subnodos */}
             <View style={styles.subnodesWrapper}>
                 <View style={styles.subnodesTopRow}>
                     {SUBLEVEL_ORDER.slice(0, 2).map((type, i) => {
@@ -175,24 +177,18 @@ function LevelCard({
                 </View>
             </View>
 
-            {/* Conector hacia abajo */}
             {level.id < 12 && (
                 <View style={styles.connector} />
             )}
-        </TouchableOpacity>
+        </View>
     );
 }
 
 export default function PathScreen({ navigation }: any) {
     const { progress, loading, isLocked } = useLevelProgress();
-
-    if (loading) {
-        return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={colors.accent} />
-            </View>
-        );
-    }
+    const flatListRef = useRef<FlatList>(null);
+    const scrollAnimRef = useRef(new Animated.Value(0)).current;
+    const hasScrolledRef = useRef(false);
 
     const userProgress = {
         level: progress.nivel,
@@ -222,20 +218,37 @@ export default function PathScreen({ navigation }: any) {
                 </View>
             </View>
 
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                showsVerticalScrollIndicator={false}
-            >
-                {LEVELS.map((level) => (
-                    <LevelCard
-                        key={level.id}
-                        level={level}
-                        userProgress={userProgress}
-                        navigation={navigation}
-                        isLocked={isLocked}
-                    />
-                ))}
-            </ScrollView>
+            {!loading ? (
+                <FlatList
+                    ref={flatListRef}
+                    data={LEVELS}
+                    keyExtractor={(item) => String(item.id)}
+                    contentContainerStyle={styles.flatListContent}
+                    renderItem={({ item: level }) => (
+                        <LevelCard
+                            level={level}
+                            userProgress={userProgress}
+                            navigation={navigation}
+                            isLocked={isLocked}
+                        />
+                    )}
+                    scrollEnabled={true}
+                    showsVerticalScrollIndicator={false}
+                    onContentSizeChange={() => {
+                        performAnimatedScroll(
+                            flatListRef,
+                            scrollAnimRef,
+                            hasScrolledRef,
+                            userProgress.level,
+                        );
+                    }}
+                />
+            ) : (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.accent} />
+                    <Text style={styles.loadingText}>Cargando tu progreso...</Text>
+                </View>
+            )}
         </View>
     );
 }
@@ -262,7 +275,7 @@ const styles = StyleSheet.create({
         fontSize: fontSizes.sm,
         color: colors.textMuted,
     },
-    scroll: {
+    flatListContent: {
         paddingHorizontal: spacing.xl,
         paddingBottom: spacing.xl,
         alignItems: 'center',
@@ -327,13 +340,6 @@ const styles = StyleSheet.create({
     levelDescriptionDisabled: {
         color: '#BBBBBB',
     },
-    subnodesRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: spacing.xl,
-        marginTop: spacing.md,
-        marginBottom: spacing.xs,
-    },
     subNodeImage: {
         width: 70,
         height: 70,
@@ -361,9 +367,16 @@ const styles = StyleSheet.create({
         width: 105,
         height: 105,
     },
-    centerContainer: {
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: colors.background,
+    },
+    loadingText: {
+        marginTop: spacing.md,
+        fontSize: fontSizes.md,
+        color: colors.textMuted,
+        fontWeight: '600',
     },
 });
