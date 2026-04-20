@@ -86,7 +86,7 @@ export default function ProgressScreen({ navigation }: any) {
 
                 {/* ✅ Mostrar solo cuando está listo */}
                 {isReady ? (
-                    <View style={styles.caminoWrapper}>
+                    <TouchableOpacity style={styles.caminoWrapper} onPress={() => navigation.navigate('Path')}>
                         {/* Personaje */}
                         <View style={styles.caminoLeft}>
                             <Image
@@ -109,7 +109,7 @@ export default function ProgressScreen({ navigation }: any) {
                                 {currentLevel.shortDescription}
                             </Text>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 ) : (
                     // ✅ Skeleton mientras carga
                     <View style={styles.caminoWrapper}>
@@ -132,10 +132,10 @@ export default function ProgressScreen({ navigation }: any) {
 
                 {/* ✅ Mostrar último registro o fallback */}
                 {!loading && latestGratitude && (
-                    <View style={styles.gratitudeCard}>
+                    <TouchableOpacity style={styles.gratitudeCard} onPress={() => navigation.navigate('GratitudeHistory')}>
                         <Text style={styles.gratitudeDate}>{latestGratitude.dia}</Text>
                         <Text style={styles.gratitudeText}>{latestGratitude.gratitud}</Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
                 {/* Mi análisis */}
@@ -144,11 +144,11 @@ export default function ProgressScreen({ navigation }: any) {
                     <Feather name="chevron-right" size={18} color={colors.text} />
                 </TouchableOpacity>
 
-                <View style={styles.analysisCard}>
+                <TouchableOpacity style={styles.analysisCard} onPress={() => navigation.navigate('Analysis')}>
                     <Text style={styles.analysisText}>
                         💪 Tu ánimo ha mejorado un 25% esta semana.
                     </Text>
-                </View>
+                </TouchableOpacity>
 
                 <View style={styles.bottomPadding} />
             </ScrollView>

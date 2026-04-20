@@ -29,19 +29,19 @@ export default function Nivel1Modulo1({ navigation }: any) {
             setAdvancing(true);
             try {
                 const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
-                console.log('âœ… MÃ³dulo completado. Nuevo progreso:', newProgress);
+                console.log('✅ Módulo completado. Nuevo progreso:', newProgress);
 
                 Alert.alert(
-                    'Â¡Felicidades!',
-                    `Has completado el MÃ³dulo ${CURRENT_SUBLEVEL}. ${
+                    '¡Felicidades!',
+                    `Has completado el Módulo ${CURRENT_SUBLEVEL}. ${
                         newProgress.subnivel > CURRENT_SUBLEVEL
-                            ? 'Siguiente mÃ³dulo desbloqueado.'
+                            ? 'Siguiente módulo desbloqueado.'
                             : 'Completa los anteriores para continuar.'
                     }`,
                     [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
                 );
             } catch (error) {
-                console.error('âŒ Error guardando progreso:', error);
+                console.error('❌ Error guardando progreso:', error);
                 Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
             } finally {
                 setAdvancing(false);
@@ -53,7 +53,7 @@ export default function Nivel1Modulo1({ navigation }: any) {
 
     const handleBack = () => {
         if (stepIndex === 0) {
-            navigation.goBack();
+            navigation.navigate('Path');
         } else {
             setStepIndex(stepIndex - 1);
         }
@@ -67,16 +67,16 @@ export default function Nivel1Modulo1({ navigation }: any) {
             mascot={MASCOT}
             onBack={handleBack}
             onContinue={handleContinue}
-            continueLabel={isLast ? 'Completar mÃ³dulo' : 'Continuar'}
+            continueLabel={isLast ? 'Completar módulo' : 'Continuar'}
             showIntro={step === 'intro'}
-            introTitle="Paso 1, MÃ³dulo 1"
-            introDescription="ContinÃºa tu camino en los 12 pasos de recuperaciÃ³n."
+            introTitle="Paso 1, Módulo 1"
+            introDescription="Continúa tu camino en los 12 pasos de recuperación."
         >
             {step === 'q1' && (
                 <>
-                    <MascotBubble text="Â¿CÃ³mo te sientes en este momento?" />
+                    <MascotBubble text="¿Cómo te sientes en este momento?" />
                     <MultipleChoice
-                        options={['Bien', 'Neutral', 'DifÃ­cil', 'Reflexivo']}
+                        options={['Bien', 'Neutral', 'Difícil', 'Reflexivo']}
                         selected={q1}
                         onSelect={setQ1}
                     />
@@ -84,14 +84,14 @@ export default function Nivel1Modulo1({ navigation }: any) {
             )}
 
             {step === 'frase1' && (
-                <ReflectivePhrase text="Cada paso te acerca mÃ¡s a tu recuperaciÃ³n." />
+                <ReflectivePhrase text="Cada paso te acerca más a tu recuperación." />
             )}
 
             {step === 'q2' && (
                 <>
-                    <MascotBubble text="Â¿QuÃ© aprendiste en este mÃ³dulo?" />
+                    <MascotBubble text="¿Qué aprendiste en este módulo?" />
                     <OpenQuestion
-                        placeholder="Escribe aquÃ­..."
+                        placeholder="Escribe aquí..."
                         value={q2}
                         onChange={setQ2}
                     />
@@ -99,7 +99,7 @@ export default function Nivel1Modulo1({ navigation }: any) {
             )}
 
             {step === 'frase2' && (
-                <ReflectivePhrase text="Tu compromiso con ti mismo es el mÃ¡s importante." />
+                <ReflectivePhrase text="Tu compromiso contigo mismo es el más importante." />
             )}
 
             {step === 'reflexion' && (

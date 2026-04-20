@@ -35,6 +35,7 @@ import DailyCheckInScreen from '../modules/progress/screens/DailyCheckInScreen';
 import CheckInSuccessScreen from '../modules/progress/screens/CheckInSuccessScreen';
 import AnalysisScreen from '../modules/progress/screens/AnalysisScreen';
 import PathScreen from '../modules/progress/screens/PathScreen';
+import ProgressScreen from '../modules/progress/screens/ProgressScreen';
 import Nivel1Modulo1 from '../modules/progress/screens/levels/nivel1/Nivel1Modulo1';
 import Nivel1Modulo2 from '../modules/progress/screens/levels/nivel1/Nivel1Modulo2';
 import Nivel1Modulo3 from '../modules/progress/screens/levels/nivel1/Nivel1Modulo3';
@@ -135,6 +136,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="CheckInSuccess" component={CheckInSuccessScreen} />
           <Stack.Screen name="Analysis" component={AnalysisScreen} />
           <Stack.Screen name="Path" component={PathScreen} />
+          <Stack.Screen name="Progress" component={ProgressScreen} />
           <Stack.Screen name="Nivel1Modulo1" component={Nivel1Modulo1} />
           <Stack.Screen name="Nivel1Modulo2" component={Nivel1Modulo2} />
           <Stack.Screen name="Nivel1Modulo3" component={Nivel1Modulo3} />

@@ -53,7 +53,7 @@ export default function Nivel5Modulo3({ navigation }: any) {
 
     const handleBack = () => {
         if (stepIndex === 0) {
-            navigation.goBack();
+            navigation.navigate('Path');
         } else {
             setStepIndex(stepIndex - 1);
         }
