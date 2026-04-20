@@ -1,46 +1,50 @@
 export interface FraseDia {
-  _id: string;
+  _id?: string;
   frase_id: string;
   frase: string;
-  dia: string;
-  fecha_actualiz?: string;
+  dia?: string;
   isFavorite?: boolean;
-}
-
-export interface FraseGuardada {
-  _id: string;
-  usuario_id: string;
-  frase_id: string;
-}
-
-export interface Challenge {
-  reto_id: string;
-  titulo: string;
-  descripcion: string;
-  dificultad: 'SUAVE' | 'MODERADA' | 'INTENSA';
-  tipo: 'SOBRIETY_DAYS' | 'CHECKIN_STREAK' | 'CHECKIN_TOTAL' | 'PATH_LEVEL';
-  target: number;
-  estado: 'DRAFT' | 'PUBLISHED';
+  usuario_id?: string;
 }
 
 export interface UserChallenge {
   reto_id: string;
-  usuario_id: string;
   titulo: string;
   descripcion: string;
   dificultad: 'SUAVE' | 'MODERADA' | 'INTENSA';
   tipo: 'SOBRIETY_DAYS' | 'CHECKIN_STREAK' | 'CHECKIN_TOTAL' | 'PATH_LEVEL';
   target: number;
-  progreso: number;
-  estado: 'IN_PROGRESS' | 'COMPLETED';
-  fecha_inscripcion: string;
-  fecha_completado?: string;
+  progreso_actual?: number;
+  estado?: 'ACTIVE' | 'COMPLETED' | 'PENDING';
+  texto_progreso?: string;
+  user_reto_id?: string;
+  fecha_inicio?: string;
+  fecha_completado?: string | null;
 }
 
 export interface Medal {
+  _id?: string;
   reto_id: string;
   titulo: string;
   descripcion: string;
-  dificultad: 'SUAVE' | 'MODERADA' | 'INTENSA';
-  fecha_completado: string;
+  fecha_obtenida?: string;
+}
+
+export interface MotivationContextType {
+  fraseDia: FraseDia | null;
+  frasesGuardadas: FraseDia[];
+  misChallenges: {
+    activos: UserChallenge[];
+    disponibles: UserChallenge[];
+    terminados: UserChallenge[];
+  };
+  misMedallas: Medal[];
+  loading: boolean;
+  error: string | null;
+  fetchFraseDia: () => Promise<void>;
+  fetchFrasesGuardadas: () => Promise<void>;
+  toggleFraseFavorita: (fraseId: string) => Promise<void>;
+  fetchMisChallenges: () => Promise<void>;
+  handleJoinChallenge: (retoId: string) => Promise<void>;
+  fetchMisMedallas: () => Promise<void>;
 }
