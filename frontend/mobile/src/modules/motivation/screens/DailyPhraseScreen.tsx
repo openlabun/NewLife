@@ -1,62 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Share,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-
-const DAILY_PHRASE = {
-  id: '1',
-  text: 'No necesitas alcohol para calmarte, tu fuerza está contigo.',
-  image: require('../../../assets/images/phrase1.png'),
-  liked: false,
-};
-
-const SAVED_PHRASES = [
-  { id: '1', text: 'No necesitas alcohol para calmarte, tu fuerza está contigo.', image: require('../../../assets/images/phrase1.png'), liked: true },
-  { id: '2', text: 'Permite la quietud, más cerca estás de ti.', image: require('../../../assets/images/phrase2.png'), liked: true },
-  { id: '3', text: 'Cada día sobrio es una victoria que merece celebrarse.', image: require('../../../assets/images/phrase3.png'), liked: true },
-  { id: '4', text: 'Tu cuerpo y mente te agradecen cada decisión consciente.', image: require('../../../assets/images/phrase4.png'), liked: true },
-];
-
-type Phrase = typeof SAVED_PHRASES[0];
-
-function PhraseCard({ phrase, onToggleLike }: { phrase: Phrase; onToggleLike: (id: string) => void }) {
-  const handleShare = async () => {
-    await Share.share({ message: phrase.text });
-  };
-
-  return (
-    <View style={styles.card}>
-      <Image source={phrase.image} style={styles.cardImage} resizeMode="cover" />
-      <View style={styles.cardOverlay}>
-        <Text style={styles.cardText}>{phrase.text}</Text>
-        <View style={styles.cardActions}>
-          <TouchableOpacity onPress={handleShare}>
-            <Feather name="share" size={20} color={colors.white} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => onToggleLike(phrase.id)}>
-            <Feather
-              name="heart"
-              size={20}
-              color={phrase.liked ? '#FF6B6B' : colors.white}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-}
+import { useMotivation } from '../hooks/useMotivation';
+import { PhraseCard } from '../components/PhraseCard';
 
 export default function DailyPhraseScreen({ navigation }: any) {
-  const [saved, setSaved] = useState(SAVED_PHRASES);
+  const {
+    fraseDia,
+    frasesGuardadas,
+    loading,
+    fetchFraseDia,
+    fetchFrasesGuardadas,
+  } = useMotivation();
 
-  const toggleLike = (id: string) => {
-    setSaved(saved.map((p) => p.id === id ? { ...p, liked: !p.liked } : p));
+  useEffect(() => {
+    // ✅ Cargar inmediatamente al montar
+    fetchFraseDia();
+    fetchFrasesGuardadas();
+
+    // ✅ Refetch cuando vuelves a la pantalla (desde otra pantalla)
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchFraseDia();
+      fetchFrasesGuardadas();
+    });
+
+    return unsubscribe;
+  }, [navigation, fetchFraseDia, fetchFrasesGuardadas]);
+
+  const handleFavoriteChange = () => {
+    // ✅ Refetch inmediato cuando cambia favorita
+    fetchFraseDia();
+    fetchFrasesGuardadas();
   };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.text} />
@@ -68,14 +50,63 @@ export default function DailyPhraseScreen({ navigation }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Frase del día */}
-        <PhraseCard phrase={DAILY_PHRASE} onToggleLike={() => {}} />
+        {/* Frase del Día */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.accent} />
+          </View>
+        ) : fraseDia ? (
+          <PhraseCard
+            fraseId={fraseDia.frase_id}
+            texto={fraseDia.frase}
+            isFavorite={fraseDia.isFavorite || false}
+            onFavoriteChange={handleFavoriteChange}
+          />
+        ) : null}
 
-        {/* Frases guardadas */}
-        <Text style={styles.savedTitle}>Frases guardadas</Text>
-        {saved.map((phrase) => (
-          <PhraseCard key={phrase.id} phrase={phrase} onToggleLike={toggleLike} />
-        ))}
+        {/* Frases Guardadas - Excluir la frase del día */}
+        {(() => {
+          // ✅ Filtrar: solo frases guardadas que NO sean la del día
+          const otherSavedPhrases = Array.isArray(frasesGuardadas)
+            ? frasesGuardadas.filter((frase) => frase.frase_id !== fraseDia?.frase_id)
+            : [];
+
+          console.log('🔍 otherSavedPhrases:', otherSavedPhrases);
+          console.log('🔍 otherSavedPhrases.length:', otherSavedPhrases.length);
+          console.log('🔍 frasesGuardadas.length:', frasesGuardadas.length);
+
+          // ✅ CASO 1: Hay frases guardadas (que no son la del día)
+          if (otherSavedPhrases.length > 0) {
+            return (
+              <>
+                <Text style={styles.savedTitle}>Frases guardadas</Text>
+                {otherSavedPhrases.map((frase) => (
+                  <PhraseCard
+                    key={frase.frase_id}
+                    fraseId={frase.frase_id}
+                    texto={frase.frase}
+                    isFavorite={true}
+                    onFavoriteChange={handleFavoriteChange}
+                  />
+                ))}
+              </>
+            );
+          }
+
+          // ✅ CASO 2: Solo la frase del día está guardada (no mostrar nada)
+          if (frasesGuardadas.length === 1 && frasesGuardadas[0]?.frase_id === fraseDia?.frase_id) {
+            return null;
+          }
+
+          // ✅ CASO 3: No hay nada guardado (mostrar mensaje)
+          return (
+            <View style={styles.emptyState}>
+              <Feather name="inbox" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>Aún no tienes frases guardadas</Text>
+              <Text style={styles.emptySubtext}>Guarda tus frases favoritas dándole corazón</Text>
+            </View>
+          );
+        })()}
 
         <View style={{ height: spacing.xl }} />
       </ScrollView>
@@ -110,41 +141,30 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     gap: spacing.md,
   },
-  card: {
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  cardImage: {
-    width: '100%',
-    height: 180,
-  },
-  cardOverlay: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  cardText: {
-    fontSize: fontSizes.md,
-    color: colors.white,
-    textAlign: 'center',
-    lineHeight: 20,
-    fontWeight: '500',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   savedTitle: {
     fontSize: fontSizes.md,
     fontWeight: '700',
     color: colors.text,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
+  },
+  loadingContainer: {
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    gap: spacing.md,
+  },
+  emptyText: {
+    fontSize: fontSizes.md,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  emptySubtext: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
   },
 });
