@@ -1,0 +1,80 @@
+import { Controller, Get, Post, Delete, Body, Req, UseGuards, Param } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../../auth/presentation/guards/jwt-auth.guard';
+
+import { GetFraseDelDiaUseCase } from '../../application/use-cases/get-frase-del-dia.use-case';
+import { GetFrasesGuardadasUseCase } from '../../application/use-cases/get-frases-guardadas.use-case';
+import { GuardarFraseUseCase } from '../../application/use-cases/guardar-frase.use-case';
+import { DesguardarFraseUseCase } from '../../application/use-cases/desguardar-frase.use-case';
+import { FraseActionDto } from '../dtos/frase.dto';
+
+import { JoinChallengeUseCase } from '../../application/use-cases/join-challenge.use-case';
+import { GetMyChallengesUseCase } from '../../application/use-cases/get-my-challenges.use-case';
+import { JoinChallengeDto } from '../dtos/join-challenge.dto';
+import { GetMisMedallasUseCase } from '../../application/use-cases/get-mis-medallas.use-case';
+
+@ApiTags('Motivación')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('motivation')
+export class MotivationController {
+  constructor(
+    private readonly getFraseDelDiaUseCase: GetFraseDelDiaUseCase,
+    private readonly getFrasesGuardadasUseCase: GetFrasesGuardadasUseCase,
+    private readonly guardarFraseUseCase: GuardarFraseUseCase,
+    private readonly desguardarFraseUseCase: DesguardarFraseUseCase,
+    private readonly getMyChallengesUseCase: GetMyChallengesUseCase,
+    private readonly joinChallengeUseCase: JoinChallengeUseCase,
+    private readonly getMisMedallasUseCase: GetMisMedallasUseCase,
+  ) {}
+
+  @ApiOperation({ summary: 'Obtiene la frase del día actual y verifica si el usuario le dio corazón' })
+  @Get('frase-del-dia')
+  async getFraseDelDia(@Req() req: any) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.getFraseDelDiaUseCase.execute(req.user.uid, token);
+  }
+
+  @ApiOperation({ summary: 'Obtiene la lista de todas las frases que el usuario ha guardado (favoritas)' })
+  @Get('frases-guardadas')
+  async getFrasesGuardadas(@Req() req: any) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.getFrasesGuardadasUseCase.execute(req.user.uid, token);
+  }
+
+  @ApiOperation({ summary: 'Guarda una frase en la lista de favoritas (Darle corazón)' })
+  @Post('frases-guardadas') 
+  async guardarFrase(@Req() req: any, @Body() dto: FraseActionDto) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.guardarFraseUseCase.execute(req.user.uid, dto.frase_id, token);
+  }
+
+  @ApiOperation({ summary: 'Quita una frase de la lista de favoritas (Quitar corazón)' })
+  @ApiParam({ name: 'fraseId', description: 'El ID de la frase que se va a eliminar de guardadas' })
+  @Delete('frases-guardadas/:fraseId')
+  async desguardarFrase(@Req() req: any, @Param('fraseId') fraseId: string) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.desguardarFraseUseCase.execute(req.user.uid, fraseId, token);
+  }
+
+  @ApiOperation({ summary: 'Obtener la lista de retos inscritos y su progreso' })
+  @Get('mis-retos')
+  async getMyChallenges(@Req() req: any) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.getMyChallengesUseCase.execute(req.user.uid, token);
+  }
+
+  @ApiOperation({ summary: 'Inscribe al usuario a un reto publicado y lo inicia en 0' })
+  @Post('retos/unirse')
+  async joinChallenge(@Req() req: any, @Body() dto: JoinChallengeDto) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.joinChallengeUseCase.execute(req.user.uid, dto.reto_id, token);
+  }
+
+  @ApiOperation({ summary: 'Obtener la lista de medallas (Retos en estado COMPLETED)' })
+  @Get('mis-medallas')
+  async getMisMedallas(@Req() req: any) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.getMisMedallasUseCase.execute(req.user.uid, token);
+  }
+}

@@ -38,7 +38,7 @@ export class ProgressController {
     private readonly initSobrietyUseCase: InitSobrietyUseCase,
     private readonly getAllRegistrosDiarioUseCase: GetAllRegistrosDiarioUseCase,
     private readonly getConsumptionDatesUseCase: GetConsumptionDatesUseCase,
-  ) {}
+  ) { }
 
   @Post('init')
   @ApiOperation({ summary: 'Inicializa/verifica registro en camino del usuario' })
@@ -54,7 +54,7 @@ export class ProgressController {
     return this.initSobrietyUseCase.execute(req.user.uid, body.fecha_ultimo_consumo, masterToken);
   }
 
-@Post('daily-checkin')
+  @Post('daily-checkin')
   async dailyCheckin(@Req() req, @Body() dto: DailyCheckinDto) {
     try {
       console.log('📤 Body recibido:', dto);
@@ -62,7 +62,7 @@ export class ProgressController {
       // ✨ GENERAR FECHA ACTUAL Y CONVERTIR A UTC-5
       const ahora = new Date();
       const fechaUTC5 = new Date(ahora.getTime() - (5 * 60 * 60 * 1000));
-      
+
       const dataWithTimezone = {
         ...dto,
         fecha: fechaUTC5.toISOString().slice(0, 19) + '-05:00', // "2026-04-19T01:10:19-05:00"
@@ -88,7 +88,8 @@ export class ProgressController {
   @Post('camino/advance')
   @ApiOperation({ summary: 'Avanza al siguiente subnivel/nivel en los 12 pasos' })
   async advanceCamino(@Req() req, @Body() body: { nivel: number; subnivel: number }) {
-    return this.advanceCaminoUseCase.execute(req.user.uid, body.nivel, body.subnivel);
+    const userToken = req.headers.authorization.split(' ')[1];
+    return this.advanceCaminoUseCase.execute(req.user.uid, userToken, body.nivel, body.subnivel);
   }
 
   @Get('camino')

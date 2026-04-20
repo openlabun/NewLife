@@ -1,6 +1,4 @@
-// backend/admin-api/src/modules/admin/admin.module.ts
-
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -43,6 +41,9 @@ import { ADMIN_AUTH_PORT } from './domain/ports/admin-auth.port';
 import { ADMIN_USER_REPOSITORY } from './domain/ports/admin-user.repository.port';
 import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
 
+// Motivation module
+import { MotivationModule } from '../motivation/motivation.module';
+
 @Module({
   imports: [
     ConfigModule,
@@ -56,6 +57,7 @@ import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
         },
       }),
     }),
+    forwardRef(() => MotivationModule),
   ],
   controllers: [
     AdminAuthController,

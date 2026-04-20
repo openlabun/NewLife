@@ -1,4 +1,6 @@
 import { AdminModule } from './modules/admin/admin.module';
+import { MotivationModule } from './modules/motivation/motivation.module';
+import { CareModule } from './modules/care/care.module';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -7,38 +9,37 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Validación global de DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,       // ignora campos no declarados en el DTO
+      whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true,       // transforma tipos automáticamente
+      transform: true,
     }),
   );
 
-  // CORS — ajusta el origin cuando tengas la URL del panel web
   app.enableCors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // ── Swagger panel web ────────────────────────────────────────────────────
   const webConfig = new DocumentBuilder()
     .setTitle('NewLife — Panel de Administración')
     .setDescription('Endpoints del panel web para admins y superadmins')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('Admin — Auth')
+    .addTag('Admin — Frases del Día')
+    .addTag('Admin — Retos')
+    .addTag('Admin — Grupos de Apoyo')
     .build();
 
   const webDocument = SwaggerModule.createDocument(app, webConfig, {
-    include: [AdminModule],
+    include: [AdminModule, MotivationModule, CareModule],
   });
 
   SwaggerModule.setup('api/docs/web', app, webDocument);
 
-  // ── Arrancar servidor ────────────────────────────────────────────────────
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`
