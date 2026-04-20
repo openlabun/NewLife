@@ -14,16 +14,32 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   INTENSA: '#FF6B6B',
 };
 
+function DifficultyBadge({ difficulty }: { difficulty: string }) {
+  const displayDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+  return (
+    <View style={styles.difficultyRow}>
+      <View
+        style={[
+          styles.difficultyDot,
+          { backgroundColor: DIFFICULTY_COLORS[difficulty] || '#999' },
+        ]}
+      />
+      <Text style={styles.difficultyText}>Dificultad: {displayDifficulty}</Text>
+    </View>
+  );
+}
+
 function ChallengeCard({
   challenge,
   onPress,
   onJoin,
+  isAvailable,
 }: {
   challenge: any;
   onPress: () => void;
   onJoin?: () => void;
+  isAvailable: boolean;
 }) {
-  const isAvailable = !challenge.progreso_actual && challenge.estado !== 'COMPLETED';
   const percent = challenge.target > 0
     ? Math.round(((challenge.progreso_actual || 0) / challenge.target) * 100)
     : 0;
@@ -32,16 +48,7 @@ function ChallengeCard({
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{challenge.titulo}</Text>
       <Text style={styles.cardDescription}>{challenge.descripcion}</Text>
-
-      <View style={styles.difficultyRow}>
-        <View
-          style={[
-            styles.difficultyDot,
-            { backgroundColor: DIFFICULTY_COLORS[challenge.dificultad] || '#999' },
-          ]}
-        />
-        <Text style={styles.difficultyText}>Dificultad: {challenge.dificultad}</Text>
-      </View>
+      <DifficultyBadge difficulty={challenge.dificultad} />
 
       {!isAvailable && (
         <>
@@ -49,13 +56,13 @@ function ChallengeCard({
             <View style={[styles.progressFill, { width: `${percent}%` }]} />
           </View>
           <Text style={styles.progressLabel}>
-            {percent}% completado — {challenge.progreso_actual || 0}/{challenge.target}
+            {percent}% completado — {challenge.progreso_actual || 0}/{challenge.target} cumplidos
           </Text>
         </>
       )}
 
       {isAvailable ? (
-        <TouchableOpacity style={styles.buttonJoin} onPress={onJoin}>
+        <TouchableOpacity style={styles.button} onPress={onJoin}>
           <Text style={styles.buttonText}>Únete</Text>
         </TouchableOpacity>
       ) : (
@@ -68,21 +75,24 @@ function ChallengeCard({
 }
 
 export default function ChallengesScreen({ navigation }: any) {
-  const {
-    misChallenges,
-    loading,
-    fetchMisChallenges,
-    handleJoinChallenge,
-  } = useMotivation();
+  const { misChallenges, loading, fetchMisChallenges, handleJoinChallenge } =
+    useMotivation();
 
   const [tab, setTab] = useState<ChallengeTab>('disponibles');
+  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMisChallenges();
   }, [fetchMisChallenges]);
 
   const handleJoin = async (retoId: string) => {
-    await handleJoinChallenge(retoId);
+    setJoiningId(retoId);
+    try {
+      await handleJoinChallenge(retoId);
+      await fetchMisChallenges();
+    } finally {
+      setJoiningId(null);
+    }
   };
 
   const getChallenges = () => {
@@ -147,6 +157,7 @@ export default function ChallengesScreen({ navigation }: any) {
               <ChallengeCard
                 key={challenge.reto_id}
                 challenge={challenge}
+                isAvailable={tab === 'disponibles'}
                 onPress={() =>
                   navigation.navigate('ChallengeDetail', { challenge })
                 }
@@ -156,7 +167,7 @@ export default function ChallengesScreen({ navigation }: any) {
           ) : (
             <View style={styles.emptyState}>
               <Feather name="inbox" size={48} color={colors.textMuted} />
-              <Text style={styles.emptyText}>No hay retos disponibles</Text>
+              <Text style={styles.emptyText}>No hay retos en esta categoría</Text>
             </View>
           )}
           <View style={{ height: spacing.xl }} />
@@ -267,13 +278,6 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.accent,
-    borderRadius: borderRadius.full,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
-  buttonJoin: {
-    backgroundColor: colors.primary,
     borderRadius: borderRadius.full,
     paddingVertical: spacing.md,
     alignItems: 'center',
