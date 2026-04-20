@@ -201,10 +201,17 @@ export default function PathScreen({ navigation }: any) {
 
     console.log('📊 PathScreen - Progress:', userProgress);
 
+    const handleGoBack = () => {
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home', params: { initialTab: 'Progress' } }],
+        });
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate('Progress')}>
+                <TouchableOpacity onPress={handleGoBack}>
                     <Feather name="chevron-left" size={24} color={colors.text} />
                 </TouchableOpacity>
                 <View>
