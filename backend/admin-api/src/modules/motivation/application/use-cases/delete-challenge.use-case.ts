@@ -11,9 +11,7 @@ export class DeleteChallengeUseCase {
     const existing = await this.challengeRepo.findByRetoId(id);
     if (!existing) throw new NotFoundException('Reto no encontrado');
     
-    if (existing.estado === ChallengeState.PUBLISHED) {
-      throw new ConflictException('No se puede eliminar un reto que ya está publicado.');
-    }
+    await this.challengeRepo.deleteEnrollmentsByRetoId(id);
 
     await this.challengeRepo.delete(id);
   }

@@ -7,7 +7,7 @@ const RETOS_TABLE = 'retos';
 
 @Injectable()
 export class RobleChallengeRepository implements IChallengeRepository {
-  constructor(private readonly roble: RobleHttpService) {}
+  constructor(private readonly roble: RobleHttpService) { }
 
   private mapChallenge(row: Record<string, unknown>): Challenge {
     return new Challenge({
@@ -58,5 +58,17 @@ export class RobleChallengeRepository implements IChallengeRepository {
 
   async delete(retoId: string): Promise<void> {
     await this.roble.dbDelete(RETOS_TABLE, 'reto_id', retoId);
+  }
+
+  async deleteEnrollmentsByRetoId(retoId: string): Promise<void> {
+    // 1. Buscamos todas las inscripciones a este reto
+    const inscripciones = await this.roble.dbRead<any[]>('user_retos', { reto_id: retoId });
+
+    // 2. Si hay usuarios inscritos, los borramos uno por uno
+    if (inscripciones && inscripciones.length > 0) {
+      for (const inscripcion of inscripciones) {
+        await this.roble.dbDelete('user_retos', 'user_reto_id', inscripcion.user_reto_id);
+      }
+    }
   }
 }

@@ -27,4 +27,5 @@ export interface IChallengeRepository {
   create(data: CreateChallengeInput): Promise<Challenge>;
   update(retoId: string, data: UpdateChallengeInput): Promise<Challenge>;
   delete(retoId: string): Promise<void>;
+  deleteEnrollmentsByRetoId(retoId: string): Promise<void>;
 }
