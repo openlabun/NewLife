@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@nestjs/event-emitter": "^3.0.1",
     "react-native-reanimated": "^4.3.0"
   }
 }
