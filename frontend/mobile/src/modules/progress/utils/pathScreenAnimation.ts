@@ -1,5 +1,5 @@
 import { Animated } from 'react-native';
-import { getTotalHeightUpTo } from './levelHeights';
+import { getTotalHeightUpTo, levelHeights } from './levelHeights';
 
 export const performAnimatedScroll = (
     flatListRef: any,
@@ -7,41 +7,47 @@ export const performAnimatedScroll = (
     hasScrolledRef: any,
     userLevel: number,
 ) => {
-    if (hasScrolledRef.current || userLevel <= 1) return;
-    
-    hasScrolledRef.current = true;
+    hasScrolledRef.current = false;
 
+    if (userLevel <= 1) return;
+    
+    const allHeightsMeasured = Object.keys(levelHeights).length === 12;
+    
+    if (!allHeightsMeasured) {
+        console.log('⏳ Esperando a que todas las cards se carguen...');
+        return;
+    }
+
+    console.log(`🎬 Animando a Nivel ${userLevel}`);
+
+    // ✅ DELAY MÍNIMO: Solo 100ms en lugar de 700ms
     setTimeout(() => {
-        // Calcular offset EXACTO basado en alturas reales
         const targetOffset = getTotalHeightUpTo(userLevel);
 
-        console.log(`🎬 Nivel ${userLevel} - Offset exacto: ${targetOffset}px`);
-
-        flatListRef.current?.scrollToIndex({
-            index: Math.max(0, userLevel - 1),
-            animated: false,
-            viewPosition: 0,
-        });
+        console.log(`📍 Offset objetivo: ${targetOffset}px`);
 
         setTimeout(() => {
-            // UN ÚNICO spring con configuración underdamped para bounce natural
-            // damping bajo + stiffness bajo = movimiento lento con rebote elástico
+            hasScrolledRef.current = true;
+
+            scrollAnimRef.setValue(0);
+
+            // Mismo spring de antes (velocidad original)
             Animated.spring(scrollAnimRef, {
                 toValue: targetOffset,
-                damping: 12,        // Bajo = más rebotes, más elástico
-                stiffness: 25,      // Muy bajo = movimiento más lento
-                mass: 1.5,          // Mayor masa = más inercia, movimiento pesado
+                damping: 12,
+                stiffness: 25,
+                mass: 1.5,
                 velocity: 0,
                 restDisplacementThreshold: 0.5,
                 restSpeedThreshold: 0.5,
                 useNativeDriver: false,
             }).start(() => {
-                console.log('✅ Scroll animado completado con bounce elástico natural');
+                console.log('✅ Scroll completado');
             });
 
             const listenerId = scrollAnimRef.addListener((event: { value: number }) => {
                 flatListRef.current?.scrollToOffset({ offset: event.value, animated: false });
             });
-        }, 50);
-    }, 100);
+        }, 50);  // ⬇️ Reducido
+    }, 100);   // ⬇️ Era 700ms, ahora 100ms - empieza casi al instante
 };
