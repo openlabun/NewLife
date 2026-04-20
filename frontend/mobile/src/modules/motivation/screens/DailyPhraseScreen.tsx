@@ -16,8 +16,12 @@ export default function DailyPhraseScreen({ navigation }: any) {
     fetchFrasesGuardadas,
   } = useMotivation();
 
-  // ✅ Refetch cuando vuelves a la pantalla
   useEffect(() => {
+    // ✅ Cargar inmediatamente al montar
+    fetchFraseDia();
+    fetchFrasesGuardadas();
+
+    // ✅ Refetch cuando vuelves a la pantalla (desde otra pantalla)
     const unsubscribe = navigation.addListener('focus', () => {
       fetchFraseDia();
       fetchFrasesGuardadas();
@@ -60,29 +64,49 @@ export default function DailyPhraseScreen({ navigation }: any) {
           />
         ) : null}
 
-        {/* Frases Guardadas */}
-        {frasesGuardadas && frasesGuardadas.length > 0 && (
-          <>
-            <Text style={styles.savedTitle}>Frases guardadas</Text>
-            {frasesGuardadas.map((frase) => (
-              <PhraseCard
-                key={frase.frase_id}
-                fraseId={frase.frase_id}
-                texto={frase.frase}
-                isFavorite={true}
-                onFavoriteChange={handleFavoriteChange}
-              />
-            ))}
-          </>
-        )}
+        {/* Frases Guardadas - Excluir la frase del día */}
+        {(() => {
+          // ✅ Filtrar: solo frases guardadas que NO sean la del día
+          const otherSavedPhrases = Array.isArray(frasesGuardadas)
+            ? frasesGuardadas.filter((frase) => frase.frase_id !== fraseDia?.frase_id)
+            : [];
 
-        {!loading && frasesGuardadas.length === 0 && (
-          <View style={styles.emptyState}>
-            <Feather name="inbox" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyText}>Aún no tienes frases guardadas</Text>
-            <Text style={styles.emptySubtext}>Guarda tus frases favoritas dándole corazón</Text>
-          </View>
-        )}
+          console.log('🔍 otherSavedPhrases:', otherSavedPhrases);
+          console.log('🔍 otherSavedPhrases.length:', otherSavedPhrases.length);
+          console.log('🔍 frasesGuardadas.length:', frasesGuardadas.length);
+
+          // ✅ CASO 1: Hay frases guardadas (que no son la del día)
+          if (otherSavedPhrases.length > 0) {
+            return (
+              <>
+                <Text style={styles.savedTitle}>Frases guardadas</Text>
+                {otherSavedPhrases.map((frase) => (
+                  <PhraseCard
+                    key={frase.frase_id}
+                    fraseId={frase.frase_id}
+                    texto={frase.frase}
+                    isFavorite={true}
+                    onFavoriteChange={handleFavoriteChange}
+                  />
+                ))}
+              </>
+            );
+          }
+
+          // ✅ CASO 2: Solo la frase del día está guardada (no mostrar nada)
+          if (frasesGuardadas.length === 1 && frasesGuardadas[0]?.frase_id === fraseDia?.frase_id) {
+            return null;
+          }
+
+          // ✅ CASO 3: No hay nada guardado (mostrar mensaje)
+          return (
+            <View style={styles.emptyState}>
+              <Feather name="inbox" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>Aún no tienes frases guardadas</Text>
+              <Text style={styles.emptySubtext}>Guarda tus frases favoritas dándole corazón</Text>
+            </View>
+          );
+        })()}
 
         <View style={{ height: spacing.xl }} />
       </ScrollView>

@@ -27,7 +27,12 @@ export const getFraseDia = async () => {
 export const getFrasesGuardadas = async () => {
   try {
     const response = await api.get('/motivation/frases-guardadas');
-    return response.data || [];
+    // ✅ El backend retorna { data: [...] }
+    // Extraemos solo el array
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
   } catch (error: any) {
     console.error('❌ Error obteniendo frases guardadas:', error.message);
     throw error;
@@ -61,17 +66,16 @@ export const desguardarFrase = async (fraseId: string) => {
 };
 
 /**
- * Obtiene todos los retos en los que el usuario está inscrito
+ * Obtiene todos los retos (activos, disponibles, terminados)
  */
 export const getMisChallenges = async () => {
   try {
     const response = await api.get('/motivation/mis-retos');
     // ✅ El backend retorna { data: { activos, disponibles, terminados } }
-    // Retornamos solo los activos
-    if (response.data?.data?.activos) {
-      return response.data.data.activos;
+    if (response.data?.data) {
+      return response.data.data;
     }
-    return [];
+    return { activos: [], disponibles: [], terminados: [] };
   } catch (error: any) {
     console.error('❌ Error obteniendo mis retos:', error.message);
     throw error;
@@ -98,7 +102,11 @@ export const joinChallenge = async (retoId: string) => {
 export const getMisMedallas = async () => {
   try {
     const response = await api.get('/motivation/mis-medallas');
-    return response.data || [];
+    // ✅ El backend retorna { data: [...] }
+    if (response.data?.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
   } catch (error: any) {
     console.error('❌ Error obteniendo medallas:', error.message);
     throw error;

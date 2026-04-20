@@ -13,7 +13,17 @@ import { FraseDia, UserChallenge, Medal } from '../types/motivation';
 export const useMotivation = () => {
   const [fraseDia, setFraseDia] = useState<FraseDia | null>(null);
   const [frasesGuardadas, setFrasesGuardadas] = useState<FraseDia[]>([]);
-  const [misChallenges, setMisChallenges] = useState<UserChallenge[]>([]);
+  
+  const [misChallenges, setMisChallenges] = useState<{
+    activos: UserChallenge[];
+    disponibles: UserChallenge[];
+    terminados: UserChallenge[];
+  }>({
+    activos: [],
+    disponibles: [],
+    terminados: [],
+  });
+  
   const [misMedallas, setMisMedallas] = useState<Medal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,15 +45,13 @@ export const useMotivation = () => {
 
   const fetchFrasesGuardadas = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      // ✅ NO usar setLoading aquí - solo cargar en background
       const frases = await getFrasesGuardadas();
-      setFrasesGuardadas(frases);
+      setFrasesGuardadas(frases || []);
     } catch (err: any) {
       setError(err.message || 'Error obteniendo frases guardadas');
       console.error('❌ Error fetchFrasesGuardadas:', err);
-    } finally {
-      setLoading(false);
+      setFrasesGuardadas([]);
     }
   }, []);
 
@@ -51,19 +59,30 @@ export const useMotivation = () => {
     async (fraseId: string) => {
       try {
         setError(null);
-        const isFavorite = frasesGuardadas.some((f) => f.frase_id === fraseId);
+        const isFavorite = frasesGuardadas && Array.isArray(frasesGuardadas)
+          ? frasesGuardadas.some((f) => f.frase_id === fraseId)
+          : false;
 
         if (isFavorite) {
-          await desguardarFrase(fraseId);
+          // ✅ Eliminar de favoritas - actualizar estado inmediatamente
           setFrasesGuardadas((prev) => prev.filter((f) => f.frase_id !== fraseId));
+          await desguardarFrase(fraseId);
           if (fraseDia?.frase_id === fraseId) {
             setFraseDia((prev) =>
               prev ? { ...prev, isFavorite: false } : null
             );
           }
         } else {
+          // ✅ Agregar a favoritas - crear el objeto y agregarlo inmediatamente
+          const newSavedPhrase = {
+            _id: fraseId,
+            frase_id: fraseId,
+            usuario_id: '',
+            frase: fraseDia?.frase || '',
+            dia: fraseDia?.dia || '',
+          };
+          setFrasesGuardadas((prev) => [...prev, newSavedPhrase]);
           await guardarFrase(fraseId);
-          await fetchFrasesGuardadas();
           if (fraseDia?.frase_id === fraseId) {
             setFraseDia((prev) =>
               prev ? { ...prev, isFavorite: true } : null
@@ -73,6 +92,8 @@ export const useMotivation = () => {
       } catch (err: any) {
         setError(err.message || 'Error actualizando favorita');
         console.error('❌ Error toggleFraseFavorita:', err);
+        // ❌ Si falla, refetch para sincronizar
+        await fetchFrasesGuardadas();
       }
     },
     [frasesGuardadas, fraseDia, fetchFrasesGuardadas]
@@ -84,7 +105,11 @@ export const useMotivation = () => {
       setLoading(true);
       setError(null);
       const challenges = await getMisChallenges();
-      setMisChallenges(challenges);
+      setMisChallenges({
+        activos: challenges.activos || [],
+        disponibles: challenges.disponibles || [],
+        terminados: challenges.terminados || [],
+      });
     } catch (err: any) {
       setError(err.message || 'Error obteniendo retos');
       console.error('❌ Error fetchMisChallenges:', err);
@@ -93,16 +118,21 @@ export const useMotivation = () => {
     }
   }, []);
 
-  const handleJoinChallenge = useCallback(async (retoId: string) => {
-    try {
-      setError(null);
-      const newChallenge = await joinChallenge(retoId);
-      setMisChallenges((prev) => [...prev, newChallenge]);
-    } catch (err: any) {
-      setError(err.message || 'Error uniéndose al reto');
-      console.error('❌ Error joinChallenge:', err);
-    }
-  }, []);
+  const handleJoinChallenge = useCallback(
+    async (retoId: string) => {
+      try {
+        setError(null);
+        const newChallenge = await joinChallenge(retoId);
+        console.log('✅ Inscrito al reto:', newChallenge);
+        // Refetch para actualizar lista
+        await fetchMisChallenges();
+      } catch (err: any) {
+        setError(err.message || 'Error uniéndose al reto');
+        console.error('❌ Error joinChallenge:', err);
+      }
+    },
+    [fetchMisChallenges]
+  );
 
   // ✅ MEDALLAS
   const fetchMisMedallas = useCallback(async () => {
@@ -121,7 +151,7 @@ export const useMotivation = () => {
 
   return {
     fraseDia,
-    frasesGuardadas,
+    frasesGuardadas: frasesGuardadas || [],
     misChallenges,
     misMedallas,
     loading,

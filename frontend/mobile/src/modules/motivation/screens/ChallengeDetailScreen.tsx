@@ -1,85 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import Svg, { Path } from 'react-native-svg';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  Suave: '#4CAF50',
-  Moderada: '#FFC107',
-  Intensa: '#FF6B6B',
+  SUAVE: '#4CAF50',
+  MODERADA: '#FFC107',
+  INTENSA: '#FF6B6B',
 };
 
-// ── CheckIcon ────
-const CheckIcon = () => (
-  <Svg width={14} height={14} viewBox="0 0 24 24">
-    <Path
-      d="M5 12L10 17L19 7"
-      stroke="#FFF"
-      strokeWidth={3}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      fill="none"
-    />
-  </Svg>
-);
-
-// ── ProgressDot ───
-const ProgressDot = ({
-  isActive,
-  isCompleted,
-  index,
-}: {
-  isActive: boolean;
-  isCompleted: boolean;
-  index: number;
-}) => {
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(index * 80),
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 5,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-  }, []);
-
-  const dotStyle = isActive || isCompleted ? styles.dotFilled : styles.dotEmpty;
-
-  return (
-    <Animated.View
-      style={[
-        styles.dotWrapper,
-        { opacity: opacityAnim, transform: [{ scale: scaleAnim }] },
-      ]}
-    >
-      <View style={[styles.dot, dotStyle]}>
-        {(isActive || isCompleted) && <CheckIcon />}
-      </View>
-      {(isActive || isCompleted) && <View style={styles.dotGlow} />}
-    </Animated.View>
-  );
-};
-
-// ── ChallengeDetailScreen ───
 export default function ChallengeDetailScreen({ navigation, route }: any) {
   const { challenge } = route.params;
-  const isCompleted = challenge.status === 'completed';
-  const percent = Math.round((challenge.progress / challenge.total) * 100);
+
+  const isCompleted = challenge.estado === 'COMPLETED';
+  const percent = challenge.target > 0
+    ? Math.round(((challenge.progreso_actual || 0) / challenge.target) * 100)
+    : 0;
 
   return (
     <View style={styles.container}>
@@ -88,7 +26,7 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
           <Feather name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>{challenge.title}</Text>
+          <Text style={styles.headerTitle}>{challenge.titulo}</Text>
           <Text style={styles.headerSubtitle}>
             {isCompleted ? 'Reto completado' : 'Reto activo'}
           </Text>
@@ -96,60 +34,56 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.description}>{challenge.description}</Text>
+        <Text style={styles.description}>{challenge.descripcion}</Text>
 
-        {/* ── Progreso ── */}
+        {/* Progreso */}
         <View style={styles.progressContainer}>
-          {/* Texto */}
           <View style={styles.progressHeader}>
-            <Text style={styles.progressNumber}>{challenge.progress}</Text>
+            <Text style={styles.progressNumber}>{challenge.progreso_actual || 0}</Text>
             <Text style={styles.progressText}> de </Text>
-            <Text style={styles.progressNumber}>{challenge.total}</Text>
+            <Text style={styles.progressNumber}>{challenge.target}</Text>
             <Text style={styles.progressText}> cumplidos</Text>
           </View>
 
-          {/* Barra */}
           <View style={styles.progressBarBg}>
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${(challenge.progress / challenge.total) * 100}%` },
+                { width: `${percent}%` },
               ]}
             />
           </View>
 
-          {/* Dots animados */}
-          <View style={styles.dotsRow}>
-            {Array.from({ length: challenge.total }).map((_, i) => (
-              <ProgressDot
-                key={i}
-                index={i}
-                isActive={i < challenge.progress}
-                isCompleted={isCompleted && i < challenge.progress}
-              />
-            ))}
-          </View>
+          <Text style={styles.progressLabel}>
+            {percent}% completado
+          </Text>
         </View>
 
-        {/* ── Medalla ── */}
+        {/* Medalla */}
         <View style={[styles.medalCard, isCompleted && styles.medalCardCompleted]}>
           <Text style={[styles.medalEmoji, !isCompleted && styles.medalEmojiGray]}>
             🏅
           </Text>
           <Text style={[styles.medalTitle, !isCompleted && styles.medalTitleGray]}>
-            {challenge.title}
+            {challenge.titulo}
           </Text>
         </View>
 
-        {/* ── Dificultad ── */}
+        {/* Dificultad */}
         <View style={styles.difficultyRow}>
           <View
             style={[
               styles.difficultyDot,
-              { backgroundColor: DIFFICULTY_COLORS[challenge.difficulty] },
+              { backgroundColor: DIFFICULTY_COLORS[challenge.dificultad] || '#999' },
             ]}
           />
-          <Text style={styles.difficultyText}>Dificultad: {challenge.difficulty}</Text>
+          <Text style={styles.difficultyText}>Dificultad: {challenge.dificultad}</Text>
+        </View>
+
+        {/* Tipo de reto */}
+        <View style={styles.typeRow}>
+          <Text style={styles.typeLabel}>Tipo de reto:</Text>
+          <Text style={styles.typeValue}>{challenge.tipo}</Text>
         </View>
 
         <View style={{ height: spacing.xl }} />
@@ -158,7 +92,6 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
   );
 }
 
-// ── Styles ───
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -187,12 +120,10 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: fontSizes.md,
-    color: colors.textLight,
+    color: colors.text,
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
-
-  // ── Progreso
   progressContainer: {
     alignItems: 'center',
     marginBottom: spacing.xl,
@@ -205,71 +136,30 @@ const styles = StyleSheet.create({
   progressNumber: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#406ADF',
+    color: colors.primary,
   },
   progressText: {
     fontSize: 15,
     fontWeight: '500',
-    color:     colors.text,
+    color: colors.text,
   },
   progressBarBg: {
     width: '100%',
     height: 6,
-    backgroundColor: 'rgba(173, 206, 245, 0.52)',
+    backgroundColor: '#E0E0E0',
     borderRadius: 3,
     marginBottom: 20,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#406ADF',
+    backgroundColor: colors.primary,
     borderRadius: 3,
   },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+  progressLabel: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
   },
-
-  // ── Dots
-  dotWrapper: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  dotFilled: {
-    backgroundColor: '#406ADF',
-    shadowColor: '#406ADF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  dotEmpty: {
-    backgroundColor: '#cbe2fc',
-    borderWidth: 2,
-    borderColor: 'rgba(90, 116, 230, 0.39)',
-    borderStyle: 'dashed',
-  },
-  dotGlow: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(90, 116, 230, 0.39)',
-    zIndex: 1,
-  },
-
-  // ── Medalla
   medalCard: {
     backgroundColor: '#F0F0F0',
     borderRadius: borderRadius.md,
@@ -301,12 +191,11 @@ const styles = StyleSheet.create({
   medalTitleGray: {
     color: colors.textMuted,
   },
-
-  // ── Dificultad
   difficultyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    marginBottom: spacing.lg,
   },
   difficultyDot: {
     width: 10,
@@ -317,5 +206,20 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colors.text,
     fontWeight: '600',
+  },
+  typeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  typeLabel: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  typeValue: {
+    fontSize: fontSizes.sm,
+    color: colors.text,
+    fontWeight: '700',
   },
 });
