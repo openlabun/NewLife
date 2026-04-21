@@ -42,7 +42,7 @@ const MAP_HTML = `
 const QUICK_ACTIONS = [
     { key: 'groups', label: 'Grupos', icon: 'users', color: '#406ADF' },
     { key: 'emergency', label: 'Emergencia', icon: 'bell', color: '#406ADF' },
-    { key: 'motivation', label: 'Motivación', icon: 'user', color: '#406ADF' },
+    { key: 'motivation', label: 'Motivación', icon: 'zap', color: '#406ADF' },
     { key: 'content', label: 'Contenido', icon: 'book-open', color: '#406ADF' },
 ];
 
@@ -51,7 +51,7 @@ export default function CareScreen({ navigation }: any) {
         switch (key) {
             case 'groups': navigation.navigate('GroupsScreen'); break;
             case 'emergency': navigation.navigate('CareContacts'); break;
-            case 'motivation': navigation.navigate('MotivationalPhrasesScreen'); break;
+            case 'motivation': navigation.navigate('MotivationalScreen'); break;
             case 'content': navigation.navigate('ContentScreen'); break;
         }
     };

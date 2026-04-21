@@ -5,10 +5,11 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+
 const FAVORITES = [
-  { id: '2', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Motivación', duration: '3 min de lectura', image: require('../../../assets/images/contenido2.png'), liked: true, tags: ['impulsos', 'motivación'] },
-  { id: '3', title: 'Co-adicción: señales y pasos a seguir', type: 'video', category: 'Relaciones', duration: '5 min de duración', image: require('../../../assets/images/contenido3.png'), liked: true, tags: ['relaciones'] },
-  { id: '5', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Relaciones', duration: '3 min de lectura', image: require('../../../assets/images/contenido5.png'), liked: true, tags: ['relaciones'] },
+  { id: '2', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Motivación', duration: '3 min de lectura', image: require('../../../../assets/images/contenido2.png'), liked: true, tags: ['impulsos', 'motivación'] },
+  { id: '3', title: 'Co-adicción: señales y pasos a seguir', type: 'video', category: 'Relaciones', duration: '5 min de duración', image: require('../../../../assets/images/contenido3.png'), liked: true, tags: ['relaciones'] },
+  { id: '5', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Relaciones', duration: '3 min de lectura', image: require('../../../../assets/images/contenido5.png'), liked: true, tags: ['relaciones'] },
 ];
 
 export default function FavoritesScreen({ navigation }: any) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -30,11 +30,9 @@ export default function MotivationalCard({
   image,
   isFavorite,
   onToggleFavorite,
-  onShare,
 }: MotivationalCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // ✅ Animación de like
   const animateLike = () => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -67,29 +65,28 @@ export default function MotivationalCard({
 
   return (
     <View style={styles.card}>
+      {/* Imagen SIN overlay */}
       <Image source={image} style={styles.cardImage} resizeMode="cover" />
-      <View style={styles.cardOverlay}>
+
+      {/* Footer gris (clave del diseño) */}
+      <View style={styles.footer}>
         <Text style={styles.cardText}>{text}</Text>
+
         <View style={styles.cardActions}>
+          <TouchableOpacity onPress={handleShare}>
+            <Feather name="share-2" size={18} color={colors.white} />
+          </TouchableOpacity>
+
           <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleToggleFavorite}
-            >
+            <TouchableOpacity onPress={handleToggleFavorite}>
               <Feather
-                name={isFavorite ? 'heart' : 'heart'}
+                name="heart"
                 size={18}
                 color={isFavorite ? '#FF6B6B' : colors.white}
                 fill={isFavorite ? '#FF6B6B' : 'none'}
               />
             </TouchableOpacity>
           </Animated.View>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleShare}
-          >
-            <Feather name="share-2" size={18} color={colors.white} />
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -102,45 +99,31 @@ const styles = StyleSheet.create({
     height: CARD_WIDTH * 1.4,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
-    backgroundColor: '#E0E0E0',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: '#E0E0E0', // crema/gris base
   },
+
   cardImage: {
     width: '100%',
-    height: '100%',
-    position: 'absolute',
+    height: '70%', // 🔥 clave: la imagen NO ocupa todo
   },
-  cardOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'flex-end',
+
+  footer: {
+    height: '30%', // 🔥 bloque inferior
+    backgroundColor: '#404040', // gris visible (ajusta si quieres más claro)
     padding: spacing.md,
-    gap: spacing.sm,
+    justifyContent: 'space-between',
   },
+
   cardText: {
     fontSize: fontSizes.sm,
     color: colors.white,
     fontWeight: '600',
     lineHeight: 20,
   },
+
   cardActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
 });
