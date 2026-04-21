@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from '../database/database.module';
 import { AuthModule } from '../auth/auth.module';
+import { ProgressModule } from '../progress/progress.module';
 import { RobleMotivationAdapter } from './infrastructure/adapters/roble-motivation.adapter';
 import { GetFraseDelDiaUseCase } from './application/use-cases/get-frase-del-dia.use-case';
 import { GetFrasesGuardadasUseCase } from './application/use-cases/get-frases-guardadas.use-case';
@@ -19,7 +21,7 @@ import { GetMisMedallasUseCase } from './application/use-cases/get-mis-medallas.
 import { MotivationController } from './presentation/controllers/motivation.controller';
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [DatabaseModule, AuthModule, EventEmitterModule, ProgressModule],
   controllers: [
     MotivationController
   ],

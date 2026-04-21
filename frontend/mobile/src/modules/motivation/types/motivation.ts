@@ -23,11 +23,11 @@ export interface UserChallenge {
 }
 
 export interface Medal {
-  _id?: string;
+  user_reto_id: string;
   reto_id: string;
   titulo: string;
-  descripcion: string;
-  fecha_obtenida?: string;
+  dificultad: 'SUAVE' | 'MODERADA' | 'INTENSA';
+  fecha_completado: string;
 }
 
 export interface MotivationContextType {

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DatabaseModule } from '../database/database.module';
 import { RobleProgressAdapter } from './infrastructure/adapters/roble-progress.adapter';
 import { DailyCheckinUseCase } from './application/use-cases/daily-checkin.use-case';
@@ -19,7 +20,7 @@ import { AuthModule } from '../auth/auth.module';
 import { GetConsumptionDatesUseCase } from './application/use-cases/get-consumption-dates.use-case';
 
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [DatabaseModule, AuthModule, EventEmitterModule],
   controllers: [ProgressController],
   providers: [
     DailyCheckinUseCase,
@@ -40,6 +41,6 @@ import { GetConsumptionDatesUseCase } from './application/use-cases/get-consumpt
       useClass: RobleProgressAdapter,
     },
   ],
-  exports: ['IProgressProviderPort'],
+  exports: ['IProgressProviderPort', EventEmitterModule],
 })
 export class ProgressModule {}

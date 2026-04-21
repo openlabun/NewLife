@@ -1,10 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { IMotivationProviderPort } from '../../domain/ports/motivation-provider.port';
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import type { IMotivationProviderPort } from '../../domain/ports/motivation-provider.port';
 import { ChallengeEvaluatorFactory } from '../strategies/challenge-evaluator.factory';
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 
 @Injectable()
 export class EvaluateChallengesUseCase {
+  private logger = new Logger(EvaluateChallengesUseCase.name);
+
   constructor(
     @Inject('IMotivationProviderPort')
     private readonly motivationProvider: IMotivationProviderPort,
@@ -13,35 +15,112 @@ export class EvaluateChallengesUseCase {
   ) {}
 
   async execute(usuarioId: string, userToken: string) {
-    const masterToken = await this.systemAuth.getMasterToken();
-    const activeChallenges = await this.motivationProvider.getActiveUserChallenges(usuarioId, userToken);
-    
-    for (const userChallenge of activeChallenges) {
-      const retoCatalogo = await this.motivationProvider.getChallengeById(userChallenge.reto_id, masterToken);
-      if (!retoCatalogo) continue;
+    this.logger.log(
+      `🎯 [EvaluateChallengesUseCase] Iniciando evaluación para usuario: ${usuarioId}`,
+    );
 
-      const evaluator = this.evaluatorFactory.getEvaluator(retoCatalogo.tipo);
-      const nuevoProgreso = await evaluator.evaluate(usuarioId, retoCatalogo.target, userToken, masterToken);
+    try {
+      const masterToken = await this.systemAuth.getMasterToken();
+      const activeChallenges =
+        await this.motivationProvider.getActiveUserChallenges(usuarioId, userToken);
 
-      if (nuevoProgreso !== userChallenge.progreso_actual) {
-        let estadoFinal = 'ACTIVE';
+      this.logger.log(
+        `🎯 [EvaluateChallengesUseCase] Retos activos encontrados: ${activeChallenges.length}`,
+      );
 
-        if (nuevoProgreso >= retoCatalogo.target) {
-          estadoFinal = 'COMPLETED';
-        } 
-        // Si el progreso de hoy es menor que el que tenía (ej. llevaba 5 días y ahora tiene 0), recayó.
-        else if (nuevoProgreso < userChallenge.progreso_actual && 
-                (retoCatalogo.tipo === 'SOBRIETY_DAYS' || retoCatalogo.tipo === 'CHECKIN_STREAK')) {
-          estadoFinal = 'FAILED';
+      if (activeChallenges.length === 0) {
+        this.logger.log(
+          `🎯 [EvaluateChallengesUseCase] No hay retos activos, nada que evaluar`,
+        );
+        return;
+      }
+
+      for (const userChallenge of activeChallenges) {
+        this.logger.log(
+          `🎯 [EvaluateChallengesUseCase] Evaluando reto: ${userChallenge.reto_id}`,
+        );
+
+        const retoCatalogo = await this.motivationProvider.getChallengeById(
+          userChallenge.reto_id,
+          masterToken,
+        );
+
+        if (!retoCatalogo) {
+          this.logger.warn(
+            `🎯 [EvaluateChallengesUseCase] Reto no encontrado: ${userChallenge.reto_id}`,
+          );
+          continue;
         }
 
-        await this.motivationProvider.updateChallengeProgress(
-          userChallenge.user_reto_id, 
-          nuevoProgreso, 
-          estadoFinal, 
-          userToken
+        const evaluator = this.evaluatorFactory.getEvaluator(retoCatalogo.tipo);
+        this.logger.log(
+          `🎯 [EvaluateChallengesUseCase] Evaluador seleccionado: ${retoCatalogo.tipo}`,
         );
+
+        const nuevoProgreso = await evaluator.evaluate(
+          usuarioId,
+          retoCatalogo.target,
+          userToken,
+          masterToken,
+        );
+
+        this.logger.log(
+          `🎯 [EvaluateChallengesUseCase] Reto: "${retoCatalogo.titulo}" (tipo: ${retoCatalogo.tipo})`,
+        );
+        this.logger.log(
+          `🎯 [EvaluateChallengesUseCase] Target: ${retoCatalogo.target}, Progreso anterior: ${userChallenge.progreso_actual}, Nuevo: ${nuevoProgreso}`,
+        );
+
+        // ✅ Solo actualizar si el progreso cambió
+        if (nuevoProgreso !== userChallenge.progreso_actual) {
+          let estadoFinal = 'ACTIVE';
+
+          if (nuevoProgreso >= retoCatalogo.target) {
+            estadoFinal = 'COMPLETED';
+            this.logger.log(
+              `🎯 [EvaluateChallengesUseCase] ✅ RETO COMPLETADO: "${retoCatalogo.titulo}"`,
+            );
+          } else if (
+            nuevoProgreso < userChallenge.progreso_actual &&
+            (retoCatalogo.tipo === 'SOBRIETY_DAYS' ||
+              retoCatalogo.tipo === 'CHECKIN_STREAK')
+          ) {
+            estadoFinal = 'FAILED';
+            this.logger.log(
+              `🎯 [EvaluateChallengesUseCase] ❌ RETO FALLIDO: "${retoCatalogo.titulo}" (Retroceso en progreso)`,
+            );
+          }
+
+          this.logger.log(
+            `🎯 [EvaluateChallengesUseCase] Actualizando: user_reto_id=${userChallenge.user_reto_id}, progreso=${nuevoProgreso}, estado=${estadoFinal}`,
+          );
+
+          await this.motivationProvider.updateChallengeProgress(
+            userChallenge.user_reto_id,
+            nuevoProgreso,
+            estadoFinal,
+            userToken,
+          );
+
+          this.logger.log(
+            `🎯 [EvaluateChallengesUseCase] ✅ Reto actualizado correctamente`,
+          );
+        } else {
+          this.logger.log(
+            `🎯 [EvaluateChallengesUseCase] ℹ️ Sin cambios en progreso (${nuevoProgreso} = ${userChallenge.progreso_actual})`,
+          );
+        }
       }
+
+      this.logger.log(
+        `🎯 [EvaluateChallengesUseCase] Evaluación completada exitosamente`,
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `🎯 [EvaluateChallengesUseCase] Error durante evaluación:`,
+        error.message,
+      );
+      throw error;
     }
   }
 }

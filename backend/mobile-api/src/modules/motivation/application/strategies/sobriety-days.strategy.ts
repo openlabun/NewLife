@@ -1,42 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { IChallengeEvaluator } from './challenge-evaluator.interface';
 import { DatabaseService } from '../../../database/infrastructure/database.service';
 
 @Injectable()
 export class SobrietyDaysStrategy implements IChallengeEvaluator {
+  private logger = new Logger(SobrietyDaysStrategy.name);
+  
   constructor(private readonly db: DatabaseService) {}
 
-  async evaluate(usuarioId: string, target: number, fechaInicio: string, userToken: string, masterToken: string): Promise<number> {
+  async evaluate(
+    usuarioId: string,
+    target: number,
+    userToken: string,
+    masterToken: string,
+  ): Promise<number> {
+    this.logger.log(`[SobrietyDaysStrategy] Evaluando usuario: ${usuarioId}, target: ${target}`);
+
+    // ✅ Obtener historial de sobriedad
     const result = await this.db.find('sobriedad', { usuario_id: usuarioId }, masterToken);
     const rows = Array.isArray(result) ? result : (result?.rows ?? []);
     
-    const inicioReto = new Date(fechaInicio);
-    let fechaReferencia = inicioReto;
-
-    if (rows.length > 0 && rows[0].fecha_ultimo_consumo) {
-      const ultimoConsumo = new Date(rows[0].fecha_ultimo_consumo);
-      
-      // ¿Consumió ANTES o DESPUÉS de unirse/reiniciar el reto?
-      if (ultimoConsumo > inicioReto) {
-        // Consumió durante el reto. El contador se reinicia desde la fecha del consumo.
-        fechaReferencia = ultimoConsumo;
-      } else {
-        // El consumo fue en el pasado (incluso horas antes de reiniciar el reto). 
-        // Empezamos a contar desde que inició el reto.
-        fechaReferencia = inicioReto;
-      }
+    if (!rows.length) {
+      this.logger.warn(`[SobrietyDaysStrategy] Sin registro de sobriedad para ${usuarioId}`);
+      return 0;
     }
 
-    // Calculamos días calendario exactos a las 00:00 para evitar fallos por horas
+    const sobrietyRecord = rows[0];
+    const ultimoConsumo = new Date(sobrietyRecord.fecha_ultimo_consumo);
+    
+    this.logger.log(`[SobrietyDaysStrategy] Último consumo: ${ultimoConsumo.toISOString()}`);
+
+    // ✅ Calcular días a las 00:00:00 para exactitud
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const ref = new Date(fechaReferencia);
-    ref.setHours(0, 0, 0, 0);
+    
+    const lastConsumptionDate = new Date(ultimoConsumo);
+    lastConsumptionDate.setHours(0, 0, 0, 0);
 
-    const diffTime = today.getTime() - ref.getTime();
+    const diffTime = today.getTime() - lastConsumptionDate.getTime();
     const daysSober = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    // Asegurarnos de que no de números negativos en el mismo día
-    return Math.min(Math.max(daysSober, 0), target);
+    const resultado = Math.min(Math.max(daysSober, 0), target);
+
+    this.logger.log(`[SobrietyDaysStrategy] Días sobrio calculados: ${daysSober} (capped a ${target})`);
+
+    return resultado;
   }
 }

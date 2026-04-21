@@ -22,7 +22,7 @@ export default function MotivationScreen({ navigation }: any) {
     fetchFraseDia();
     fetchMisChallenges();
 
-    // ✅ Refetch cuando vuelves a la pantalla (desde otra pantalla)
+    // ✅ Refetch cuando vuelves a la pantalla
     const unsubscribe = navigation.addListener('focus', () => {
       fetchFraseDia();
       fetchMisChallenges();
