@@ -1,11 +1,12 @@
-import { Controller, Get, Post, Delete, Body, Req, UseGuards, Param } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Body, Req, UseGuards, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/presentation/guards/jwt-auth.guard';
 
 import { GetFraseDelDiaUseCase } from '../../application/use-cases/get-frase-del-dia.use-case';
 import { GetFrasesGuardadasUseCase } from '../../application/use-cases/get-frases-guardadas.use-case';
 import { GuardarFraseUseCase } from '../../application/use-cases/guardar-frase.use-case';
 import { DesguardarFraseUseCase } from '../../application/use-cases/desguardar-frase.use-case';
+import { GetFrasesPorFechaUseCase } from '../../application/use-cases/get-frases-por-fecha.use-case';
 import { FraseActionDto } from '../dtos/frase.dto';
 
 import { JoinChallengeUseCase } from '../../application/use-cases/join-challenge.use-case';
@@ -23,6 +24,7 @@ export class MotivationController {
     private readonly getFrasesGuardadasUseCase: GetFrasesGuardadasUseCase,
     private readonly guardarFraseUseCase: GuardarFraseUseCase,
     private readonly desguardarFraseUseCase: DesguardarFraseUseCase,
+    private readonly getFrasesPorFechaUseCase: GetFrasesPorFechaUseCase,
     private readonly getMyChallengesUseCase: GetMyChallengesUseCase,
     private readonly joinChallengeUseCase: JoinChallengeUseCase,
     private readonly getMisMedallasUseCase: GetMisMedallasUseCase,
@@ -40,6 +42,15 @@ export class MotivationController {
   async getFrasesGuardadas(@Req() req: any) {
     const token = req.headers.authorization.split(' ')[1];
     return await this.getFrasesGuardadasUseCase.execute(req.user.uid, token);
+  }
+
+  // ✅ NUEVO ENDPOINT
+  @ApiOperation({ summary: 'Obtiene todas las frases hasta una fecha específica' })
+  @ApiQuery({ name: 'hasta', description: 'Fecha en formato YYYY-MM-DD', example: '2026-04-21' })
+  @Get('frases')
+  async getFrasesPorFecha(@Query('hasta') hasta: string, @Req() req: any) {
+    const token = req.headers.authorization.split(' ')[1];
+    return await this.getFrasesPorFechaUseCase.execute(req.user.uid, hasta, token);
   }
 
   @ApiOperation({ summary: 'Guarda una frase en la lista de favoritas (Darle corazón)' })

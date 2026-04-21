@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 
 type EventCategory = 'Reunion' | 'Grupo AA' | 'Fundación' | 'Otro' | 'Lectura';
 type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly';

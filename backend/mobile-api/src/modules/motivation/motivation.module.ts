@@ -8,6 +8,7 @@ import { GetFraseDelDiaUseCase } from './application/use-cases/get-frase-del-dia
 import { GetFrasesGuardadasUseCase } from './application/use-cases/get-frases-guardadas.use-case';
 import { GuardarFraseUseCase } from './application/use-cases/guardar-frase.use-case';
 import { DesguardarFraseUseCase } from './application/use-cases/desguardar-frase.use-case';
+import { GetFrasesPorFechaUseCase } from './application/use-cases/get-frases-por-fecha.use-case';
 import { EvaluateChallengesUseCase } from './application/use-cases/evaluate-challenges.use-case';
 import { JoinChallengeUseCase } from './application/use-cases/join-challenge.use-case';
 import { GetMyChallengesUseCase } from './application/use-cases/get-my-challenges.use-case';
@@ -34,6 +35,7 @@ import { MotivationController } from './presentation/controllers/motivation.cont
     GetFrasesGuardadasUseCase,
     GuardarFraseUseCase,
     DesguardarFraseUseCase,
+    GetFrasesPorFechaUseCase,
     EvaluateChallengesUseCase,
     JoinChallengeUseCase,
     GetMyChallengesUseCase,
@@ -45,5 +47,6 @@ import { MotivationController } from './presentation/controllers/motivation.cont
     ProgressEventsListener,
     GetMisMedallasUseCase,
   ],
+  exports: ['IMotivationProviderPort', GetFrasesPorFechaUseCase], // ✅ AGREGAR ESTO
 })
 export class MotivationModule {}

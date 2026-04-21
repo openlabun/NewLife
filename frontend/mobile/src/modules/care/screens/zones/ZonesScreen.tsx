@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Feather } from '@expo/vector-icons';
-import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 
 const { height } = Dimensions.get('window');
 

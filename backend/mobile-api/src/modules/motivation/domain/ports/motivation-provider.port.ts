@@ -5,6 +5,8 @@ import { UserChallengeEntity } from '../entities/user-challenge.entity';
 export interface IMotivationProviderPort {
   getFraseDelDia(fecha: string, masterToken: string): Promise<FraseDiaEntity | null>;
   getFraseById(fraseId: string, masterToken: string): Promise<FraseDiaEntity | null>;
+  // ✅ NUEVO MÉTODO
+  getFrasesPorFecha(fecha: string, masterToken: string): Promise<FraseDiaEntity[]>;
   getFrasesGuardadas(usuarioId: string, userToken: string): Promise<FraseGuardadaEntity[]>;
   isFraseGuardada(usuarioId: string, fraseId: string, userToken: string): Promise<boolean>;
   guardarFrase(usuarioId: string, fraseId: string, userToken: string): Promise<any>;

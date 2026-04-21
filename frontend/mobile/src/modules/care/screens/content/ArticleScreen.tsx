@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Share, Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 
 const { width } = Dimensions.get('window');
 

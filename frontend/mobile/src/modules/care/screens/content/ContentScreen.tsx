@@ -4,7 +4,7 @@ import {
   Image, TextInput, FlatList, Share, Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.55;

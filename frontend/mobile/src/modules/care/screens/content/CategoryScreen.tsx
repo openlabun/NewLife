@@ -1,31 +1,28 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, TextInput, Share,
+  Image, TextInput, Share, Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 
-const FAVORITES = [
-  { id: '2', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Motivación', duration: '3 min de lectura', image: require('../../../assets/images/contenido2.png'), liked: true, tags: ['impulsos', 'motivación'] },
-  { id: '3', title: 'Co-adicción: señales y pasos a seguir', type: 'video', category: 'Relaciones', duration: '5 min de duración', image: require('../../../assets/images/contenido3.png'), liked: true, tags: ['relaciones'] },
-  { id: '5', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Relaciones', duration: '3 min de lectura', image: require('../../../assets/images/contenido5.png'), liked: true, tags: ['relaciones'] },
-];
+const { width } = Dimensions.get('window');
 
-export default function FavoritesScreen({ navigation }: any) {
-  const [favorites, setFavorites] = useState(FAVORITES);
+export default function CategoryScreen({ navigation, route }: any) {
+  const { category, items } = route.params;
+  const [content, setContent] = useState(items);
   const [search, setSearch] = useState('');
 
   const toggleLike = (id: string) => {
-    setFavorites(favorites.filter((f) => f.id !== id));
+    setContent(content.map((c: any) => c.id === id ? { ...c, liked: !c.liked } : c));
   };
 
   const filtered = search.trim()
-    ? favorites.filter((f) =>
-        f.title.toLowerCase().includes(search.toLowerCase()) ||
-        f.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+    ? content.filter((c: any) =>
+        c.title.toLowerCase().includes(search.toLowerCase()) ||
+        c.tags.some((t: string) => t.toLowerCase().includes(search.toLowerCase()))
       )
-    : favorites;
+    : content;
 
   return (
     <View style={styles.container}>
@@ -34,8 +31,14 @@ export default function FavoritesScreen({ navigation }: any) {
           <Feather name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>Favoritos</Text>
-          <Text style={styles.headerSubtitle}>Contenido que te gustó</Text>
+          <Text style={styles.headerTitle}>{category}</Text>
+          <Text style={styles.headerSubtitle}>
+            {category === 'Relaciones' ? 'Para parejas y vínculos' :
+             category === 'Apoyo' ? 'Herramientas para ti' :
+             category === 'Motivación' ? 'Sigue adelante' :
+             category === 'Más leído' ? 'Lo más popular' :
+             'Contenido relacionado'}
+          </Text>
         </View>
       </View>
 
@@ -51,7 +54,7 @@ export default function FavoritesScreen({ navigation }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filtered.map((item) => (
+        {filtered.map((item: any) => (
           <TouchableOpacity
             key={item.id}
             style={styles.card}
@@ -74,7 +77,7 @@ export default function FavoritesScreen({ navigation }: any) {
                   <Feather name="share" size={16} color={colors.white} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => toggleLike(item.id)}>
-                  <Feather name="heart" size={16} color="#FF6B6B" />
+                  <Feather name="heart" size={16} color={item.liked ? '#FF6B6B' : colors.white} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -109,10 +112,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     gap: spacing.sm,
     elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
   },
   searchInput: { flex: 1, fontSize: fontSizes.md, color: colors.text },
   scroll: { paddingHorizontal: spacing.xl, gap: spacing.md },
   card: {
+    width: '100%',
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     elevation: 3,
@@ -142,6 +150,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     fontWeight: '700',
     color: colors.white,
+    lineHeight: 18,
   },
   cardMeta: { fontSize: fontSizes.xs, color: 'rgba(255,255,255,0.7)' },
   cardActions: {

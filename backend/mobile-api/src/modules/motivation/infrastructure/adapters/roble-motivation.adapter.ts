@@ -8,6 +8,7 @@ import { UserChallengeEntity } from '../../domain/entities/user-challenge.entity
 @Injectable()
 export class RobleMotivationAdapter implements IMotivationProviderPort {
   constructor(private readonly dbService: DatabaseService) {}
+  
   async getFraseDelDia(fecha: string, masterToken: string): Promise<FraseDiaEntity | null> {
     const result = await this.dbService.find('frases_dia', { dia: fecha }, masterToken);
     const rows = Array.isArray(result) ? result : (result?.rows ?? []);
@@ -18,6 +19,29 @@ export class RobleMotivationAdapter implements IMotivationProviderPort {
     const result = await this.dbService.find('frases_dia', { frase_id: fraseId }, masterToken);
     const rows = Array.isArray(result) ? result : (result?.rows ?? []);
     return rows[0] ?? null;
+  }
+
+  // ✅ NUEVO MÉTODO
+  async getFrasesPorFecha(fecha: string, masterToken: string): Promise<FraseDiaEntity[]> {
+    try {
+      // 1️⃣ Traer todas las frases de la tabla
+      const result = await this.dbService.find('frases_dia', {}, masterToken);
+      const todasLasFrases = Array.isArray(result) ? result : (result?.rows ?? []);
+
+      // 2️⃣ Filtrar en memoria: dia <= fecha (todas hasta esa fecha)
+      const frasesFiltradas = todasLasFrases.filter(
+        (f: FraseDiaEntity) => f.dia <= fecha
+      );
+
+      // 3️⃣ Ordenar descendente (más reciente primero)
+      return frasesFiltradas.sort(
+        (a: FraseDiaEntity, b: FraseDiaEntity) =>
+          new Date(b.dia).getTime() - new Date(a.dia).getTime()
+      );
+    } catch (error) {
+      console.error('❌ Error en getFrasesPorFecha:', error);
+      return [];
+    }
   }
 
   async getFrasesGuardadas(usuarioId: string, userToken: string): Promise<FraseGuardadaEntity[]> {

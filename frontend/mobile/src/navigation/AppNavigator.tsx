@@ -78,17 +78,18 @@ import MedalsScreen from '../modules/motivation/screens/MedalsScreen';
 import ChallengesScreen from '../modules/motivation/screens/ChallengesScreen';
 import ChallengeDetailScreen from '../modules/motivation/screens/ChallengeDetailScreen';
 import CareScreen from '../modules/care/screens/CareScreen';
-import ContactsScreen from '../modules/care/screens/ContactsScreen';
-import GroupsScreen from '../modules/care/screens/GroupsScreen';
-import ContentScreen from '../modules/care/screens/ContentScreen';
-import ArticleScreen from '../modules/care/screens/ArticleScreen';
-import CategoryScreen from '../modules/care/screens/CategoryScreen';
-import FavoritesScreen from '../modules/care/screens/FavoritesScreen';
-import AgendaScreen from '../modules/care/screens/AgendaScreen';
-import AddEventScreen from '../modules/care/screens/AddEventScreen';
+import ContactsScreen from '../modules/care/screens/contacts/ContactsScreen';
+import GroupsScreen from '../modules/care/screens/groups/GroupsScreen';
+import ContentScreen from '../modules/care/screens/content/ContentScreen';
+import ArticleScreen from '../modules/care/screens/content/ArticleScreen';
+import CategoryScreen from '../modules/care/screens/content/CategoryScreen';
+import FavoritesScreen from '../modules/care/screens/content/FavoritesScreen';
+import AgendaScreen from '../modules/care/screens/agenda/AgendaScreen';
+import AddEventScreen from '../modules/care/screens/agenda/AddEventScreen';
+import ZonesScreen from '../modules/care/screens/zones/ZonesScreen';
+import MotivationalScreen from '../modules/care/screens/motivational/MotivationalScreen';
 import LockedLevelScreen from '../modules/progress/screens/index/LockedLevelScreen';
 import LevelsIndexScreen from '../modules/progress/screens/index/LevelsIndexScreen';
-import ZonesScreen from '../modules/care/screens/ZonesScreen';
 import SocialScreen from '../modules/social/screens/SocialScreen';
 
 const Stack = createNativeStackNavigator();
@@ -186,8 +187,9 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
           <Stack.Screen name="FavoritesScreen" component={FavoritesScreen} />
           <Stack.Screen name="AgendaScreen" component={AgendaScreen} />
-          <Stack.Screen name="ZonesScreen" component={ZonesScreen} />
           <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
+          <Stack.Screen name="ZonesScreen" component={ZonesScreen} />
+          <Stack.Screen name="MotivationalScreen" component={MotivationalScreen} />
           <Stack.Screen name="LockedLevel" component={LockedLevelScreen} />
           <Stack.Screen name="LevelsIndex" component={LevelsIndexScreen} />
           <Stack.Screen name="Social" component={SocialScreen} />

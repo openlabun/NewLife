@@ -4,8 +4,8 @@ import {
   Modal, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-import { useCare } from '../hooks/useCare';
+import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import { useCare } from '../../hooks/useCare';
 
 export default function ContactsScreen({ navigation }: any) {
   const { contactos, loading, addContacto, deleteContacto, updateContacto, fetchContactos } = useCare();
