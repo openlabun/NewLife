@@ -1,66 +1,110 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Linking, Modal, TextInput, Alert,
+  Modal, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-
-type Contact = {
-  id: string;
-  name: string;
-  phone: string;
-  avatar?: any;
-};
-
-const INITIAL_CONTACTS: Contact[] = [
-  { id: '1', name: 'Padrino Rubén', phone: '+57 300 123 4567' },
-  { id: '2', name: 'Fund. Shalom', phone: '+57 300 123 4567' },
-  { id: '3', name: 'Psicólogo Juan', phone: '+57 300 123 4567' },
-];
+import { useCare } from '../hooks/useCare';
 
 export default function ContactsScreen({ navigation }: any) {
-  const [contacts, setContacts] = useState(INITIAL_CONTACTS);
+  const { contactos, loading, addContacto, deleteContacto, updateContacto, fetchContactos } = useCare();
   const [showModal, setShowModal] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [editingContact, setEditingContact] = useState<any | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // ✅ Cargar contactos al montar
+  useEffect(() => {
+    fetchContactos();
+  }, []);
+
+  // ✅ Refetch al enfocarse en la pantalla
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchContactos();
+    });
+    return unsubscribe;
+  }, [navigation, fetchContactos]);
 
   const openAdd = () => {
+    setErrorMessage('');
     setEditingContact(null);
     setName('');
     setPhone('');
     setShowModal(true);
   };
 
-  const openEdit = (contact: Contact) => {
+  const openEdit = (contact: any) => {
+    setErrorMessage('');
     setEditingContact(contact);
-    setName(contact.name);
-    setPhone(contact.phone);
+    setName(contact.nombre);
+    setPhone(String(contact.telefono));
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (!name.trim() || !phone.trim()) return;
-    if (editingContact) {
-      setContacts(contacts.map((c) =>
-        c.id === editingContact.id ? { ...c, name, phone } : c
-      ));
-    } else {
-      setContacts([...contacts, { id: Date.now().toString(), name, phone }]);
-    }
-    setShowModal(false);
+  const validatePhoneNumber = (phoneNumber: string): boolean => {
+    const cleaned = phoneNumber.replace(/[^0-9]/g, '');
+    return cleaned.length === 10;
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert('Eliminar contacto', '¿Estás seguro?', [
+  const handleSave = async () => {
+    if (!name.trim() || !phone.trim()) {
+      setErrorMessage('Nombre y teléfono son obligatorios');
+      return;
+    }
+
+    if (!validatePhoneNumber(phone)) {
+      setErrorMessage('Número inválido. Debe tener 10 dígitos.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setErrorMessage('');
+
+      if (editingContact) {
+        await updateContacto(editingContact.contacto_id, {
+          nombre: name,
+          telefono: phone,
+        });
+      } else {
+        await addContacto({
+          nombre: name,
+          telefono: phone,
+        });
+      }
+
+      setShowModal(false);
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Error al guardar contacto');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = (contactoId: string) => {
+    Alert.alert('Eliminar contacto', '¿Estás seguro de que deseas eliminar este contacto?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => setContacts(contacts.filter((c) => c.id !== id)) },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteContacto(contactoId);
+          } catch (error: any) {
+            Alert.alert('Error', error.message || 'Error al eliminar contacto');
+          }
+        },
+      },
     ]);
   };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.text} />
@@ -71,37 +115,49 @@ export default function ContactsScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {contacts.map((contact) => (
-          <View key={contact.id} style={styles.contactCard}>
-            <View style={styles.avatarWrapper}>
-              <View style={styles.avatarPlaceholder}>
-                <Feather name="user" size={24} color={colors.textMuted} />
+      {/* Content */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {contactos && contactos.length > 0 ? (
+            contactos.map((contact) => (
+              <View key={contact.contacto_id || contact._id} style={styles.contactCard}>
+                <View style={styles.avatarWrapper}>
+                  <View style={styles.avatarPlaceholder}>
+                    <Feather name="user" size={24} color={colors.textMuted} />
+                  </View>
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactName}>{contact.nombre}</Text>
+                  <Text style={styles.contactPhone}>{contact.telefono}</Text>
+                </View>
+                <View style={styles.contactActions}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => openEdit(contact)}
+                  >
+                    <Feather name="edit-2" size={16} color={colors.white} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleDelete(contact.contacto_id || contact._id)}
+                  >
+                    <Feather name="trash-2" size={16} color={colors.white} />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactName}>{contact.name}</Text>
-              <Text style={styles.contactPhone}>{contact.phone}</Text>
-            </View>
-            <View style={styles.contactActions}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => openEdit(contact)}
-              >
-                <Feather name="edit-2" size={16} color={colors.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleDelete(contact.id)}
-              >
-                <Feather name="trash-2" size={16} color={colors.white} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No tienes contactos de emergencia aún.</Text>
+          )}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      )}
 
+      {/* Add Button */}
       <TouchableOpacity style={styles.addButton} onPress={openAdd}>
         <Text style={styles.addButtonText}>Agregar contacto</Text>
       </TouchableOpacity>
@@ -111,7 +167,7 @@ export default function ContactsScreen({ navigation }: any) {
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
+              <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Feather name="chevron-left" size={24} color={colors.text} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>
@@ -120,44 +176,53 @@ export default function ContactsScreen({ navigation }: any) {
             </View>
 
             {/* Avatar */}
-            <TouchableOpacity style={styles.avatarLarge}>
+            <View style={styles.avatarLarge}>
               <View style={styles.avatarLargePlaceholder}>
                 <Feather name="user" size={40} color={colors.textMuted} />
               </View>
               <View style={styles.avatarEditBadge}>
                 <Feather name="edit-2" size={10} color={colors.white} />
               </View>
-            </TouchableOpacity>
+            </View>
 
             <Text style={styles.inputLabel}>Nombre</Text>
             <TextInput
               style={styles.input}
-              placeholder="Escribe un nombre...."
+              placeholder="Escribe un nombre..."
               placeholderTextColor={colors.border}
               value={name}
               onChangeText={setName}
+              editable={!isSaving}
             />
 
-            <Text style={styles.inputLabel}>Numero</Text>
+            <Text style={styles.inputLabel}>Número</Text>
             <TextInput
               style={styles.input}
-              placeholder="+57...."
+              placeholder="10 dígitos..."
               placeholderTextColor={colors.border}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(text) => {
+                const cleaned = text.replace(/[^0-9]/g, '');
+                setPhone(cleaned.slice(0, 10));
+              }}
               keyboardType="phone-pad"
+              editable={!isSaving}
             />
-            <TouchableOpacity style={styles.addFieldButton}>
-              <Text style={styles.addFieldText}>+ Añadir numero de teléfono</Text>
-            </TouchableOpacity>
 
-            <Text style={styles.inputLabel}>Email</Text>
-            <TouchableOpacity style={styles.addFieldButton}>
-              <Text style={styles.addFieldText}>+ Añadir correo</Text>
-            </TouchableOpacity>
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
 
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>Guardar</Text>
+            <TouchableOpacity
+              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Text style={styles.saveButtonText}>Guardar</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -188,10 +253,21 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colors.textMuted,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scroll: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
     gap: spacing.md,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: colors.textMuted,
+    fontSize: fontSizes.md,
+    marginTop: spacing.xl,
   },
   contactCard: {
     backgroundColor: colors.white,
@@ -318,16 +394,11 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: colors.text,
   },
-  addFieldButton: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: fontSizes.sm,
     marginTop: spacing.xs,
-  },
-  addFieldText: {
-    fontSize: fontSizes.md,
-    color: colors.textMuted,
+    textAlign: 'center',
   },
   saveButton: {
     backgroundColor: colors.primary,
@@ -335,6 +406,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.xl,
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
   saveButtonText: {
     color: colors.white,
