@@ -89,6 +89,7 @@ import AddEventScreen from '../modules/care/screens/AddEventScreen';
 import LockedLevelScreen from '../modules/progress/screens/index/LockedLevelScreen';
 import LevelsIndexScreen from '../modules/progress/screens/index/LevelsIndexScreen';
 import ZonesScreen from '../modules/care/screens/ZonesScreen';
+import SocialScreen from '../modules/social/screens/SocialScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -189,6 +190,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="AddEventScreen" component={AddEventScreen} />
           <Stack.Screen name="LockedLevel" component={LockedLevelScreen} />
           <Stack.Screen name="LevelsIndex" component={LevelsIndexScreen} />
+          <Stack.Screen name="Social" component={SocialScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>

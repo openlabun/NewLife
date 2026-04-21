@@ -160,12 +160,6 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
           <Text style={styles.difficultyText}>Dificultad: {displayDifficulty}</Text>
         </View>
 
-        {/* ── Tipo de reto ── */}
-        <View style={styles.typeRow}>
-          <Text style={styles.typeLabel}>Tipo de reto:</Text>
-          <Text style={styles.typeValue}>{challenge.tipo}</Text>
-        </View>
-
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </View>
@@ -332,22 +326,5 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colors.text,
     fontWeight: '600',
-  },
-
-  // ── Tipo
-  typeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  typeLabel: {
-    fontSize: fontSizes.sm,
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-  typeValue: {
-    fontSize: fontSizes.sm,
-    color: colors.text,
-    fontWeight: '700',
   },
 });
