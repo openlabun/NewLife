@@ -36,8 +36,15 @@ export const useMotivation = () => {
       const frase = await getFraseDia();
       setFraseDia(frase);
     } catch (err: any) {
-      setError(err.message || 'Error obteniendo frase del día');
-      console.error('❌ Error fetchFraseDia:', err);
+      // ✅ Si es 404, no es un "error" - es que no hay frase hoy
+      if (err.response?.status === 404) {
+        setFraseDia(null);
+        setError(null); // ← NO mostrar como error
+        console.log('⚠️ No hay frase del día para hoy');
+      } else {
+        setError(err.message || 'Error obteniendo frase del día');
+        console.error('❌ Error fetchFraseDia:', err);
+      }
     } finally {
       setLoading(false);
     }

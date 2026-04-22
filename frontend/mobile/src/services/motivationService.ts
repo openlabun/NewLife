@@ -3,6 +3,9 @@
 /**
  * Obtiene la frase del día actual
  */
+/**
+ * Obtiene la frase del día actual
+ */
 export const getFraseDia = async () => {
   try {
     const response = await api.get('/motivation/frase-del-dia');
@@ -16,6 +19,12 @@ export const getFraseDia = async () => {
     }
     return null;
   } catch (error: any) {
+    // ✅ Si es 404, retornar null en lugar de tirar error
+    if (error.response?.status === 404) {
+      console.log('⚠️ No hay frase del día para hoy');
+      return null; // ← RETORNAR NULL, NO TIRAR ERROR
+    }
+    // ❌ Para otros errores, sí tirar el error
     console.error('❌ Error obteniendo frase del día:', error.message);
     throw error;
   }

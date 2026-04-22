@@ -85,7 +85,22 @@ export default function MotivationScreen({ navigation }: any) {
               onFavoriteChange={handleFavoriteChange}
             />
           </TouchableOpacity>
-        ) : null}
+        ) : (
+          // ✅ EMPTY STATE CUANDO NO HAY FRASE DEL DÍA
+          <View style={styles.emptyPhraseContainer}>
+            <Feather name="inbox" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyPhraseTitle}>No hay frase del día</Text>
+            <Text style={styles.emptyPhraseSubtext}>
+              Aún no se ha publicado una frase inspiradora para hoy. ¡Intenta más tarde!
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyPhraseButton}
+              onPress={() => navigation.navigate('DailyPhrase')}
+            >
+              <Text style={styles.emptyPhraseButtonText}>Ver frases guardadas</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Retos */}
         <TouchableOpacity
@@ -186,6 +201,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.white,
   },
+
+  // ✅ EMPTY STATE FRASE DEL DÍA
+  emptyPhraseContainer: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
+  emptyPhraseTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  emptyPhraseSubtext: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  emptyPhraseButton: {
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  emptyPhraseButtonText: {
+    color: colors.white,
+    fontSize: fontSizes.sm,
+    fontWeight: '700',
+  },
+
   challengeCardLoading: {
     borderRadius: borderRadius.md,
     overflow: 'hidden',
