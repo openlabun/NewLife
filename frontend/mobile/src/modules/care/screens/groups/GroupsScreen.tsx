@@ -1,56 +1,51 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Linking,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Linking,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
-
-type Group = {
-  id: string;
-  name: string;
-  type: string;
-  address: string;
-  link?: string;
-  linkLabel?: string;
-  isFoundation?: boolean;
-};
-
-const GROUPS: Group[] = [
-  {
-    id: '1',
-    name: 'Fund. Shalom',
-    type: 'Programa de acompañamiento',
-    address: 'Cra 66 # 81 - 77',
-    link: 'https://fundacionshalom.org',
-    linkLabel: 'Ir al sitio web',
-    isFoundation: true,
-  },
-  {
-    id: '2',
-    name: 'AA Barranquilla',
-    type: 'Grupo presencial',
-    address: 'Parroquia 3 avemarías',
-    link: 'https://maps.google.com',
-    linkLabel: 'Ver reuniones cercanas',
-  },
-  {
-    id: '3',
-    name: 'Jóvenes AA',
-    type: 'Grupo virtual',
-    address: '@grupojovens_AA',
-    link: 'https://discord.com',
-    linkLabel: 'Unirme en Discord',
-  },
-];
+import { useGrupos } from '../../hooks/useGrupos';
+import { Grupo } from '../../services/gruposService';
+import GroupDetailModal from './components/GroupDetailModal';
 
 export default function GroupsScreen({ navigation }: any) {
   const [search, setSearch] = useState('');
+  const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const { grupos, loading, error } = useGrupos();
 
-  const filtered = GROUPS.filter((g) =>
-    g.name.toLowerCase().includes(search.toLowerCase()) ||
-    g.type.toLowerCase().includes(search.toLowerCase())
+  const filtered = grupos.filter((g) =>
+    g.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    (g.descripcion && g.descripcion.toLowerCase().includes(search.toLowerCase())) ||
+    (g.lugar && g.lugar.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const handleCallPhone = (telefonos?: string[]) => {
+    if (telefonos && telefonos.length > 0) {
+      const phoneNumber = telefonos[0];
+      Linking.openURL(`tel:${phoneNumber}`);
+    }
+  };
+
+  const handleWhatsApp = (whatsapp?: string[]) => {
+    if (whatsapp && whatsapp.length > 0) {
+      const phoneNumber = whatsapp[0];
+      Linking.openURL(`https://wa.me/${phoneNumber}`);
+    }
+  };
+
+  const handleOpenLinks = (grupo: Grupo) => {
+    setSelectedGrupo(grupo);
+    setShowModal(true);
+  };
 
   return (
     <View style={styles.container}>
@@ -76,44 +71,136 @@ export default function GroupsScreen({ navigation }: any) {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filtered.map((group) => (
-          <View key={group.id} style={styles.groupCard}>
-            <View style={styles.groupAvatar}>
-              {group.isFoundation ? (
-                <View style={styles.foundationIcon}>
-                  <View style={styles.foundationRing} />
-                  <View style={[styles.foundationRing, styles.foundationRingInner]} />
-                </View>
+      {/* CONTENIDO */}
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : error ? (
+        <View style={styles.centerContainer}>
+          <Feather name="alert-circle" size={48} color={colors.textMuted} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : filtered.length === 0 ? (
+        <View style={styles.centerContainer}>
+          <Feather name="inbox" size={48} color={colors.textMuted} />
+          <Text style={styles.emptyText}>
+            {search.trim() ? 'No se encontraron grupos' : 'Sin grupos disponibles'}
+          </Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {filtered.map((grupo) => (
+            <View key={grupo.grupo_id} style={styles.groupCard}>
+              {/* Logo */}
+              {grupo.logo_url ? (
+                <Image source={{ uri: grupo.logo_url }} style={styles.groupLogo} />
               ) : (
-                <Feather name="user" size={24} color={colors.textMuted} />
+                <View style={styles.groupLogoPlaceholder}>
+                  <Feather name="home" size={32} color={colors.textMuted} />
+                </View>
               )}
-            </View>
-            <View style={styles.groupInfo}>
-              <Text style={styles.groupName}>{group.name}</Text>
-              <Text style={styles.groupType}>{group.type}</Text>
-              <Text style={styles.groupAddress}>{group.address}</Text>
-              {group.link && (
-                <TouchableOpacity onPress={() => Linking.openURL(group.link!)}>
-                  <Text style={styles.groupLink}>{group.linkLabel}</Text>
+
+              {/* Info Principal */}
+              <View style={styles.groupInfo}>
+                <Text style={styles.groupName} numberOfLines={2}>
+                  {grupo.nombre}
+                </Text>
+                {grupo.descripcion && (
+                  <Text style={styles.groupDescription} numberOfLines={2}>
+                    {grupo.descripcion}
+                  </Text>
+                )}
+              </View>
+
+              {/* Ubicación */}
+              {(grupo.lugar || grupo.direccion) && (
+                <View style={styles.locationSection}>
+                  {grupo.lugar && (
+                    <Text style={styles.locationPlace}>{grupo.lugar}</Text>
+                  )}
+                  {grupo.direccion && (
+                    <View style={styles.locationRow}>
+                      <Feather name="map-pin" size={14} color={colors.textMuted} />
+                      <Text style={styles.locationAddress} numberOfLines={2}>
+                        {grupo.direccion}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Acciones */}
+              <View style={styles.groupActions}>
+                {/* Llamar */}
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    !grupo.telefonos?.length && styles.actionButtonDisabled,
+                  ]}
+                  onPress={() => handleCallPhone(grupo.telefonos)}
+                  disabled={!grupo.telefonos?.length}
+                >
+                  <Feather
+                    name="phone"
+                    size={20}
+                    color={grupo.telefonos?.length ? colors.primary : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.actionButtonText,
+                      !grupo.telefonos?.length && styles.actionButtonTextDisabled,
+                    ]}
+                  >
+                    Llamar
+                  </Text>
                 </TouchableOpacity>
-              )}
+
+                {/* WhatsApp */}
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    !grupo.whatsapp?.length && styles.actionButtonDisabled,
+                  ]}
+                  onPress={() => handleWhatsApp(grupo.whatsapp)}
+                  disabled={!grupo.whatsapp?.length}
+                >
+                  <Feather
+                    name="message-circle"
+                    size={20}
+                    color={grupo.whatsapp?.length ? colors.primary : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.actionButtonText,
+                      !grupo.whatsapp?.length && styles.actionButtonTextDisabled,
+                    ]}
+                  >
+                    WhatsApp
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Ver Enlaces */}
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => handleOpenLinks(grupo)}
+                >
+                  <Feather name="link-2" size={20} color={colors.primary} />
+                  <Text style={styles.actionButtonText}>Enlaces</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.groupActions}>
-              <TouchableOpacity
-                style={styles.groupActionButton}
-                onPress={() => Linking.openURL('tel:+573001234567')}
-              >
-                <Feather name="phone" size={16} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.groupActionButton}>
-                <Feather name="message-circle" size={16} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-        <View style={{ height: spacing.xl }} />
-      </ScrollView>
+          ))}
+          <View style={{ height: spacing.xl }} />
+        </ScrollView>
+      )}
+
+      {/* Modal de Enlaces */}
+      <GroupDetailModal
+        visible={showModal}
+        grupo={selectedGrupo}
+        onClose={() => setShowModal(false)}
+      />
     </View>
   );
 }
@@ -161,6 +248,23 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: colors.text,
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  errorText: {
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  emptyText: {
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
   scroll: {
     paddingHorizontal: spacing.xl,
     gap: spacing.md,
@@ -169,8 +273,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     gap: spacing.md,
     elevation: 2,
     shadowColor: '#000',
@@ -178,64 +280,83 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
   },
-  groupAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  groupLogo: {
+    width: '100%',
+    height: 160,
+    borderRadius: borderRadius.md,
+    backgroundColor: '#F0F0F0',
+  },
+  groupLogoPlaceholder: {
+    width: '100%',
+    height: 160,
+    borderRadius: borderRadius.md,
     backgroundColor: '#F0F0F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  foundationIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  foundationRing: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2.5,
-    borderColor: '#4CAF50',
-    position: 'absolute',
-  },
-  foundationRingInner: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-  },
   groupInfo: {
-    flex: 1,
-    gap: 2,
+    gap: spacing.xs,
   },
   groupName: {
     fontSize: fontSizes.md,
     fontWeight: '700',
     color: colors.text,
   },
-  groupType: {
+  groupDescription: {
     fontSize: fontSizes.sm,
     color: colors.textMuted,
+    lineHeight: 18,
   },
-  groupAddress: {
-    fontSize: fontSizes.sm,
-    color: colors.textMuted,
+  locationSection: {
+    gap: spacing.xs,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingBottom: spacing.sm,
   },
-  groupLink: {
+  locationPlace: {
     fontSize: fontSizes.sm,
-    color: colors.accent,
     fontWeight: '600',
-    marginTop: 2,
+    color: colors.text,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  locationAddress: {
+    flex: 1,
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    lineHeight: 18,
   },
   groupActions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginTop: spacing.md,
   },
-  groupActionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0F0F0',
+  actionButton: {
+    flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.md,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.xs,
+  },
+  actionButtonDisabled: {
+    opacity: 0.4,
+  },
+  actionButtonText: {
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  actionButtonTextDisabled: {
+    color: colors.textMuted,
   },
 });
