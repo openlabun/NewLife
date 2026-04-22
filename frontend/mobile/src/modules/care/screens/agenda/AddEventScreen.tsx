@@ -4,8 +4,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useAgenda } from '../../hooks/useAgenda';
+import { AgendaEventFrontend } from '../../services/agendaService';
 import EventForm from './components/EventForm';
 
 const COLORS = {
@@ -13,12 +17,13 @@ const COLORS = {
   white: '#FFFFFF',
   darkGray: '#404040',
   background: '#FAFAFA',
+  red: '#FF6B6B',
 };
 
 type AgendaEvent = {
   id: string;
   title: string;
-  date: Date;
+  date: Date | string;
   timeFrom: string;
   timeTo: string;
   category: string;
@@ -27,12 +32,30 @@ type AgendaEvent = {
   repeat: string;
 };
 
+// Función para convertir tiempo a minutos
+function timeToMinutes(timeStr: string): number {
+  const [timePart, period] = timeStr.split(' ');
+  let [hours, minutes] = timePart.split(':').map(Number);
+
+  if (period === 'pm' && hours !== 12) hours += 12;
+  if (period === 'am' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
 export default function AddEventScreen({ navigation, route }: any) {
+  const { createAgenda, updateAgenda } = useAgenda();
+  const refetch = route.params?.refetch;
+  const [isSaving, setIsSaving] = useState(false);
+
   const existing = route.params?.event as AgendaEvent | undefined;
-  const defaultDate: Date = route.params?.defaultDate || new Date();
+  const defaultDateStr = route.params?.defaultDate as string | undefined;
+  const defaultDate: Date = defaultDateStr ? new Date(defaultDateStr) : new Date();
+
+  const existingDate = existing?.date ? new Date(existing.date as string) : defaultDate;
 
   const [title, setTitle] = useState(existing?.title || '');
-  const [selectedDate, setSelectedDate] = useState<Date>(existing?.date || defaultDate);
+  const [selectedDate, setSelectedDate] = useState<Date>(existingDate);
   const [currentMonth, setCurrentMonth] = useState(selectedDate.getMonth());
   const [currentYear, setCurrentYear] = useState(selectedDate.getFullYear());
   const [timeFrom, setTimeFrom] = useState(existing?.timeFrom || '8:00 am');
@@ -42,31 +65,95 @@ export default function AddEventScreen({ navigation, route }: any) {
   const [reminderMinutes, setReminderMinutes] = useState(existing?.reminderMinutes || 30);
   const [repeat, setRepeat] = useState(existing?.repeat || 'none');
 
-  const handleSave = () => {
-    // TODO: Integrar con backend
-    console.log({
-      title,
-      selectedDate,
-      timeFrom,
-      timeTo,
-      category,
-      reminder,
-      reminderMinutes,
-      repeat,
-    });
-    navigation.goBack();
+  const validateTimes = (): boolean => {
+    const fromMinutes = timeToMinutes(timeFrom);
+    const toMinutes = timeToMinutes(timeTo);
+
+    if (fromMinutes >= toMinutes) {
+      Alert.alert('Error de validación', 'La hora de inicio debe ser menor que la hora de fin');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'El título del evento es obligatorio');
+      return;
+    }
+
+    if (!validateTimes()) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const eventData: AgendaEventFrontend = {
+        id: existing?.id || '',
+        title,
+        date: selectedDate,
+        timeFrom,
+        timeTo,
+        category,
+        reminder,
+        reminderMinutes,
+        repeat,
+      };
+
+      if (existing) {
+        await updateAgenda(existing.id, eventData);
+        Alert.alert('Éxito', 'Evento actualizado correctamente');
+      } else {
+        await createAgenda(eventData);
+        Alert.alert('Éxito', 'Evento creado correctamente');
+      }
+
+      if (refetch) {
+        await refetch();
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo guardar el evento. Intenta nuevamente.');
+      console.error('Error al guardar evento:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const prevMonth = () => {
+    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
+    else setCurrentMonth(currentMonth - 1);
+  };
+
+  const nextMonth = () => {
+    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
+    else setCurrentMonth(currentMonth + 1);
   };
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.headerBtn}
+          disabled={isSaving}
+        >
           <Feather name="x" size={20} color={COLORS.darkGray} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{existing ? 'Editar evento' : 'Nuevo evento'}</Text>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Feather name="check" size={20} color={COLORS.primary} />
+        <TouchableOpacity
+          style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Feather name="check" size={20} color={COLORS.primary} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -78,14 +165,8 @@ export default function AddEventScreen({ navigation, route }: any) {
         onDateSelect={setSelectedDate}
         currentMonth={currentMonth}
         currentYear={currentYear}
-        onPrevMonth={() => {
-          if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
-          else setCurrentMonth(currentMonth - 1);
-        }}
-        onNextMonth={() => {
-          if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
-          else setCurrentMonth(currentMonth + 1);
-        }}
+        onPrevMonth={prevMonth}
+        onNextMonth={nextMonth}
         timeFrom={timeFrom}
         onTimeFromChange={setTimeFrom}
         timeTo={timeTo}
@@ -101,8 +182,16 @@ export default function AddEventScreen({ navigation, route }: any) {
       />
 
       {/* Boton guardar */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Guardar evento</Text>
+      <TouchableOpacity
+        style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+        onPress={handleSave}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <ActivityIndicator size="small" color={COLORS.white} />
+        ) : (
+          <Text style={styles.saveButtonText}>Guardar evento</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -136,6 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  saveBtnDisabled: { opacity: 0.5 },
   saveButton: {
     position: 'absolute',
     bottom: 32,
@@ -146,5 +236,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
+  saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '600' },
 });

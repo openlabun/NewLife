@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import CategorySelector from './CategorySelector';
 import RepeatSelector from './RepeatSelector';
+import TimeInputField from './TimeInputField';
 
 const COLORS = {
   primary: '#D38A58',
@@ -17,6 +19,7 @@ const COLORS = {
   gray: '#969696',
   darkGray: '#404040',
   background: '#FAFAFA',
+  red: '#FF6B6B',
 };
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -27,6 +30,17 @@ const DAY_ITEM_GAP = 8;
 
 function getDaysInMonth(month: number, year: number) {
   return new Date(year, month + 1, 0).getDate();
+}
+
+// Función para convertir tiempo a minutos
+function timeToMinutes(timeStr: string): number {
+  const [timePart, period] = timeStr.split(' ');
+  let [hours, minutes] = timePart.split(':').map(Number);
+
+  if (period === 'pm' && hours !== 12) hours += 12;
+  if (period === 'am' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
 }
 
 interface EventFormProps {
@@ -75,6 +89,7 @@ export default function EventForm({
   onReminderMinutesSelect,
 }: EventFormProps) {
   const calendarScrollRef = useRef<ScrollView>(null);
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -95,6 +110,30 @@ export default function EventForm({
       calendarScrollRef.current?.scrollTo({ x: Math.max(0, scrollX), animated: true });
     }, 100);
   }, [currentMonth, currentYear]);
+
+  // Validar horas cuando cambien
+  const validateTimes = (from: string, to: string) => {
+    const fromMinutes = timeToMinutes(from);
+    const toMinutes = timeToMinutes(to);
+
+    if (fromMinutes >= toMinutes) {
+      setTimeError('La hora de inicio debe ser menor que la hora de fin');
+      return false;
+    } else {
+      setTimeError(null);
+      return true;
+    }
+  };
+
+  const handleTimeFromChange = (time: string) => {
+    onTimeFromChange(time);
+    validateTimes(time, timeTo);
+  };
+
+  const handleTimeToChange = (time: string) => {
+    onTimeToChange(time);
+    validateTimes(timeFrom, time);
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -152,28 +191,32 @@ export default function EventForm({
         </ScrollView>
       </View>
 
-      {/* Hora */}
-      <View style={styles.section}>
+      {/* Hora - CON TIME PICKER Y VALIDACIÓN */}
+      <View style={[styles.section, timeError && styles.sectionError]}>
         <Text style={styles.label}>Hora</Text>
         <View style={styles.timeRow}>
-          <View style={styles.timeBox}>
-            <Text style={styles.timeLabel}>Desde</Text>
-            <TextInput
-              style={styles.timeInput}
-              value={timeFrom}
-              onChangeText={onTimeFromChange}
-            />
+          <TimeInputField
+            label="Desde"
+            value={timeFrom}
+            onChange={handleTimeFromChange}
+          />
+          <View style={styles.timeArrowContainer}>
+            <Feather name="arrow-right" size={16} color={COLORS.gray} />
           </View>
-          <Feather name="arrow-right" size={16} color={COLORS.gray} />
-          <View style={styles.timeBox}>
-            <Text style={styles.timeLabel}>Hasta</Text>
-            <TextInput
-              style={styles.timeInput}
-              value={timeTo}
-              onChangeText={onTimeToChange}
-            />
-          </View>
+          <TimeInputField
+            label="Hasta"
+            value={timeTo}
+            onChange={handleTimeToChange}
+          />
         </View>
+
+        {/* Mensaje de error */}
+        {timeError && (
+          <View style={styles.errorContainer}>
+            <Feather name="alert-circle" size={14} color={COLORS.red} />
+            <Text style={styles.errorText}>{timeError}</Text>
+          </View>
+        )}
       </View>
 
       {/* Categoria */}
@@ -204,6 +247,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
   },
+  sectionError: {
+    borderWidth: 1.5,
+    borderColor: COLORS.red,
+  },
   label: { fontSize: 14, fontWeight: '600', color: COLORS.darkGray, marginBottom: 12 },
   inputBox: {
     backgroundColor: COLORS.background,
@@ -229,7 +276,7 @@ const styles = StyleSheet.create({
   monthLabel: { fontSize: 15, fontWeight: '600', color: COLORS.darkGray },
   daysScroll: { gap: DAY_ITEM_GAP },
   dayItem: {
-    width: DAY_ITEM_WIDTH,
+    width: 44,
     height: 60,
     alignItems: 'center',
     justifyContent: 'center',
@@ -241,18 +288,33 @@ const styles = StyleSheet.create({
   dayName: { fontSize: 10, fontWeight: '500', color: COLORS.gray },
   dayNumber: { fontSize: 16, fontWeight: '700', color: COLORS.darkGray },
   dayTextSelected: { color: COLORS.white },
+
+  // Time Inputs
   timeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 12,
   },
-  timeBox: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
+  timeArrowContainer: {
+    marginBottom: 12,
+    paddingBottom: 2,
   },
-  timeLabel: { fontSize: 11, color: COLORS.gray, marginBottom: 4 },
-  timeInput: { fontSize: 16, fontWeight: '600', color: COLORS.darkGray, textAlign: 'center' },
+
+  // Error Container
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: `${COLORS.red}10`,
+    borderRadius: 8,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.red,
+  },
 });
