@@ -1,7 +1,7 @@
 # docker-compose.yml
 # Levanta: admin-api, mobile-api, frontend-web
 # La app móvil (React Native) no se dockeriza — corre en emulador/dispositivo
-
+name: cerebro
 services:
 
   # ── Backend Web (admin-api) ──────────────────────────────────────
@@ -11,7 +11,7 @@ services:
       dockerfile: Dockerfile
     container_name: newlife-admin-api
     ports:
-      - "3001:3001"
+      - "5180:3001"
     environment:
       PORT: 3001
       ROBLE_BASE_URL: ${ROBLE_BASE_URL}
@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile
     container_name: newlife-mobile-api
     ports:
-      - "3000:3000"
+      - "5181:3000"
     env_file:
       - .env
     volumes:
@@ -49,10 +49,10 @@ services:
       dockerfile: Dockerfile
     container_name: newlife-frontend-web
     ports:
-      - "3002:3000"
+      - "5182:3000"
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://admin-api:3001
+      NEXT_PUBLIC_API_URL: http://admin-api:5180
     volumes:
       - ./frontend/web:/app
       - /app/node_modules
