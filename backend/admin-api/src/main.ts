@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // CORS — ajusta el origin cuando tengas la URL del panel web
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3002',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
