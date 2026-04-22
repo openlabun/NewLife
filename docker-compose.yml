@@ -44,6 +44,7 @@ services:
 
   # ── Frontend Web (Next.js) ───────────────────────────────────────
   frontend-web:
+    # newlife.openlab.uninorte.edu.co
     build:
       context: ./frontend/web
       dockerfile: Dockerfile
