@@ -1,31 +1,47 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, TextInput, Share, Dimensions,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
+import ContentCard from './components/ContentCard';
+import { useContent } from '../../hooks/useContent';
 
-const { width } = Dimensions.get('window');
+interface ContentItem {
+  id: string;
+  title: string;
+  type: 'article' | 'video';
+  category: string;
+  duration: string;
+  image: string;
+  liked: boolean;
+  tags: string[];
+  author?: string;
+  authorRole?: string;
+  body?: string;
+}
 
 export default function CategoryScreen({ navigation, route }: any) {
   const { category, items } = route.params;
-  const [content, setContent] = useState(items);
+  const { toggleFavorito } = useContent();
   const [search, setSearch] = useState('');
 
-  const toggleLike = (id: string) => {
-    setContent(content.map((c: any) => c.id === id ? { ...c, liked: !c.liked } : c));
-  };
-
   const filtered = search.trim()
-    ? content.filter((c: any) =>
-        c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.tags.some((t: string) => t.toLowerCase().includes(search.toLowerCase()))
+    ? items.filter(
+        (c: ContentItem) =>
+          c.title.toLowerCase().includes(search.toLowerCase()) ||
+          c.tags.some((t: string) => t.toLowerCase().includes(search.toLowerCase()))
       )
-    : content;
+    : items;
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.text} />
@@ -33,15 +49,20 @@ export default function CategoryScreen({ navigation, route }: any) {
         <View>
           <Text style={styles.headerTitle}>{category}</Text>
           <Text style={styles.headerSubtitle}>
-            {category === 'Relaciones' ? 'Para parejas y vínculos' :
-             category === 'Apoyo' ? 'Herramientas para ti' :
-             category === 'Motivación' ? 'Sigue adelante' :
-             category === 'Más leído' ? 'Lo más popular' :
-             'Contenido relacionado'}
+            {category === 'Relaciones'
+              ? 'Para parejas y vínculos'
+              : category === 'Apoyo'
+              ? 'Herramientas para ti'
+              : category === 'Motivación'
+              ? 'Sigue adelante'
+              : category === 'Más leído'
+              ? 'Lo más popular'
+              : 'Contenido relacionado'}
           </Text>
         </View>
       </View>
 
+      {/* Search */}
       <View style={styles.searchWrapper}>
         <Feather name="search" size={16} color={colors.textMuted} />
         <TextInput
@@ -53,36 +74,29 @@ export default function CategoryScreen({ navigation, route }: any) {
         />
       </View>
 
+      {/* Content */}
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filtered.map((item: any) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.card}
-            onPress={() => navigation.navigate('ArticleScreen', { item })}
-            activeOpacity={0.9}
-          >
-            <Image source={item.image} style={styles.cardImage} resizeMode="cover" />
-            {item.type === 'video' && (
-              <View style={styles.playButton}>
-                <Feather name="play" size={14} color={colors.white} />
-              </View>
-            )}
-            <View style={styles.cardOverlay}>
-              <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.cardMeta}>
-                {item.type === 'article' ? 'Artículo' : 'Video'} — {item.duration}
-              </Text>
-              <View style={styles.cardActions}>
-                <TouchableOpacity onPress={async () => await Share.share({ message: item.title })}>
-                  <Feather name="share" size={16} color={colors.white} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => toggleLike(item.id)}>
-                  <Feather name="heart" size={16} color={item.liked ? '#FF6B6B' : colors.white} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+        {filtered.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Feather name="inbox" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No hay contenido disponible</Text>
+          </View>
+        ) : (
+          filtered.map((item: ContentItem) => (
+            <ContentCard
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              type={item.type}
+              duration={item.duration}
+              image={item.image}
+              liked={item.liked}
+              wide
+              onPress={() => navigation.navigate('ArticleScreen', { item })}
+              onToggleLike={toggleFavorito}
+            />
+          ))
+        )}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </View>
@@ -119,44 +133,9 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: fontSizes.md, color: colors.text },
   scroll: { paddingHorizontal: spacing.xl, gap: spacing.md },
-  card: {
-    width: '100%',
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  cardImage: { width: '100%', height: 180 },
-  playButton: {
-    position: 'absolute',
-    bottom: spacing.lg + 44,
-    right: spacing.md,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: spacing.xl,
   },
-  cardOverlay: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    gap: 4,
-  },
-  cardTitle: {
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.white,
-    lineHeight: 18,
-  },
-  cardMeta: { fontSize: fontSizes.xs, color: 'rgba(255,255,255,0.7)' },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.md,
-    marginTop: 4,
-  },
+  emptyText: { fontSize: fontSizes.md, color: colors.textMuted, marginTop: spacing.md },
 });

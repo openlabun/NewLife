@@ -1,34 +1,33 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, TextInput, Share,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
-
-const FAVORITES = [
-  { id: '2', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Motivación', duration: '3 min de lectura', image: require('../../../../assets/images/contenido2.png'), liked: true, tags: ['impulsos', 'motivación'] },
-  { id: '3', title: 'Co-adicción: señales y pasos a seguir', type: 'video', category: 'Relaciones', duration: '5 min de duración', image: require('../../../../assets/images/contenido3.png'), liked: true, tags: ['relaciones'] },
-  { id: '5', title: 'Cómo manejar los impulsos en momentos difíciles', type: 'article', category: 'Relaciones', duration: '3 min de lectura', image: require('../../../../assets/images/contenido5.png'), liked: true, tags: ['relaciones'] },
-];
+import ContentCard from './components/ContentCard';
+import { useContent } from '../../hooks/useContent';
 
 export default function FavoritesScreen({ navigation }: any) {
-  const [favorites, setFavorites] = useState(FAVORITES);
+  const { favoritos, loading, error, toggleFavorito } = useContent();
   const [search, setSearch] = useState('');
 
-  const toggleLike = (id: string) => {
-    setFavorites(favorites.filter((f) => f.id !== id));
-  };
-
   const filtered = search.trim()
-    ? favorites.filter((f) =>
-        f.title.toLowerCase().includes(search.toLowerCase()) ||
-        f.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+    ? favoritos.filter(
+        (f) =>
+          f.title.toLowerCase().includes(search.toLowerCase()) ||
+          f.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
       )
-    : favorites;
+    : favoritos;
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.text} />
@@ -39,6 +38,7 @@ export default function FavoritesScreen({ navigation }: any) {
         </View>
       </View>
 
+      {/* Search */}
       <View style={styles.searchWrapper}>
         <Feather name="search" size={16} color={colors.textMuted} />
         <TextInput
@@ -50,44 +50,53 @@ export default function FavoritesScreen({ navigation }: any) {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filtered.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.card}
-            onPress={() => navigation.navigate('ArticleScreen', { item })}
-            activeOpacity={0.9}
-          >
-            <Image source={item.image} style={styles.cardImage} resizeMode="cover" />
-            {item.type === 'video' && (
-              <View style={styles.playButton}>
-                <Feather name="play" size={14} color={colors.white} />
-              </View>
-            )}
-            <View style={styles.cardOverlay}>
-              <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.cardMeta}>
-                {item.type === 'article' ? 'Artículo' : 'Video'} — {item.duration}
+      {/* Content */}
+      {loading ? (
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={colors.accent} />
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {filtered.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Feather name="heart" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>
+                {favoritos.length === 0
+                  ? 'Aún no tienes favoritos'
+                  : 'No hay resultados'}
               </Text>
-              <View style={styles.cardActions}>
-                <TouchableOpacity onPress={async () => await Share.share({ message: item.title })}>
-                  <Feather name="share" size={16} color={colors.white} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => toggleLike(item.id)}>
-                  <Feather name="heart" size={16} color="#FF6B6B" />
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.emptySubtext}>
+                {favoritos.length === 0
+                  ? 'Guarda contenido que te interese'
+                  : 'Intenta con otra búsqueda'}
+              </Text>
             </View>
-          </TouchableOpacity>
-        ))}
-        <View style={{ height: spacing.xl }} />
-      </ScrollView>
+          ) : (
+            filtered.map((item) => (
+              <ContentCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                type={item.type}
+                duration={item.duration}
+                image={item.image}
+                liked={item.liked}
+                wide
+                onPress={() => navigation.navigate('ArticleScreen', { item })}
+                onToggleLike={toggleFavorito}
+              />
+            ))
+          )}
+          <View style={{ height: spacing.xl }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  centerContent: { justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -109,45 +118,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     gap: spacing.sm,
     elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
   },
   searchInput: { flex: 1, fontSize: fontSizes.md, color: colors.text },
   scroll: { paddingHorizontal: spacing.xl, gap: spacing.md },
-  card: {
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  cardImage: { width: '100%', height: 180 },
-  playButton: {
-    position: 'absolute',
-    bottom: spacing.lg + 44,
-    right: spacing.md,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  emptyContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: spacing.xl,
   },
-  cardOverlay: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    gap: 4,
-  },
-  cardTitle: {
+  emptyText: { fontSize: fontSizes.md, color: colors.textMuted, marginTop: spacing.md },
+  emptySubtext: {
     fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.white,
-  },
-  cardMeta: { fontSize: fontSizes.xs, color: 'rgba(255,255,255,0.7)' },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.md,
-    marginTop: 4,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
   },
 });

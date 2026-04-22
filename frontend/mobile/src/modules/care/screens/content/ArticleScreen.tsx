@@ -1,22 +1,70 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Share, Dimensions,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Share,
+  Linking,
+  Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/theme';
 
-const { width } = Dimensions.get('window');
+interface ContentItem {
+  id: string;
+  title: string;
+  type: 'article' | 'video';
+  category: string;
+  duration: string;
+  image: string;
+  liked: boolean;
+  tags: string[];
+  author?: string;
+  authorRole?: string;
+  body?: string;
+  videoUrl?: string;
+  autorFoto?: string;
+}
 
 export default function ArticleScreen({ navigation, route }: any) {
-  const { item } = route.params;
-  const [liked, setLiked] = useState(item.liked);
+  const item: ContentItem = route.params?.item;
+
+  if (!item) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>Contenido no disponible</Text>
+      </View>
+    );
+  }
 
   const handleShare = async () => {
-    await Share.share({ message: item.title });
+    try {
+      await Share.share({
+        message: `Mira este contenido: ${item.title}`,
+      });
+    } catch (error) {
+      console.error('Error compartiendo:', error);
+    }
+  };
+
+  const handleOpenVideo = () => {
+    if (!item.videoUrl) {
+      Alert.alert('Error', 'No hay video disponible');
+      return;
+    }
+
+    Linking.openURL(item.videoUrl).catch((err) => {
+      Alert.alert('Error', 'No se pudo abrir el video');
+      console.error('Error abriendo video:', err);
+    });
   };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.text} />
@@ -25,34 +73,43 @@ export default function ArticleScreen({ navigation, route }: any) {
           <Text style={styles.headerTitle}>
             {item.type === 'article' ? 'Artículo' : 'Video'}
           </Text>
-          <Text style={styles.headerSubtitle}>Lectura: {item.duration}</Text>
+          <Text style={styles.headerSubtitle}>{item.duration}</Text>
         </View>
         <TouchableOpacity onPress={handleShare} style={styles.headerAction}>
           <Feather name="share" size={20} color={colors.text} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setLiked(!liked)} style={styles.headerAction}>
-          <Feather name="heart" size={20} color={liked ? '#FF6B6B' : colors.text} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
         {/* Imagen principal */}
-        <Image source={item.image} style={styles.heroImage} resizeMode="cover" />
+        <Image source={{ uri: item.image }} style={styles.heroImage} resizeMode="cover" />
+
+        {/* Para VIDEO: botón para abrir */}
+        {item.type === 'video' && item.videoUrl && (
+          <View style={styles.videoContainer}>
+            <TouchableOpacity
+              style={styles.openVideoButton}
+              onPress={handleOpenVideo}
+            >
+              <Feather name="play" size={20} color={colors.white} />
+              <Text style={styles.openVideoText}>Ver video completo</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Título */}
         <Text style={styles.title}>{item.title}</Text>
 
-        {/* Tags + likes */}
+        {/* Meta: categoría y stats */}
         <View style={styles.metaRow}>
           <View style={styles.tag}>
             <Text style={styles.tagText}>{item.category}</Text>
           </View>
           <View style={styles.metaStats}>
             <Feather name="heart" size={14} color={colors.textMuted} />
-            <Text style={styles.metaStat}>100</Text>
+            <Text style={styles.metaStat}>—</Text>
             <Feather name="share" size={14} color={colors.textMuted} />
-            <Text style={styles.metaStat}>120</Text>
+            <Text style={styles.metaStat}>—</Text>
           </View>
         </View>
 
@@ -60,7 +117,11 @@ export default function ArticleScreen({ navigation, route }: any) {
         {item.author && (
           <View style={styles.authorRow}>
             <View style={styles.authorAvatar}>
-              <Feather name="user" size={20} color={colors.textMuted} />
+              {item.autorFoto ? (
+                <Image source={{ uri: item.autorFoto }} style={styles.authorImage} />
+              ) : (
+                <Feather name="user" size={20} color={colors.textMuted} />
+              )}
             </View>
             <View>
               <Text style={styles.authorName}>{item.author}</Text>
@@ -69,25 +130,31 @@ export default function ArticleScreen({ navigation, route }: any) {
           </View>
         )}
 
-        {/* Cuerpo */}
+        {/* Contenido */}
         {item.body ? (
           item.body.split('\n\n').map((paragraph: string, i: number) => (
-            <Text key={i} style={styles.body}>{paragraph}</Text>
+            <Text key={i} style={styles.body}>
+              {paragraph}
+            </Text>
           ))
         ) : (
           <Text style={styles.body}>
-            Este contenido explora el tema de {item.title.toLowerCase()}. Profundiza en estrategias prácticas para tu proceso de recuperación y bienestar.
+            {item.type === 'video'
+              ? 'Este video explora el tema de ' + item.title.toLowerCase() + '.'
+              : 'Contenido no disponible'}
           </Text>
         )}
 
         {/* Tags */}
-        <View style={styles.tagsRow}>
-          {item.tags.map((tag: string) => (
-            <View key={tag} style={styles.tagChip}>
-              <Text style={styles.tagChipText}>#{tag}</Text>
-            </View>
-          ))}
-        </View>
+        {item.tags.length > 0 && (
+          <View style={styles.tagsRow}>
+            {item.tags.map((tag: string) => (
+              <View key={tag} style={styles.tagChip}>
+                <Text style={styles.tagChipText}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <View style={{ height: spacing.xl }} />
       </ScrollView>
@@ -97,6 +164,7 @@ export default function ArticleScreen({ navigation, route }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  centerContent: { justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -115,6 +183,24 @@ const styles = StyleSheet.create({
   },
   scroll: { paddingBottom: spacing.xl },
   heroImage: { width: '100%', height: 220 },
+  videoContainer: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  openVideoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.md,
+  },
+  openVideoText: {
+    fontSize: fontSizes.md,
+    fontWeight: '600',
+    color: colors.white,
+  },
   title: {
     fontSize: fontSizes.xl,
     fontWeight: '800',
@@ -158,6 +244,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  authorImage: {
+    width: 44,
+    height: 44,
   },
   authorName: { fontSize: fontSizes.md, fontWeight: '700', color: colors.text },
   authorRole: { fontSize: fontSizes.sm, color: colors.textMuted },
@@ -182,4 +273,5 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   tagChipText: { fontSize: fontSizes.xs, color: colors.textMuted },
+  errorText: { fontSize: fontSizes.md, color: colors.textMuted },
 });
