@@ -4,7 +4,7 @@ import { SystemAuthService } from '../../../auth/infrastructure/services/system-
 import { ResolveUserIdHelper } from '../helpers/resolve-user-id.helper';
 
 @Injectable()
-export class GetMyCommunitiesUseCase {
+export class GetDailyForumUseCase {
   constructor(
     private readonly dbService: DatabaseService,
     private readonly systemAuth: SystemAuthService,
@@ -15,31 +15,44 @@ export class GetMyCommunitiesUseCase {
     const masterToken = await this.systemAuth.getMasterToken();
     const robleId = await this.resolveUserId.getRobleId(usuarioUuid);
 
+    // Comunidades del usuario
     const membRes = await this.dbService.find(
       'comunidad_usuarios',
       { usuario_id: robleId },
       masterToken,
     );
     const membresias = Array.isArray(membRes) ? membRes : (membRes.rows || []);
+    if (membresias.length === 0) return { foro: null, comunidades: [] };
 
-    if (membresias.length === 0) return [];
+    // Foro del día de hoy
+    const today = new Date().toISOString().split('T')[0];
+    const foroRes = await this.dbService.find('foro_del_dia', { fecha: today }, masterToken);
+    const foroRows = Array.isArray(foroRes) ? foroRes : (foroRes.rows || []);
+    const foro = foroRows[0] || null;
 
-    const communities = await Promise.all(
+    // Comunidades activas del usuario
+    const comunidades = await Promise.all(
       membresias.map(async (m: any) => {
         const community = await this.dbService.findById('comunidades', m.comunidad_id, masterToken);
         if (!community || !community.activa) return null;
-
         return {
           id:           community._id,
           nombre:       community.nombre,
-          descripcion:  community.descripcion,
           tipo_acceso:  m.tipo_acceso,
           es_moderador: m.es_moderador,
-          joined_at:    m.joined_at,
         };
       })
     );
 
-    return communities.filter(Boolean);
+    return {
+      foro: foro ? {
+        id:          foro._id,
+        pregunta:    foro.pregunta,
+        descripcion: foro.descripcion,
+        fecha:       foro.fecha,
+        es_hoy:      true,
+      } : null,
+      comunidades: comunidades.filter(Boolean),
+    };
   }
 }

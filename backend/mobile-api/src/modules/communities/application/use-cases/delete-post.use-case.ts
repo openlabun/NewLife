@@ -15,9 +15,7 @@ export class DeletePostUseCase {
     const masterToken = await this.systemAuth.getMasterToken();
     const robleId = await this.resolveUserId.getRobleId(usuarioUuid);
  
-    const postRes = await this.dbService.find('posts', { _id: postId }, masterToken);
-    const postRows = Array.isArray(postRes) ? postRes : (postRes.rows || []);
-    const post = postRows[0];
+    const post = await this.dbService.findById('posts', postId, masterToken);
  
     if (!post || post.eliminado) throw new NotFoundException('Post no encontrado.');
     if (post.comunidad_id !== comunidadId) throw new NotFoundException('Post no encontrado en esta comunidad.');

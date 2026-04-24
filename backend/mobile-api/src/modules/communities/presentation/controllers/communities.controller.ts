@@ -14,9 +14,6 @@ import { GetCommentsUseCase } from '../../application/use-cases/get-comments.use
 import { CreateCommentUseCase } from '../../application/use-cases/create-comment.use-case';
 import { DeleteCommentUseCase } from '../../application/use-cases/delete-comment.use-case';
 import { ReactToPostUseCase } from '../../application/use-cases/react-to-post.use-case';
-import { GetForumsUseCase } from '../../application/use-cases/get-forums.use-case';
-import { GetForumDetailUseCase } from '../../application/use-cases/get-forum-detail.use-case';
-import { ReplyForumUseCase } from '../../application/use-cases/reply-forum.use-case';
 import { ModGetMembersUseCase } from '../../application/use-cases/moderator/get-members.use-case';
 import { ModChangeAccessUseCase } from '../../application/use-cases/moderator/change-access.use-case';
 import { ModSuspendMemberUseCase } from '../../application/use-cases/moderator/suspend-member.use-case';
@@ -27,6 +24,12 @@ import { CreatePostDto } from '../dtos/post.dto';
 import { CreateCommentDto } from '../dtos/comment.dto';
 import { ReactDto } from '../dtos/reaction.dto';
 import { ReplyForumDto, ChangeAccessDto, SuspendMemberDto, RequestBanDto, AddMemberDto } from '../dtos/moderator.dto';
+import { GetDailyForumUseCase } from '../../application/use-cases/get-daily-forum.use-case';
+import { GetDailyForumDetailUseCase } from '../../application/use-cases/get-daily-forum-detail.use-case';
+import { ReplyDailyForumUseCase } from '../../application/use-cases/reply-daily-forum.use-case';
+import { LikeForumReplyUseCase } from '../../application/use-cases/like-forum-reply.use-case';
+import { CommentForumReplyUseCase } from '../../application/use-cases/comment-forum-reply.use-case';
+import { GetAllForumsUseCase } from '../../application/use-cases/get-all-forums.use-case';
 
 @ApiTags('Comunidades')
 @ApiBearerAuth()
@@ -43,15 +46,18 @@ export class CommunitiesController {
     private readonly createCommentUseCase: CreateCommentUseCase,
     private readonly deleteCommentUseCase: DeleteCommentUseCase,
     private readonly reactToPostUseCase: ReactToPostUseCase,
-    private readonly getForumsUseCase: GetForumsUseCase,
-    private readonly getForumDetailUseCase: GetForumDetailUseCase,
-    private readonly replyForumUseCase: ReplyForumUseCase,
+    private readonly getDailyForumUseCase: GetDailyForumUseCase,
+    private readonly getDailyForumDetailUseCase: GetDailyForumDetailUseCase,
+    private readonly replyDailyForumUseCase: ReplyDailyForumUseCase,
+    private readonly likeForumReplyUseCase: LikeForumReplyUseCase,
+    private readonly commentForumReplyUseCase: CommentForumReplyUseCase,
     private readonly modGetMembersUseCase: ModGetMembersUseCase,
     private readonly modChangeAccessUseCase: ModChangeAccessUseCase,
     private readonly modSuspendMemberUseCase: ModSuspendMemberUseCase,
     private readonly modRequestBanUseCase: ModRequestBanUseCase,
     private readonly modRemoveMemberUseCase: ModRemoveMemberUseCase,
     private readonly modAddMemberUseCase: ModAddMemberUseCase,
+    private readonly getAllForumsUseCase: GetAllForumsUseCase,
   ) { }
 
   // ── Comunidades ────────────────────────────────────────────────────────────
@@ -60,6 +66,19 @@ export class CommunitiesController {
   @ApiOperation({ summary: 'Listar mis comunidades' })
   async getMyCommunities(@Request() req: any) {
     return this.getMyCommunitiesUseCase.execute(req.user.uid);
+  }
+
+  // ── Foros (rutas estáticas antes de :id) ──────────────────────────────────
+  @Get('daily-forum')
+  @ApiOperation({ summary: 'Obtener foro del día con comunidades del usuario' })
+  async getDailyForum(@Request() req: any) {
+    return this.getDailyForumUseCase.execute(req.user.uid);
+  }
+
+  @Get('all-forums')
+  @ApiOperation({ summary: 'Listar todos los foros del día (histórico)' })
+  async getAllForums(@Request() req: any) {
+    return this.getAllForumsUseCase.execute(req.user.uid);
   }
 
   @Get(':id')
@@ -135,32 +154,50 @@ export class CommunitiesController {
   }
 
   // ── Foros ──────────────────────────────────────────────────────────────────
-
-  @Get(':id/forums')
-  @ApiOperation({ summary: 'Ver foros de la comunidad' })
-  async getForums(@Param('id') id: string, @Request() req: any) {
-    return this.getForumsUseCase.execute(id, req.user.uid);
-  }
-
-  @Get(':id/forums/:forumId')
-  @ApiOperation({ summary: 'Ver detalle de un foro con respuestas' })
-  async getForumDetail(
+  @Get(':id/daily-forum/:foroId')
+  @ApiOperation({ summary: 'Detalle del foro del día en una comunidad específica' })
+  async getDailyForumDetail(
     @Param('id') id: string,
-    @Param('forumId') forumId: string,
+    @Param('foroId') foroId: string,
     @Request() req: any,
   ) {
-    return this.getForumDetailUseCase.execute(id, forumId, req.user.uid);
+    return this.getDailyForumDetailUseCase.execute(foroId, id, req.user.uid);
   }
 
-  @Post(':id/forums/:forumId/replies')
-  @ApiOperation({ summary: 'Responder a un foro' })
-  async replyForum(
+  @Post(':id/daily-forum/:foroId/replies')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Responder al foro del día (solo si es hoy)' })
+  async replyDailyForum(
     @Param('id') id: string,
-    @Param('forumId') forumId: string,
+    @Param('foroId') foroId: string,
     @Body() dto: ReplyForumDto,
     @Request() req: any,
   ) {
-    return this.replyForumUseCase.execute(id, forumId, req.user.uid, dto.contenido);
+    return this.replyDailyForumUseCase.execute(foroId, id, req.user.uid, dto.contenido);
+  }
+
+  @Post(':id/daily-forum/:foroId/replies/:replyId/likes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Like/unlike a una respuesta del foro (toggle)' })
+  async likeForumReply(
+    @Param('id') id: string,
+    @Param('replyId') replyId: string,
+    @Request() req: any,
+  ) {
+    return this.likeForumReplyUseCase.execute(id, replyId, req.user.uid);
+  }
+
+  @Post(':id/daily-forum/:foroId/replies/:replyId/comments')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Comentar en una respuesta del foro (solo si es hoy)' })
+  async commentForumReply(
+    @Param('id') id: string,
+    @Param('foroId') foroId: string,
+    @Param('replyId') replyId: string,
+    @Body() dto: ReplyForumDto,
+    @Request() req: any,
+  ) {
+    return this.commentForumReplyUseCase.execute(foroId, id, replyId, req.user.uid, dto.contenido);
   }
 
   // ── Moderador ──────────────────────────────────────────────────────────────

@@ -26,9 +26,7 @@ export class CreateCommentUseCase {
     if (!membresia) throw new ForbiddenException('No eres miembro de esta comunidad.');
     if (membresia.tipo_acceso === 'SOLO_VER') throw new ForbiddenException('Tu tipo de acceso no permite comentar.');
  
-    const postRes = await this.dbService.find('posts', { _id: postId }, masterToken);
-    const postRows = Array.isArray(postRes) ? postRes : (postRes.rows || []);
-    const post = postRows[0];
+    const post = await this.dbService.findById('posts', postId, masterToken);
  
     if (!post || post.eliminado) throw new NotFoundException('Post no encontrado.');
     if (post.comunidad_id !== comunidadId) throw new NotFoundException('Post no encontrado en esta comunidad.');
@@ -37,6 +35,7 @@ export class CreateCommentUseCase {
     const result = await this.dbService.insert('comentarios', [{
       post_id:    postId,
       autor_id:   robleId,
+      comunidad_id: comunidadId,
       contenido,
       created_at: now,
       eliminado:  false,

@@ -60,18 +60,42 @@ export const reactToPost = async (communityId: string, postId: string, tipo: str
 
 // ── Foros ─────────────────────────────────────────────────────────────────────
 
-export const getForums = async (communityId: string) => {
-  const res = await api.get(`/communities/${communityId}/forums`);
+// Foro del día
+export const getDailyForum = async () => {
+  const res = await api.get('/communities/daily-forum');
   return res.data;
 };
 
-export const getForumDetail = async (communityId: string, forumId: string) => {
-  const res = await api.get(`/communities/${communityId}/forums/${forumId}`);
+export const getDailyForumDetail = async (communityId: string, foroId: string) => {
+  const res = await api.get(`/communities/${communityId}/daily-forum/${foroId}`);
   return res.data;
 };
 
-export const replyForum = async (communityId: string, forumId: string, contenido: string) => {
-  const res = await api.post(`/communities/${communityId}/forums/${forumId}/replies`, { contenido });
+export const replyDailyForum = async (communityId: string, foroId: string, contenido: string) => {
+  const res = await api.post(`/communities/${communityId}/daily-forum/${foroId}/replies`, { contenido });
+  return res.data;
+};
+
+export const likeForumReply = async (communityId: string, foroId: string, replyId: string) => {
+  const res = await api.post(`/communities/${communityId}/daily-forum/${foroId}/replies/${replyId}/likes`);
+  return res.data;
+};
+
+export const commentForumReply = async (
+  communityId: string,
+  foroId: string,
+  replyId: string,
+  contenido: string,
+) => {
+  const res = await api.post(
+    `/communities/${communityId}/daily-forum/${foroId}/replies/${replyId}/comments`,
+    { contenido },
+  );
+  return res.data;
+};
+
+export const getAllForums = async () => {
+  const res = await api.get('/communities/all-forums');
   return res.data;
 };
 

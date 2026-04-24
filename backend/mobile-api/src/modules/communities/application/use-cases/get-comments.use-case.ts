@@ -23,10 +23,8 @@ export class GetCommentsUseCase {
     const membRows = Array.isArray(membRes) ? membRes : (membRes.rows || []);
     if (membRows.length === 0) throw new ForbiddenException('No eres miembro de esta comunidad.');
  
-    const postRes = await this.dbService.find('posts', { _id: postId }, masterToken);
-    const postRows = Array.isArray(postRes) ? postRes : (postRes.rows || []);
-    const post = postRows[0];
- 
+    const post = await this.dbService.findById('posts', postId, masterToken);
+    
     if (!post || post.eliminado) throw new NotFoundException('Post no encontrado.');
  
     const commRes = await this.dbService.find('comentarios', { post_id: postId }, masterToken);
@@ -35,8 +33,7 @@ export class GetCommentsUseCase {
  
     const enriched = await Promise.all(
       comments.map(async (comment: any) => {
-        const autorRes = await this.dbService.find('usuarios', { _id: comment.autor_id }, masterToken);
-        const autor = Array.isArray(autorRes) ? autorRes[0] : autorRes.rows?.[0];
+        const autor = await this.dbService.findById('usuarios', comment.autor_id, masterToken);
         return {
           id:         comment._id,
           contenido:  comment.contenido,

@@ -28,13 +28,11 @@ export class GetUserPostsUseCase {
     // 3. Enriquecer con comunidad y conteos
     const enriched = await Promise.all(
       posts.map(async (post: any) => {
-        const [commRes, commentsRes, reactionsRes] = await Promise.all([
-          this.dbService.find('comunidades', { _id: post.comunidad_id }, masterToken),
+        const [community, commentsRes, reactionsRes] = await Promise.all([
+          this.dbService.findById('comunidades', post.comunidad_id, masterToken),
           this.dbService.find('comentarios', { post_id: post._id }, masterToken),
           this.dbService.find('reacciones', { post_id: post._id }, masterToken),
         ]);
-
-        const community = Array.isArray(commRes) ? commRes[0] : commRes.rows?.[0];
         const comments  = Array.isArray(commentsRes) ? commentsRes : (commentsRes.rows || []);
         const reactions = Array.isArray(reactionsRes) ? reactionsRes : (reactionsRes.rows || []);
         const activeComments = comments.filter((c: any) => !c.eliminado);

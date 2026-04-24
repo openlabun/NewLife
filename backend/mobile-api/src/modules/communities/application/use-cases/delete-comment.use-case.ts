@@ -25,9 +25,7 @@ export class DeleteCommentUseCase {
  
     if (!membresia) throw new ForbiddenException('No eres miembro de esta comunidad.');
  
-    const commRes = await this.dbService.find('comentarios', { _id: commentId }, masterToken);
-    const commRows = Array.isArray(commRes) ? commRes : (commRes.rows || []);
-    const comment = commRows[0];
+    const comment = await this.dbService.findById('comentarios', commentId, masterToken);
  
     if (!comment || comment.eliminado) throw new NotFoundException('Comentario no encontrado.');
     if (comment.post_id !== postId) throw new NotFoundException('Comentario no encontrado en este post.');

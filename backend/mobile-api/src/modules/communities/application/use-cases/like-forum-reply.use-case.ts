@@ -3,24 +3,19 @@ import { DatabaseService } from '../../../database/infrastructure/database.servi
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 import { ResolveUserIdHelper } from '../helpers/resolve-user-id.helper';
 
-const VALID_REACTIONS = ['LIKE', 'LOVE', 'APOYO', 'FUERTE'];
-
 @Injectable()
-export class ReactToPostUseCase {
+export class LikeForumReplyUseCase {
   constructor(
     private readonly dbService: DatabaseService,
     private readonly systemAuth: SystemAuthService,
     private readonly resolveUserId: ResolveUserIdHelper,
   ) { }
 
-  async execute(comunidadId: string, postId: string, usuarioUuid: string, tipo: string) {
+  async execute(comunidadId: string, respuestaId: string, usuarioUuid: string) {
     const masterToken = await this.systemAuth.getMasterToken();
     const robleId = await this.resolveUserId.getRobleId(usuarioUuid);
 
-    if (!VALID_REACTIONS.includes(tipo)) {
-      throw new ForbiddenException(`Reacción inválida. Opciones: ${VALID_REACTIONS.join(', ')}`);
-    }
-
+    // Verificar membresía
     const membRes = await this.dbService.find(
       'comunidad_usuarios',
       { comunidad_id: comunidadId, usuario_id: robleId },
@@ -29,27 +24,30 @@ export class ReactToPostUseCase {
     const membRows = Array.isArray(membRes) ? membRes : (membRes.rows || []);
     if (membRows.length === 0) throw new ForbiddenException('No eres miembro de esta comunidad.');
 
-    const post = await this.dbService.findById('posts', postId, masterToken);
-    
-    if (!post || post.eliminado) throw new NotFoundException('Post no encontrado.');
+    // Verificar que la respuesta existe
+    const respuesta = await this.dbService.findById('foros_respuestas', respuestaId, masterToken);
+    if (!respuesta) throw new NotFoundException('Respuesta no encontrada.');
 
-    const reactRes = await this.dbService.find('reacciones', { post_id: postId, usuario_id: robleId }, masterToken);
-    const allReactions = Array.isArray(reactRes) ? reactRes : (reactRes.rows || []);
-    const existing = allReactions.find((r: any) => r.tipo === tipo);
+    // Toggle like
+    const likeRes = await this.dbService.find(
+      'foro_respuesta_likes',
+      { respuesta_id: respuestaId, usuario_id: robleId },
+      masterToken,
+    );
+    const likes = Array.isArray(likeRes) ? likeRes : (likeRes.rows || []);
+    const existing = likes[0];
 
     if (existing) {
-      await this.dbService.delete('reacciones', '_id', existing._id, masterToken);
-      return { message: 'Reacción eliminada.', accion: 'removed', tipo };
+      await this.dbService.delete('foro_respuesta_likes', '_id', existing._id, masterToken);
+      return { accion: 'removed' };
     }
 
-    await this.dbService.insert('reacciones', [{
-      post_id: postId,
+    await this.dbService.insert('foro_respuesta_likes', [{
+      respuesta_id: respuestaId,
       usuario_id: robleId,
-      comunidad_id: comunidadId,
-      tipo,
       created_at: new Date().toISOString(),
     }], masterToken);
 
-    return { message: 'Reacción agregada.', accion: 'added', tipo };
+    return { accion: 'added' };
   }
 }

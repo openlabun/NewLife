@@ -21,9 +21,7 @@ export class ModSuspendMemberUseCase {
  
     await this.modGetMembers.checkModerador(comunidadId, moderadorRobleId, masterToken);
  
-    const userRes = await this.dbService.find('usuarios', { _id: targetId }, masterToken);
-    const userRows = Array.isArray(userRes) ? userRes : (userRes.rows || []);
-    const user = userRows[0];
+    const user = await this.dbService.findById('usuarios', targetId, masterToken);
  
     if (!user) throw new NotFoundException('Usuario no encontrado.');
     if (user.estado === 'BANEADO') throw new ForbiddenException('El usuario ya está baneado.');

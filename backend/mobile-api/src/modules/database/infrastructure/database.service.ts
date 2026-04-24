@@ -44,4 +44,20 @@ export class DatabaseService {
     });
     return res.data;
   }
+
+  async findAll(tableName: string, token: string) {
+    const res = await axios.get(`${this.dbUrl}/read`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { tableName },
+      timeout: 30000,
+    });
+    return res.data;
+  }
+
+  async findById(tableName: string, id: string, token: string) {
+    const res = await this.findAll(tableName, token);
+    const rows = Array.isArray(res) ? res : (res.rows || []);
+    return rows.find((r: any) => r._id === id) || null;
+  }
 }
+

@@ -1,21 +1,21 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../../../database/infrastructure/database.service';
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
-import { BadRequestException } from '@nestjs/common';
 import { ResolveUserIdHelper } from '../helpers/resolve-user-id.helper';
- 
+
 @Injectable()
-export class ReplyForumUseCase {
+export class ReplyDailyForumUseCase {
   constructor(
     private readonly dbService: DatabaseService,
     private readonly systemAuth: SystemAuthService,
     private readonly resolveUserId: ResolveUserIdHelper,
   ) {}
- 
-  async execute(comunidadId: string, foroId: string, usuarioUuid: string, contenido: string) {
+
+  async execute(foroId: string, comunidadId: string, usuarioUuid: string, contenido: string) {
     const masterToken = await this.systemAuth.getMasterToken();
     const robleId = await this.resolveUserId.getRobleId(usuarioUuid);
- 
+
+    // Verificar membresía y acceso
     const membRes = await this.dbService.find(
       'comunidad_usuarios',
       { comunidad_id: comunidadId, usuario_id: robleId },
@@ -23,26 +23,31 @@ export class ReplyForumUseCase {
     );
     const membRows = Array.isArray(membRes) ? membRes : (membRes.rows || []);
     const membresia = membRows[0];
- 
+
     if (!membresia) throw new ForbiddenException('No eres miembro de esta comunidad.');
-    if (membresia.tipo_acceso === 'SOLO_VER') throw new ForbiddenException('Tu tipo de acceso no permite responder foros.');
- 
-    const foroRes = await this.dbService.find('foros', { _id: foroId }, masterToken);
-    const foroRows = Array.isArray(foroRes) ? foroRes : (foroRes.rows || []);
-    const foro = foroRows[0];
- 
-    if (!foro || foro.comunidad_id !== comunidadId) throw new NotFoundException('Foro no encontrado.');
-    if (foro.activo === false) throw new ForbiddenException('Este foro ya no está activo.');
- 
-    const now = new Date().toISOString();
+    if (membresia.tipo_acceso === 'SOLO_VER') {
+      throw new ForbiddenException('Tu tipo de acceso no permite responder.');
+    }
+
+    // Verificar que el foro existe y es de hoy
+    const foro = await this.dbService.findById('foro_del_dia', foroId, masterToken);
+
+    if (!foro) throw new NotFoundException('Foro no encontrado.');
+
+    const today = new Date().toISOString().split('T')[0];
+    if (foro.fecha !== today) {
+      throw new BadRequestException('Solo puedes responder al foro del día de hoy.');
+    }
+
     const result = await this.dbService.insert('foros_respuestas', [{
-      foro_id:    foroId,
-      autor_id:   robleId,
+      foro_id:      foroId,
+      comunidad_id: comunidadId,
+      autor_id:     robleId,
       contenido,
-      created_at: now,
-      eliminado:  false,
+      created_at:   new Date().toISOString(),
+      eliminado:    false,
     }], masterToken);
- 
+
     const inserted = result?.inserted?.[0] || result?.[0] || {};
     return { id: inserted._id, contenido: inserted.contenido, created_at: inserted.created_at };
   }

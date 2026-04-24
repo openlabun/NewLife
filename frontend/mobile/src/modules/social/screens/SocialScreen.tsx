@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-import { getMyCommunities, getPosts, getForums } from '../../../services/communityService';
+import { getMyCommunities, getPosts, getDailyForum } from '../../../services/communityService';
 
 type Post = {
   id: string;
@@ -23,7 +23,9 @@ type Post = {
 };
 
 function timeAgo(dateStr: string): string {
+  if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
+  if (diff < 60000) return 'Ahora';
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
@@ -32,13 +34,9 @@ function timeAgo(dateStr: string): string {
 }
 
 function PostCard({
-  post,
-  onPress,
-  onPressAuthor,
+  post, onPress, onPressAuthor,
 }: {
-  post: Post;
-  onPress: () => void;
-  onPressAuthor: () => void;
+  post: Post; onPress: () => void; onPressAuthor: () => void;
 }) {
   return (
     <TouchableOpacity style={styles.postCard} onPress={onPress} activeOpacity={0.9}>
@@ -53,19 +51,16 @@ function PostCard({
           )}
         </View>
         <Text style={styles.postTime}>{timeAgo(post.created_at)}</Text>
-
       </TouchableOpacity>
-      {post.titulo ? (
-        <Text style={styles.postTitle}>{post.titulo}</Text>
-      ) : null}
-      
+      {post.titulo ? <Text style={styles.postTitle}>{post.titulo}</Text> : null}
       <Text style={styles.postBody}>{post.contenido}</Text>
-
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.postAction}>
-          <Feather name="heart" size={18} color={
-            post.mis_reacciones?.includes('LIKE') ? colors.primary : colors.textMuted
-          } />
+          <Feather
+            name="heart"
+            size={18}
+            color={post.mis_reacciones?.includes('LIKE') ? colors.primary : colors.textMuted}
+          />
           <Text style={styles.postActionText}>{post.total_reacciones}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
@@ -81,11 +76,12 @@ function PostCard({
 }
 
 export default function SocialScreen({ navigation }: any) {
-  const [communities, setCommunities] = useState<any[]>([]);
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
-  const [dailyForum, setDailyForum] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [communities, setCommunities]       = useState<any[]>([]);
+  const [allPosts, setAllPosts]             = useState<Post[]>([]);
+  const [dailyForum, setDailyForum]         = useState<any>(null);
+  const [forumCommunities, setForumCommunities] = useState<any[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [refreshing, setRefreshing]         = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -99,33 +95,24 @@ export default function SocialScreen({ navigation }: any) {
         return;
       }
 
-      // Traer posts y foros de todas las comunidades en paralelo
-      const postsResults = await Promise.all(
-        comms.map((c: any) =>
-          getPosts(c.id)
-            .then((posts: Post[]) =>
-              posts.map(p => ({ ...p, comunidad_nombre: c.nombre }))
-            )
-            .catch(() => [])
-        )
-      );
+      const [postsResults, dailyForumData] = await Promise.all([
+        Promise.all(
+          comms.map((c: any) =>
+            getPosts(c.id)
+              .then((posts: Post[]) => posts.map(p => ({ ...p, comunidad_nombre: c.nombre })))
+              .catch(() => [])
+          )
+        ),
+        getDailyForum().catch(() => ({ foro: null, comunidades: [] })),
+      ]);
 
-      const forumsResults = await Promise.all(
-        comms.map((c: any) =>
-          getForums(c.id).catch(() => [])
-        )
-      );
-
-      // Aplanar y ordenar posts por más reciente
       const flatPosts = postsResults
         .flat()
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setAllPosts(flatPosts);
-
-      // Tomar el primer foro activo encontrado como foro del día
-      const firstForum = forumsResults.flat()[0] || null;
-      setDailyForum(firstForum);
+      setDailyForum(dailyForumData.foro || null);
+      setForumCommunities(dailyForumData.comunidades || []);
 
     } catch (err) {
       console.log('Error cargando feed social:', err);
@@ -135,12 +122,7 @@ export default function SocialScreen({ navigation }: any) {
     }
   }, []);
 
-  // Recargar cada vez que la pantalla toma foco
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [fetchData])
-  );
+  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   const hasCommunities = communities.length > 0;
 
@@ -154,7 +136,6 @@ export default function SocialScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Social</Text>
         <View style={styles.headerActions}>
@@ -193,22 +174,20 @@ export default function SocialScreen({ navigation }: any) {
           />
         }
       >
-        {/* Foro del día */}
+        {/* Foro del día — siempre lleva a la lista de foros */}
         <TouchableOpacity
           style={styles.forumCard}
-          onPress={() => dailyForum && navigation.navigate('DailyForum', {
-            communities,
-            initialForum: dailyForum,
-          })}
+          onPress={() => navigation.navigate('DailyForum', { communities: forumCommunities })}
           activeOpacity={0.9}
         >
           <Text style={styles.forumEmoji}>✏️</Text>
           <View style={styles.forumContent}>
             <Text style={styles.forumTitle}>Foro del día</Text>
-            <Text style={styles.forumQuestion}>
+            <Text style={styles.forumQuestion} numberOfLines={2}>
               {dailyForum?.pregunta || 'No hay foro activo hoy'}
             </Text>
           </View>
+          <Feather name="chevron-right" size={18} color={colors.textMuted} />
         </TouchableOpacity>
 
         {/* Posts */}
@@ -217,7 +196,7 @@ export default function SocialScreen({ navigation }: any) {
             <Feather name="users" size={48} color={colors.border} />
             <Text style={styles.emptyTitle}>Sin publicaciones</Text>
             <Text style={styles.emptySubtitle}>
-              No tienes ninguna publicación disponible porque no perteneces a ninguna comunidad.
+              No perteneces a ninguna comunidad todavía.
             </Text>
           </View>
         ) : allPosts.length === 0 ? (
@@ -236,30 +215,28 @@ export default function SocialScreen({ navigation }: any) {
               onPress={() => navigation.navigate('PostDetail', {
                 post,
                 communityId: post.comunidad_id,
-                // Buscar el objeto community para saber tipo_acceso y es_moderador
                 community: communities.find((c: any) => c.id === post.comunidad_id),
               })}
               onPressAuthor={() => navigation.navigate('UserProfile', {
                 isOwn: false,
                 profile: {
-                  name: post.autor.nombre,
-                  username: '@' + post.autor.nombre.toLowerCase().replace(' ', ''),
-                  bio: 'Miembro de la comunidad.',
-                  publications: 0,
-                  communities: [post.comunidad_nombre],
-                  medals: [],
-                  totalMedals: 0,
-                  level: 1,
-                  levelName: '',
-                  daysClean: 0,
+                  name:           post.autor.nombre,
+                  username:       '@' + post.autor.nombre.toLowerCase().replace(' ', ''),
+                  bio:            'Miembro de la comunidad.',
+                  publications:   0,
+                  communities:    [post.comunidad_nombre],
+                  medals:         [],
+                  totalMedals:    0,
+                  level:          1,
+                  levelName:      '',
+                  daysClean:      0,
                   medalsAchieved: 0,
-                  isOwn: false,
+                  isOwn:          false,
                 },
               })}
             />
           ))
         )}
-
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </View>
@@ -267,169 +244,55 @@ export default function SocialScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  container:      { flex: 1, backgroundColor: colors.background },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingTop: 60, paddingHorizontal: spacing.xl, paddingBottom: spacing.lg,
   },
-  title: {
-    fontSize: fontSizes.xxl,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  headerButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerButtonDisabled: {
-    opacity: 0.4,
-  },
-  profileButton: {
-    marginLeft: spacing.xs,
-  },
+  title:          { fontSize: fontSizes.xxl, fontWeight: '800', color: colors.text },
+  headerActions:  { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  headerButton:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  headerButtonDisabled: { opacity: 0.4 },
+  profileButton:  { marginLeft: spacing.xs },
   profileAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
   },
-  scroll: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-  },
+  scroll:         { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.md },
   forumCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    backgroundColor: colors.white, borderRadius: borderRadius.md, padding: spacing.lg,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
-  forumEmoji: {
-    fontSize: 32,
-  },
-  forumContent: {
-    flex: 1,
-  },
-  forumTitle: {
-    fontSize: fontSizes.md,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  forumQuestion: {
-    fontSize: fontSizes.sm,
-    color: colors.textMuted,
-    lineHeight: 18,
-  },
+  forumEmoji:    { fontSize: 32 },
+  forumContent:  { flex: 1 },
+  forumTitle:    { fontSize: fontSizes.md, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  forumQuestion: { fontSize: fontSizes.sm, color: colors.textMuted, lineHeight: 18 },
   postCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    gap: spacing.sm,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    backgroundColor: colors.white, borderRadius: borderRadius.md, padding: spacing.lg,
+    gap: spacing.sm, elevation: 2, shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
+  postHeader:     { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   postAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center',
   },
-  postAuthorInfo: {
-    flex: 1,
-  },
-  postAuthor: {
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  postCommunity: {
-    fontSize: fontSizes.xs,
-    color: colors.textMuted,
-  },
-  postTime: {
-    fontSize: fontSizes.xs,
-    color: colors.textMuted,
-  },
-  postTitle: {
-    fontSize: fontSizes.md,
-    fontWeight: '700',
-    color: colors.text,
-    lineHeight: 22,
-  },
-  postBody: {
-    fontSize: fontSizes.sm,
-    color: colors.textLight,
-    lineHeight: 20,
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: borderRadius.sm,
-  },
+  postAuthorInfo: { flex: 1 },
+  postAuthor:     { fontSize: fontSizes.sm, fontWeight: '700', color: colors.text },
+  postCommunity:  { fontSize: fontSizes.xs, color: colors.textMuted },
+  postTime:       { fontSize: fontSizes.xs, color: colors.textMuted },
+  postTitle:      { fontSize: fontSizes.md, fontWeight: '700', color: colors.text, lineHeight: 22 },
+  postBody:       { fontSize: fontSizes.sm, color: colors.textLight, lineHeight: 20 },
   postActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    marginTop: spacing.xs,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: spacing.xs,
   },
-  postAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  postActionText: {
-    fontSize: fontSizes.sm,
-    color: colors.textMuted,
-  },
+  postAction:     { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  postActionText: { fontSize: fontSizes.sm, color: colors.textMuted },
   emptyState: {
-    alignItems: 'center',
-    paddingTop: spacing.xl * 2,
-    gap: spacing.md,
-    paddingHorizontal: spacing.xl,
+    alignItems: 'center', paddingTop: spacing.xl * 2,
+    gap: spacing.md, paddingHorizontal: spacing.xl,
   },
-  emptyTitle: {
-    fontSize: fontSizes.lg,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  emptySubtitle: {
-    fontSize: fontSizes.md,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  emptyTitle:    { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
+  emptySubtitle: { fontSize: fontSizes.md, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

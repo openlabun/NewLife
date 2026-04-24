@@ -10,7 +10,9 @@ import { getProfile } from '../../../services/authService';
 import { getUserPosts } from '../../../services/communityService';
 
 function timeAgo(dateStr: string): string {
+  if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
+  if (diff < 60000) return 'Ahora';
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);

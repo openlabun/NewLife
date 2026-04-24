@@ -22,14 +22,15 @@ type Post = {
 };
 
 function timeAgo(dateStr: string): string {
+  if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
+  if (diff < 60000) return 'Ahora';
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
 }
-
 function PostCard({ post, onPress, onPressAuthor, onDelete, onReact, esModerador }: {
   post: Post;
   onPress: () => void;

@@ -9,15 +9,13 @@ export class GetCommunityDetailUseCase {
     private readonly dbService: DatabaseService,
     private readonly systemAuth: SystemAuthService,
     private readonly resolveUserId: ResolveUserIdHelper,
-  ) {}
+  ) { }
 
   async execute(comunidadId: string, usuarioUuid: string) {
     const masterToken = await this.systemAuth.getMasterToken();
     const robleId = await this.resolveUserId.getRobleId(usuarioUuid);
 
-    const commRes = await this.dbService.find('comunidades', { _id: comunidadId }, masterToken);
-    const commRows = Array.isArray(commRes) ? commRes : (commRes.rows || []);
-    const community = commRows[0];
+    const community = await this.dbService.findById('comunidades', comunidadId, masterToken);
 
     if (!community) throw new NotFoundException('Comunidad no encontrada.');
     if (!community.activa) throw new NotFoundException('Esta comunidad no está disponible.');
@@ -38,18 +36,17 @@ export class GetCommunityDetailUseCase {
       masterToken,
     );
     const allMembers = Array.isArray(allMembRes) ? allMembRes : (allMembRes.rows || []);
-
     return {
-      id:             community._id,
-      nombre:         community.nombre,
-      descripcion:    community.descripcion,
-      activa:         community.activa,
-      created_at:     community.created_at,
+      id: community._id,
+      nombre: community.nombre,
+      descripcion: community.descripcion,
+      activa: community.activa,
+      created_at: community.created_at,
       total_miembros: allMembers.length,
       mi_acceso: {
-        tipo_acceso:  membresia.tipo_acceso,
+        tipo_acceso: membresia.tipo_acceso,
         es_moderador: membresia.es_moderador,
-        joined_at:    membresia.joined_at,
+        joined_at: membresia.joined_at,
       },
     };
   }

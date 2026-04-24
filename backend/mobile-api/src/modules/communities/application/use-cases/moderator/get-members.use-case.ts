@@ -21,8 +21,7 @@ export class ModGetMembersUseCase {
  
     const enriched = await Promise.all(
       members.map(async (m: any) => {
-        const userRes = await this.dbService.find('usuarios', { _id: m.usuario_id }, masterToken);
-        const user = Array.isArray(userRes) ? userRes[0] : userRes.rows?.[0];
+        const user = await this.dbService.findById('usuarios', m.usuario_id, masterToken);
         return {
           id:           m._id,
           usuario_id:   m.usuario_id,
