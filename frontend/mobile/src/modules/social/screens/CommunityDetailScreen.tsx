@@ -6,7 +6,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
-import { getPosts, getForums, reactToPost, deletePost } from '../../../services/communityService';
+import { getPosts, getDailyForum, reactToPost, deletePost } from '../../../services/communityService';
 
 type Post = {
   id: string;
@@ -94,10 +94,10 @@ export default function CommunityDetailScreen({ navigation, route }: any) {
     try {
       const [postsData, forumsData] = await Promise.all([
         getPosts(community.id),
-        getForums(community.id).catch(() => []),
+        getDailyForum().catch(() => null),
       ]);
       setPosts(postsData);
-      setDailyForum(forumsData[0] || null);
+      setDailyForum(forumsData?.foro || null);
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Error al cargar la comunidad.');
     } finally {
@@ -216,20 +216,8 @@ export default function CommunityDetailScreen({ navigation, route }: any) {
               })}
               onPressAuthor={() => navigation.navigate('UserProfile', {
                 isOwn: false,
-                profile: {
-                  name: post.autor.nombre,
-                  username: '@' + post.autor.nombre.toLowerCase().replace(' ', ''),
-                  bio: 'Miembro de la comunidad.',
-                  publications: 0,
-                  communities: [communityName],
-                  medals: [],
-                  totalMedals: 0,
-                  level: 1,
-                  levelName: '',
-                  daysClean: 0,
-                  medalsAchieved: 0,
-                  isOwn: false,
-                },
+                robleId: post.autor.id,
+                name: post.autor.nombre,
               })}
               onDelete={() => handleDelete(post.id)}
               onReact={(tipo) => handleReact(post.id, tipo)}

@@ -34,6 +34,11 @@ export const getUserPosts = async () => {
   return res.data;
 };
 
+export const getUserPostsById = async (robleId: string) => {
+  const res = await api.get(`/user/${robleId}/posts`);
+  return res.data;
+};
+
 // ── Comentarios ───────────────────────────────────────────────────────────────
 
 export const getComments = async (communityId: string, postId: string) => {

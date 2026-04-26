@@ -8,6 +8,11 @@ import { HomeModule } from '../home/home.module';
 import { DeleteAccountUseCase } from './application/use-cases/delete-account.use-case';
 import { UpdateProfileUseCase } from './application/use-cases/update-profile.use-case';
 import { GetUserPostsUseCase } from '../communities/application/use-cases/get-user-posts.use-case';
+import { GetUserPostsByIdUseCase } from '../communities/application/use-cases/get-user-posts-by-id.use-case';
+import { GetProfileByIdUseCase } from './application/use-cases/get-profile-by-id.use-case';
+import { GetSobrietyTimeByIdUseCase } from './application/use-cases/get-sobriety-time-by-id.use-case';
+import { GetCaminoByIdUseCase } from './application/use-cases/get-camino-by-id.use-case';
+import { ProgressProvider } from '../progress/infrastructure/providers/progress.provider';
 
 @Module({
   imports: [
@@ -16,6 +21,20 @@ import { GetUserPostsUseCase } from '../communities/application/use-cases/get-us
     HomeModule,
   ],
   controllers: [UserController],
-  providers: [CompleteProfileUseCase, GetProfileUseCase, UpdateProfileUseCase, DeleteAccountUseCase, GetUserPostsUseCase,],
+  providers: [
+    CompleteProfileUseCase,
+    GetProfileUseCase,
+    UpdateProfileUseCase,
+    DeleteAccountUseCase,
+    GetUserPostsUseCase,
+    GetUserPostsByIdUseCase,
+    GetProfileByIdUseCase,
+    GetSobrietyTimeByIdUseCase,
+    GetCaminoByIdUseCase,
+    {
+      provide: 'IProgressProviderPort',
+      useClass: ProgressProvider,
+    },
+  ],
 })
-export class UsersModule { }
+export class UsersModule {}

@@ -76,12 +76,12 @@ function PostCard({
 }
 
 export default function SocialScreen({ navigation }: any) {
-  const [communities, setCommunities]       = useState<any[]>([]);
-  const [allPosts, setAllPosts]             = useState<Post[]>([]);
-  const [dailyForum, setDailyForum]         = useState<any>(null);
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [dailyForum, setDailyForum] = useState<any>(null);
   const [forumCommunities, setForumCommunities] = useState<any[]>([]);
-  const [loading, setLoading]               = useState(true);
-  const [refreshing, setRefreshing]         = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -160,6 +160,12 @@ export default function SocialScreen({ navigation }: any) {
               <Feather name="user" size={18} color={colors.white} />
             </View>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Feather name="more-horizontal" size={22} color={colors.text} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -219,20 +225,8 @@ export default function SocialScreen({ navigation }: any) {
               })}
               onPressAuthor={() => navigation.navigate('UserProfile', {
                 isOwn: false,
-                profile: {
-                  name:           post.autor.nombre,
-                  username:       '@' + post.autor.nombre.toLowerCase().replace(' ', ''),
-                  bio:            'Miembro de la comunidad.',
-                  publications:   0,
-                  communities:    [post.comunidad_nombre],
-                  medals:         [],
-                  totalMedals:    0,
-                  level:          1,
-                  levelName:      '',
-                  daysClean:      0,
-                  medalsAchieved: 0,
-                  isOwn:          false,
-                },
+                robleId: post.autor.id,
+                name: post.autor.nombre,
               })}
             />
           ))
@@ -244,55 +238,55 @@ export default function SocialScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container:      { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 60, paddingHorizontal: spacing.xl, paddingBottom: spacing.lg,
   },
-  title:          { fontSize: fontSizes.xxl, fontWeight: '800', color: colors.text },
-  headerActions:  { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  headerButton:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: fontSizes.xxl, fontWeight: '800', color: colors.text },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  headerButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerButtonDisabled: { opacity: 0.4 },
-  profileButton:  { marginLeft: spacing.xs },
+  profileButton: { marginLeft: spacing.xs },
   profileAvatar: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
   },
-  scroll:         { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.md },
+  scroll: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.md },
   forumCard: {
     backgroundColor: colors.white, borderRadius: borderRadius.md, padding: spacing.lg,
     flexDirection: 'row', alignItems: 'center', gap: spacing.md, elevation: 2,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
-  forumEmoji:    { fontSize: 32 },
-  forumContent:  { flex: 1 },
-  forumTitle:    { fontSize: fontSizes.md, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  forumEmoji: { fontSize: 32 },
+  forumContent: { flex: 1 },
+  forumTitle: { fontSize: fontSizes.md, fontWeight: '700', color: colors.text, marginBottom: 4 },
   forumQuestion: { fontSize: fontSizes.sm, color: colors.textMuted, lineHeight: 18 },
   postCard: {
     backgroundColor: colors.white, borderRadius: borderRadius.md, padding: spacing.lg,
     gap: spacing.sm, elevation: 2, shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4,
   },
-  postHeader:     { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  postHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   postAvatar: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center',
   },
   postAuthorInfo: { flex: 1 },
-  postAuthor:     { fontSize: fontSizes.sm, fontWeight: '700', color: colors.text },
-  postCommunity:  { fontSize: fontSizes.xs, color: colors.textMuted },
-  postTime:       { fontSize: fontSizes.xs, color: colors.textMuted },
-  postTitle:      { fontSize: fontSizes.md, fontWeight: '700', color: colors.text, lineHeight: 22 },
-  postBody:       { fontSize: fontSizes.sm, color: colors.textLight, lineHeight: 20 },
+  postAuthor: { fontSize: fontSizes.sm, fontWeight: '700', color: colors.text },
+  postCommunity: { fontSize: fontSizes.xs, color: colors.textMuted },
+  postTime: { fontSize: fontSizes.xs, color: colors.textMuted },
+  postTitle: { fontSize: fontSizes.md, fontWeight: '700', color: colors.text, lineHeight: 22 },
+  postBody: { fontSize: fontSizes.sm, color: colors.textLight, lineHeight: 20 },
   postActions: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: spacing.xs,
   },
-  postAction:     { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  postAction: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   postActionText: { fontSize: fontSizes.sm, color: colors.textMuted },
   emptyState: {
     alignItems: 'center', paddingTop: spacing.xl * 2,
     gap: spacing.md, paddingHorizontal: spacing.xl,
   },
-  emptyTitle:    { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
+  emptyTitle: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
   emptySubtitle: { fontSize: fontSizes.md, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
 });

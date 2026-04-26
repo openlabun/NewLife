@@ -3,27 +3,21 @@ import { DatabaseService } from '../../../database/infrastructure/database.servi
 import { SystemAuthService } from '../../../auth/infrastructure/services/system-auth.service';
 
 @Injectable()
-export class GetUserPostsUseCase {
+export class GetUserPostsByIdUseCase {
   constructor(
     private readonly dbService: DatabaseService,
     private readonly systemAuth: SystemAuthService,
   ) {}
 
-  async execute(usuarioUuid: string) {
+  async execute(robleId: string) {
     const masterToken = await this.systemAuth.getMasterToken();
 
-    // 1. Resolver el _id de Roble
-    const userRes = await this.dbService.find('usuarios', { usuario_id: usuarioUuid }, masterToken);
-    const userRows = Array.isArray(userRes) ? userRes : (userRes.rows || []);
-    if (!userRows[0]) return [];
-    const robleId = userRows[0]._id;
-
-    // 2. Buscar posts del usuario
+    // 1. Buscar posts directamente con el _id (robleId)
     const postsRes = await this.dbService.find('posts', { autor_id: robleId }, masterToken);
     const allPosts = Array.isArray(postsRes) ? postsRes : (postsRes.rows || []);
     const posts = allPosts.filter((p: any) => !p.eliminado);
 
-    // 3. Enriquecer con comunidad y conteos
+    // 2. Enriquecer con comunidad y conteos
     const enriched = await Promise.all(
       posts.map(async (post: any) => {
         const [community, commentsRes, reactionsRes] = await Promise.all([
@@ -31,6 +25,7 @@ export class GetUserPostsUseCase {
           this.dbService.find('comentarios', { post_id: post._id }, masterToken),
           this.dbService.find('reacciones', { post_id: post._id }, masterToken),
         ]);
+
         const comments  = Array.isArray(commentsRes) ? commentsRes : (commentsRes.rows || []);
         const reactions = Array.isArray(reactionsRes) ? reactionsRes : (reactionsRes.rows || []);
         const activeComments = comments.filter((c: any) => !c.eliminado);
@@ -48,6 +43,7 @@ export class GetUserPostsUseCase {
       })
     );
 
+    // 3. Ordenar por fecha descendente
     return enriched.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );

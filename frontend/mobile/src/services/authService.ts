@@ -61,8 +61,23 @@ export const getProfile = async () => {
 };
 
 export const getSobrietyTime = async () => {
-  const response = await api.get('/home/sobriety-time');
-  return response.data;
+  const res = await api.get('/home/sobriety-time');
+  return res.data;
+};
+
+export const getSobrietyTimeById = async (robleId: string) => {
+  const res = await api.get(`/user/${robleId}/sobriety-time-by-id`);
+  return res.data;
+};
+
+export const getCamino = async () => {
+  const res = await api.get('/progress/camino');
+  return res.data;
+};
+
+export const getCaminoById = async (robleId: string) => {
+  const res = await api.get(`/user/by-id/${robleId}/camino`);
+  return res.data;
 };
 
 // ─── Contactos ────────────────────────────────────────────────────────────────
@@ -86,3 +101,4 @@ export const deleteContact = async (id: string) => {
   const response = await api.delete(`/contacts/${id}`);
   return response.data;
 };
+
