@@ -23,10 +23,11 @@ export default function CreatePostScreen({ navigation, route }: any) {
   };
 
   const toggleAll = () => {
-    if (selectedCommunities.length === communities.length) {
+    const accessibleIds = communitiesWithAccess.map((c: any) => c.id);
+    if (selectedCommunities.length === accessibleIds.length) {
       setSelectedCommunities([]);
     } else {
-      setSelectedCommunities(communities.map((c: any) => c.id));
+      setSelectedCommunities(accessibleIds);
     }
   };
 
@@ -35,15 +36,22 @@ export default function CreatePostScreen({ navigation, route }: any) {
     .map((c: any) => c.nombre)
     .join(', ');
 
-  const canPublish = title.trim().length > 0 && selectedCommunities.length > 0;
+  const communitiesWithAccess = communities.filter(
+    (c: any) => c.tipo_acceso !== 'SOLO_VER'
+  );
+
+  const selectedWithAccess = selectedCommunities.filter(id =>
+    communitiesWithAccess.some((c: any) => c.id === id)
+  );
+
+  const canPublish = title.trim().length > 0 && selectedWithAccess.length > 0;
 
   const handlePublish = async () => {
     if (!canPublish) return;
     setLoading(true);
     try {
-      // Publicar en cada comunidad seleccionada en paralelo
       await Promise.all(
-        selectedCommunities.map(communityId =>
+        selectedWithAccess.map(communityId =>   // ← usa selectedWithAccess
           createPost(communityId, body.trim(), title.trim())
         )
       );
@@ -150,26 +158,38 @@ export default function CreatePostScreen({ navigation, route }: any) {
 
             <View style={styles.divider} />
 
-            {communities.map((community: any) => (
-              <TouchableOpacity
-                key={community.id}
-                style={styles.communityOption}
-                onPress={() => toggleCommunity(community.id)}
-              >
-                <View style={[
-                  styles.checkbox,
-                  selectedCommunities.includes(community.id) && styles.checkboxSelected,
-                ]}>
-                  {selectedCommunities.includes(community.id) && (
-                    <Feather name="check" size={12} color={colors.white} />
-                  )}
-                </View>
-                <View style={styles.communityOptionInfo}>
-                  <Feather name="users" size={16} color={colors.textMuted} />
-                  <Text style={styles.communityOptionText}>{community.nombre}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+            {communities.map((community: any) => {
+              const hasAccess = community.tipo_acceso !== 'SOLO_VER';
+              return (
+                <TouchableOpacity
+                  key={community.id}
+                  style={[styles.communityOption, !hasAccess && styles.communityOptionDisabled]}
+                  onPress={() => hasAccess && toggleCommunity(community.id)}
+                  activeOpacity={hasAccess ? 0.7 : 1}
+                >
+                  <View style={[
+                    styles.checkbox,
+                    selectedCommunities.includes(community.id) && styles.checkboxSelected,
+                    !hasAccess && styles.checkboxDisabled,
+                  ]}>
+                    {selectedCommunities.includes(community.id) && (
+                      <Feather name="check" size={12} color={colors.white} />
+                    )}
+                  </View>
+                  <View style={styles.communityOptionInfo}>
+                    <Feather name="users" size={16} color={hasAccess ? colors.textMuted : colors.border} />
+                    <View>
+                      <Text style={[styles.communityOptionText, !hasAccess && styles.communityOptionTextDisabled]}>
+                        {community.nombre}
+                      </Text>
+                      {!hasAccess && (
+                        <Text style={styles.noAccessText}>Solo lectura</Text>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
 
             <TouchableOpacity
               style={styles.modalConfirmButton}
@@ -375,4 +395,8 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     fontWeight: '700'
   },
+  communityOptionDisabled: { opacity: 0.5 },
+  checkboxDisabled: { backgroundColor: '#E0E0E0', borderColor: '#E0E0E0' },
+  communityOptionTextDisabled: { color: colors.textMuted },
+  noAccessText: { fontSize: fontSizes.xs, color: colors.textMuted, marginTop: 2 },
 });

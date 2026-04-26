@@ -13,12 +13,14 @@ import { GetProfileByIdUseCase } from './application/use-cases/get-profile-by-id
 import { GetSobrietyTimeByIdUseCase } from './application/use-cases/get-sobriety-time-by-id.use-case';
 import { GetCaminoByIdUseCase } from './application/use-cases/get-camino-by-id.use-case';
 import { ProgressProvider } from '../progress/infrastructure/providers/progress.provider';
+import { CommunitiesModule } from '../communities/communities.module';
 
 @Module({
   imports: [
     DatabaseModule,
     AuthModule,
     HomeModule,
+    CommunitiesModule,
   ],
   controllers: [UserController],
   providers: [

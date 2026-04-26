@@ -52,5 +52,6 @@ import { GetAllForumsUseCase } from './application/use-cases/get-all-forums.use-
     CommentForumReplyUseCase,
     GetAllForumsUseCase,
   ],
+  exports: [ResolveUserIdHelper]
 })
 export class CommunitiesModule { }

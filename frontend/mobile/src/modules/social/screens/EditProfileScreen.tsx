@@ -9,22 +9,22 @@ import { colors, fontSizes, spacing, borderRadius } from '../../../constants/the
 import { getProfile } from '../../../services/authService';
 import api from '../../../services/api';
 
-const PRONOMBRES = ['él/his', 'ella/her', 'elle/they', 'Prefiero no decir'];
+const PRONOMBRES = ['Él', 'Ella', 'Elle'];
 
 export default function EditProfileScreen({ navigation }: any) {
-  const [apodo, setApodo]           = useState('');
-  const [pronombre, setPronombre]   = useState('');
+  const [apodo, setApodo]             = useState('');
+  const [pronombre, setPronombre]     = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [showPronPicker, setShowPronPicker] = useState(false);
-  const [loading, setLoading]       = useState(true);
-  const [saving, setSaving]         = useState(false);
+  const [loading, setLoading]         = useState(true);
+  const [saving, setSaving]           = useState(false);
 
   const fetchProfile = useCallback(async () => {
     try {
       const data = await getProfile();
       setApodo(data.apodo || '');
       setPronombre(data.pronombre || '');
-      setDescripcion(data.motivo_sobrio || '');
+      setDescripcion(data.descripcion || ''); 
     } catch (err) {
       console.log('Error cargando perfil:', err);
     } finally {
@@ -40,9 +40,9 @@ export default function EditProfileScreen({ navigation }: any) {
     setSaving(true);
     try {
       await api.patch('/user/profile', {
-        apodo:         apodo.trim()      || undefined,
-        pronombre:     pronombre.trim()  || undefined,
-        motivo_sobrio: descripcion.trim() || undefined,
+        apodo:       apodo.trim()       || undefined,
+        pronombre:   pronombre.trim()   || undefined,
+        descripcion: descripcion.trim() || undefined,
       });
       navigation.goBack();
     } catch (err: any) {
@@ -91,12 +91,12 @@ export default function EditProfileScreen({ navigation }: any) {
           <Feather name="chevron-down" size={18} color={colors.textMuted} />
         </TouchableOpacity>
 
-        <Text style={styles.label}>Descripción / Motivación</Text>
+        <Text style={styles.label}>Descripción</Text>
         <TextInput
           style={styles.textArea}
           value={descripcion}
           onChangeText={setDescripcion}
-          placeholder="¿Qué te motiva a mantenerte sobrio?"
+          placeholder="Cuéntanos algo sobre ti..."
           placeholderTextColor={colors.border}
           multiline
           textAlignVertical="top"
@@ -143,82 +143,51 @@ export default function EditProfileScreen({ navigation }: any) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container:   { flex: 1, backgroundColor: colors.background },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingTop: 60,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    paddingTop: 60, paddingHorizontal: spacing.xl, paddingBottom: spacing.lg,
   },
   headerTitle: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
-  scroll: { paddingHorizontal: spacing.xl },
+  scroll:      { paddingHorizontal: spacing.xl },
   label: {
-    fontSize: fontSizes.sm,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-    marginTop: spacing.lg,
+    fontSize: fontSizes.sm, fontWeight: '700', color: colors.text,
+    marginBottom: spacing.sm, marginTop: spacing.lg,
   },
   input: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    fontSize: fontSizes.md,
-    color: colors.text,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: '#F0F0F0', borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    fontSize: fontSizes.md, color: colors.text,
   },
-  inputText: {
-    fontSize: fontSizes.md,
-    color: colors.text,
+  inputRow: {
+    backgroundColor: '#F0F0F0', borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
+  inputText:   { fontSize: fontSizes.md, color: colors.text },
   textArea: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    fontSize: fontSizes.md,
-    color: colors.text,
-    height: 120,
+    backgroundColor: '#F0F0F0', borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    fontSize: fontSizes.md, color: colors.text, height: 120,
   },
   saveButton: {
-    position: 'absolute',
-    bottom: 32,
-    left: spacing.xl,
-    right: spacing.xl,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.full,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    elevation: 4,
+    position: 'absolute', bottom: 32, left: spacing.xl, right: spacing.xl,
+    backgroundColor: colors.primary, borderRadius: borderRadius.full,
+    paddingVertical: spacing.md, alignItems: 'center', elevation: 4,
   },
-  saveButtonText: { color: colors.white, fontSize: fontSizes.lg, fontWeight: '700' },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
+  saveButtonText:      { color: colors.white, fontSize: fontSizes.lg, fontWeight: '700' },
+  modalOverlay:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modal: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: spacing.xl,
-    gap: spacing.sm,
+    backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: spacing.xl, gap: spacing.sm,
   },
-  modalTitle: { fontSize: fontSizes.lg, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
+  modalTitle:          { fontSize: fontSizes.lg, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
   modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  modalOptionText: { fontSize: fontSizes.md, color: colors.text },
+  modalOptionText:     { fontSize: fontSizes.md, color: colors.text },
   modalOptionSelected: { fontWeight: '700', color: colors.primary },
 });

@@ -94,9 +94,9 @@ export class UserController {
   }
 
   @Get(':id/posts')
-  @ApiOperation({ summary: 'Obtener posts de cualquier usuario por su _id de Roble' })
-  async getUserPostsById(@Param('id') id: string) {
-    return this.getUserPostsByIdUseCase.execute(id);
+    @ApiOperation({ summary: 'Obtener posts de cualquier usuario por su _id de Roble' })
+  async getUserPostsById(@Param('id') id: string, @Request() req: any) {
+    return this.getUserPostsByIdUseCase.execute(id, req.user.uid);
   }
 
   @Get(':id/profile')
