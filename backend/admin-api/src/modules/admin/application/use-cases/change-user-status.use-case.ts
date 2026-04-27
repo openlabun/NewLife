@@ -7,6 +7,7 @@ import {
 import type { IAdminUserRepository } from '../../domain/ports/admin-user.repository.port';
 import { ADMIN_USER_REPOSITORY } from '../../domain/ports/admin-user.repository.port';
 import { UserRole, UserStatus } from '../../domain/entities/admin-user.entity';
+import { COMMUNITY_REPOSITORY } from '../../domain/ports/community.repository.port';
 
 export interface ChangeUserStatusInput {
   userId: string;
@@ -32,7 +33,9 @@ export class ChangeUserStatusUseCase {
   constructor(
     @Inject(ADMIN_USER_REPOSITORY)
     private readonly userRepo: IAdminUserRepository,
-  ) {}
+    @Inject(COMMUNITY_REPOSITORY)
+    private readonly communityRepo: any,
+  ) { }
 
   async execute(input: ChangeUserStatusInput): Promise<ChangeUserStatusResult> {
     // 1. Verificar que el usuario existe
@@ -105,11 +108,19 @@ export class ChangeUserStatusUseCase {
       suspension_hasta,
     });
 
+    // ← NUEVO: si se banea o elimina, remover de todas las comunidades
+    if (input.estado === UserStatus.BANEADO || input.estado === UserStatus.ELIMINADO) {
+      const memberships = await this.communityRepo.findAllMembershipsByUsuarioId(input.userId);
+      for (const m of memberships) {
+        await this.communityRepo.removeMember(m._id);
+      }
+    }
+
     return {
-      id:               updated._id,
-      email:            updated.email,
-      nombre:           updated.nombre,
-      estado:           updated.estado,
+      id: updated._id,
+      email: updated.email,
+      nombre: updated.nombre,
+      estado: updated.estado,
       suspension_hasta: updated.suspension_hasta ?? null,
     };
   }

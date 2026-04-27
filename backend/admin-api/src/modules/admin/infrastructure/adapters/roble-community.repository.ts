@@ -144,7 +144,7 @@ export class RobleCommunityRepository implements ICommunityRepository {
         usuario_id: data.usuario_id,
         tipo_acceso: data.tipo_acceso,
         es_moderador: data.es_moderador,
-        joined_at:  new Date().toISOString(),
+        joined_at: new Date().toISOString(),
       },
     ]);
 
@@ -178,5 +178,13 @@ export class RobleCommunityRepository implements ICommunityRepository {
 
   async removeMember(memberId: string): Promise<void> {
     await this.roble.dbDelete(COMMUNITY_USERS_TABLE, '_id', memberId);
+  }
+
+  async findAllMembershipsByUsuarioId(usuarioId: string): Promise<ComunidadUsuario[]> {
+    const rows = await this.roble.dbRead<unknown[]>(COMMUNITY_USERS_TABLE, {
+      usuario_id: usuarioId,
+    });
+    if (!rows || rows.length === 0) return [];
+    return (rows as Record<string, unknown>[]).map(r => this.mapMember(r));
   }
 }

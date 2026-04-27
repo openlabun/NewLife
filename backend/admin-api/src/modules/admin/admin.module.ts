@@ -18,6 +18,7 @@ import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { ChangeUserRoleUseCase } from './application/use-cases/change-user-role.use-case';
 import { ChangeUserStatusUseCase } from './application/use-cases/change-user-status.use-case';
 import { CreateAdminUseCase } from './application/use-cases/create-admin.use-case';
+import { DeleteAdminUseCase } from './application/use-cases/delete-admin.use-case';
 
 // Application — Communities
 import { GetCommunitiesUseCase } from './application/use-cases/get-communities.use-case';
@@ -44,6 +45,15 @@ import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
 // Motivation module
 import { MotivationModule } from '../motivation/motivation.module';
 
+// Ban Requests
+import { RobleBanRequestRepository } from './infrastructure/adapters/roble-ban-request.repository';
+import { GetBanRequestsUseCase } from './application/use-cases/get-ban-requests.use-case';
+import { ResolveBanRequestUseCase } from './application/use-cases/resolve-ban-request.use-case';
+import { AdminBanRequestsController } from './presentation/controllers/admin-ban-requests.controller';
+import { BAN_REQUEST_REPOSITORY } from './domain/ports/ban-request.repository.port';
+
+
+
 @Module({
   imports: [
     ConfigModule,
@@ -63,6 +73,7 @@ import { MotivationModule } from '../motivation/motivation.module';
     AdminAuthController,
     AdminUsersController,
     AdminCommunitiesController,
+    AdminBanRequestsController,
   ],
   providers: [
     // Infrastructure
@@ -92,6 +103,7 @@ import { MotivationModule } from '../motivation/motivation.module';
     ChangeUserRoleUseCase,
     ChangeUserStatusUseCase,
     CreateAdminUseCase,
+    DeleteAdminUseCase,
 
     // Application — Communities
     GetCommunitiesUseCase,
@@ -106,6 +118,12 @@ import { MotivationModule } from '../motivation/motivation.module';
     // Guards
     AdminJwtGuard,
     RolesGuard,
+
+    // Ban Requests
+    RobleBanRequestRepository,
+    { provide: BAN_REQUEST_REPOSITORY, useClass: RobleBanRequestRepository },
+    GetBanRequestsUseCase,
+    ResolveBanRequestUseCase,
   ],
   exports: [
     AdminJwtGuard,
@@ -115,4 +133,4 @@ import { MotivationModule } from '../motivation/motivation.module';
     TokenBlacklistService,
   ],
 })
-export class AdminModule {}
+export class AdminModule { }

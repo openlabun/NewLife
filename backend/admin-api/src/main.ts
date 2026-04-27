@@ -19,11 +19,12 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3002',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-
+  
+  // ── Swagger panel web ────────────────────────────────────────────────────
   const webConfig = new DocumentBuilder()
     .setTitle('NewLife — Panel de Administración')
     .setDescription('Endpoints del panel web para admins y superadmins')

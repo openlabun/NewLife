@@ -53,4 +53,5 @@ export interface IAdminUserRepository {
   findAll(filters?: { rol?: UserRole; estado?: UserStatus }): Promise<AdminUser[]>;
   create(data: CreateAdminUserInput): Promise<AdminUser>;
   update(id: string, data: UpdateAdminUserInput): Promise<AdminUser>;
+  delete(id: string): Promise<void>;
 }
