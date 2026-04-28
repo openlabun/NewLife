@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,27 +39,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-  Pencil,
-  Plus,
-  Trash2,
-  Search,
-  Trophy,
-  Calendar,
-  CheckCircle,
-  ListChecks,
-  Footprints,
-  Target,
-  Flame,
-  Zap,
-  Sparkles,
+  Pencil, Plus, Trash2, Search, Trophy, Calendar, CheckCircle,
+  ListChecks, Footprints, Target, Flame, Zap, Sparkles, Loader2, AlertCircle
 } from "lucide-react"
 
-type ChallengeType = "SOBRIETY_DAYS" | "CHECKIN_STREAK" | "CHECKIN_TOTAL" | "PATH_LEVEL"
-type ChallengeDifficulty = "SUAVE" | "MODERADA" | "INTENSA"
-type ChallengeStatus = "DRAFT" | "PUBLISHED"
+import { getChallenges, createChallenge, updateChallenge, deleteChallenge, publishChallenge } from "@/lib/retos"
+
+export type ChallengeType = "SOBRIETY_DAYS" | "CHECKIN_STREAK" | "CHECKIN_TOTAL" | "PATH_LEVEL"
+export type ChallengeDifficulty = "SUAVE" | "MODERADA" | "INTENSA"
+export type ChallengeStatus = "DRAFT" | "PUBLISHED"
 
 interface Challenge {
-  id: number
+  id: string 
   title: string
   description: string
   target: number
@@ -70,26 +61,10 @@ interface Challenge {
 }
 
 const challengeTypeInfo: Record<ChallengeType, { label: string; description: string; icon: React.ElementType }> = {
-  SOBRIETY_DAYS: {
-    label: "Días de Sobriedad",
-    description: "Días consecutivos de sobriedad absoluta.",
-    icon: Calendar,
-  },
-  CHECKIN_STREAK: {
-    label: "Racha de Registros",
-    description: "Racha de días consecutivos haciendo el registro diario.",
-    icon: Flame,
-  },
-  CHECKIN_TOTAL: {
-    label: "Total de Registros",
-    description: "Sumatoria total de registros diarios hechos, sin importar si no son consecutivos.",
-    icon: ListChecks,
-  },
-  PATH_LEVEL: {
-    label: "Nivel del Camino",
-    description: "Nivel alcanzado en el camino de los 12 pasos.",
-    icon: Footprints,
-  },
+  SOBRIETY_DAYS: { label: "Días de Sobriedad", description: "Días consecutivos de sobriedad absoluta.", icon: Calendar },
+  CHECKIN_STREAK: { label: "Racha de Registros", description: "Racha de días consecutivos haciendo el registro diario.", icon: Flame },
+  CHECKIN_TOTAL: { label: "Total de Registros", description: "Sumatoria total de registros diarios hechos, sin importar si no son consecutivos.", icon: ListChecks },
+  PATH_LEVEL: { label: "Nivel del Camino", description: "Nivel alcanzado en el camino de los 12 pasos.", icon: Footprints },
 }
 
 const difficultyInfo: Record<ChallengeDifficulty, { label: string; color: string }> = {
@@ -97,59 +72,6 @@ const difficultyInfo: Record<ChallengeDifficulty, { label: string; color: string
   MODERADA: { label: "Moderada", color: "bg-[#e8a84c]/20 text-[#c08a30] border-[#e8a84c]/30" },
   INTENSA: { label: "Intensa", color: "bg-red-100 text-red-700 border-red-200" },
 }
-
-const initialChallenges: Challenge[] = [
-  {
-    id: 1,
-    title: "Primera Semana",
-    description: "Completa tu primera semana de sobriedad. El primer paso es el más importante.",
-    target: 7,
-    difficulty: "SUAVE",
-    type: "SOBRIETY_DAYS",
-    status: "PUBLISHED",
-    createdAt: "01/01/2024",
-  },
-  {
-    id: 2,
-    title: "Mes de Transformación",
-    description: "30 días continuos de sobriedad. Un mes que cambiará tu vida.",
-    target: 30,
-    difficulty: "MODERADA",
-    type: "SOBRIETY_DAYS",
-    status: "PUBLISHED",
-    createdAt: "05/01/2024",
-  },
-  {
-    id: 3,
-    title: "Registros Constantes",
-    description: "Mantén una racha de 14 días haciendo tu registro diario.",
-    target: 14,
-    difficulty: "SUAVE",
-    type: "CHECKIN_STREAK",
-    status: "PUBLISHED",
-    createdAt: "10/01/2024",
-  },
-  {
-    id: 4,
-    title: "Compromiso Total",
-    description: "Completa 100 registros diarios en tu camino de recuperación.",
-    target: 100,
-    difficulty: "INTENSA",
-    type: "CHECKIN_TOTAL",
-    status: "DRAFT",
-    createdAt: "15/01/2024",
-  },
-  {
-    id: 5,
-    title: "Primeros Pasos",
-    description: "Alcanza el nivel 3 en tu camino de los 12 pasos.",
-    target: 3,
-    difficulty: "MODERADA",
-    type: "PATH_LEVEL",
-    status: "DRAFT",
-    createdAt: "20/01/2024",
-  },
-]
 
 const emptyFormData = {
   title: "",
@@ -161,15 +83,48 @@ const emptyFormData = {
 }
 
 export default function RetosPage() {
-  const [challenges, setChallenges] = useState<Challenge[]>(initialChallenges)
+  const [challenges, setChallenges] = useState<Challenge[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [formError, setFormError] = useState("")
+  
   const [showModal, setShowModal] = useState(false)
   const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null)
-  const [deleteChallenge, setDeleteChallenge] = useState<Challenge | null>(null)
+  const [challengeToDelete, setChallengeToDelete] = useState<Challenge | null>(null)
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<ChallengeStatus | "ALL">("ALL")
   const [difficultyFilter, setDifficultyFilter] = useState<ChallengeDifficulty | "ALL">("ALL")
   const [typeFilter, setTypeFilter] = useState<ChallengeType | "ALL">("ALL")
   const [formData, setFormData] = useState(emptyFormData)
+
+  const loadChallenges = async () => {
+    try {
+      setIsLoadingData(true)
+      const data = await getChallenges()
+      
+      const mapped: Challenge[] = data.map((item: any) => ({
+        id: item.reto_id || item.id,
+        title: item.titulo,
+        description: item.descripcion,
+        target: item.target,
+        difficulty: item.dificultad,
+        type: item.tipo,
+        status: item.estado,
+        createdAt: item.fecha_creacion || new Date().toISOString()
+      }))
+      setChallenges(mapped)
+    } catch (error) {
+      console.error("Error al cargar los retos:", error)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  useEffect(() => {
+    loadChallenges()
+  }, [])
 
   const filteredChallenges = challenges.filter((c) => {
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -189,12 +144,14 @@ export default function RetosPage() {
   }
 
   const openCreateModal = () => {
+    setFormError("")
     setEditingChallenge(null)
     setFormData(emptyFormData)
     setShowModal(true)
   }
 
   const openEditModal = (challenge: Challenge) => {
+    setFormError("")
     setEditingChallenge(challenge)
     setFormData({
       title: challenge.title,
@@ -207,37 +164,72 @@ export default function RetosPage() {
     setShowModal(true)
   }
 
-  const handleSave = () => {
-    const newChallenge: Challenge = {
-      id: editingChallenge?.id || Date.now(),
-      title: formData.title,
-      description: formData.description,
+  const handleSave = async () => {
+    setFormError("")
+    setIsSaving(true)
+
+    const payload = {
+      titulo: formData.title,
+      descripcion: formData.description,
+      dificultad: formData.difficulty,
+      tipo: formData.type,
       target: formData.target,
-      difficulty: formData.difficulty,
-      type: formData.type,
-      status: formData.status,
-      createdAt: editingChallenge?.createdAt || new Date().toLocaleDateString("es-ES"),
     }
 
-    if (editingChallenge) {
-      setChallenges(challenges.map((c) => (c.id === editingChallenge.id ? newChallenge : c)))
-    } else {
-      setChallenges([newChallenge, ...challenges])
-    }
+    try {
+      if (editingChallenge) {
+        await updateChallenge(editingChallenge.id, payload)
+        
+        if (formData.status === "PUBLISHED" && editingChallenge.status === "DRAFT") {
+          await publishChallenge(editingChallenge.id)
+        }
+      } else {
+        const response = await createChallenge(payload)
+        const newChallengeId = response.reto_id || response.id
+        
+        if (formData.status === "PUBLISHED" && newChallengeId) {
+          await publishChallenge(newChallengeId)
+        }
+      }
 
-    setShowModal(false)
-    setFormData(emptyFormData)
-    setEditingChallenge(null)
+      await loadChallenges()
+      setShowModal(false)
+      setFormData(emptyFormData)
+      setEditingChallenge(null)
+    } catch (error: any) {
+      console.error("Error al guardar reto:", error)
+      setFormError("Hubo un problema al guardar el reto. Revisa los datos y vuelve a intentarlo.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleDelete = () => {
-    if (deleteChallenge) {
-      setChallenges(challenges.filter((c) => c.id !== deleteChallenge.id))
-      setDeleteChallenge(null)
+  const handleDelete = async () => {
+    if (!challengeToDelete) return
+    setIsDeleting(true)
+    
+    try {
+      await deleteChallenge(challengeToDelete.id)
+      await loadChallenges()
+      setChallengeToDelete(null)
+    } catch (error) {
+      console.error("Error al eliminar:", error)
+      // Ajuste en el mensaje de error
+      alert("No se pudo eliminar el reto. Hubo un error de conexión con el servidor.")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   const isEditDisabled = (challenge: Challenge) => challenge.status === "PUBLISHED"
+
+  if (isLoadingData) {
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#d4854a] animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <TooltipProvider>
@@ -298,12 +290,8 @@ export default function RetosPage() {
                 Gestiona los retos para motivar a los usuarios en su recuperación
               </CardDescription>
             </div>
-            <Button
-              onClick={openCreateModal}
-              className="bg-[#d4854a] hover:bg-[#c07842] text-white gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Nuevo reto
+            <Button onClick={openCreateModal} className="bg-[#d4854a] hover:bg-[#c07842] text-white gap-2">
+              <Plus className="w-4 h-4" /> Nuevo reto
             </Button>
           </CardHeader>
           <CardContent>
@@ -318,67 +306,39 @@ export default function RetosPage() {
                   className="pl-9 bg-white border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3]"
                 />
               </div>
-              <Select
-                value={statusFilter}
-                onValueChange={(value: ChallengeStatus | "ALL") => setStatusFilter(value)}
-              >
+              <Select value={statusFilter} onValueChange={(value: ChallengeStatus | "ALL") => setStatusFilter(value)}>
                 <SelectTrigger className="w-full lg:w-40 bg-white border-[#e5e5e5] text-[#1a1a1a]">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-[#e5e5e5]">
-                  <SelectItem value="ALL" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    Todos los estados
-                  </SelectItem>
-                  <SelectItem value="DRAFT" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    Borrador
-                  </SelectItem>
-                  <SelectItem value="PUBLISHED" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    Publicado
-                  </SelectItem>
+                  <SelectItem value="ALL" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">Todos</SelectItem>
+                  <SelectItem value="DRAFT" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">Borrador</SelectItem>
+                  <SelectItem value="PUBLISHED" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">Publicado</SelectItem>
                 </SelectContent>
               </Select>
-              <Select
-                value={difficultyFilter}
-                onValueChange={(value: ChallengeDifficulty | "ALL") => setDifficultyFilter(value)}
-              >
+              <Select value={difficultyFilter} onValueChange={(value: ChallengeDifficulty | "ALL") => setDifficultyFilter(value)}>
                 <SelectTrigger className="w-full lg:w-40 bg-white border-[#e5e5e5] text-[#1a1a1a]">
                   <SelectValue placeholder="Dificultad" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-[#e5e5e5]">
-                  <SelectItem value="ALL" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    Todas las dificultades
-                  </SelectItem>
+                  <SelectItem value="ALL" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">Todas</SelectItem>
                   <SelectItem value="SUAVE" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    <span className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-green-600" />
-                      Suave
-                    </span>
+                    <span className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-green-600" />Suave</span>
                   </SelectItem>
                   <SelectItem value="MODERADA" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    <span className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-[#e8a84c]" />
-                      Moderada
-                    </span>
+                    <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-[#e8a84c]" />Moderada</span>
                   </SelectItem>
                   <SelectItem value="INTENSA" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    <span className="flex items-center gap-2">
-                      <Flame className="w-4 h-4 text-red-500" />
-                      Intensa
-                    </span>
+                    <span className="flex items-center gap-2"><Flame className="w-4 h-4 text-red-500" />Intensa</span>
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <Select
-                value={typeFilter}
-                onValueChange={(value: ChallengeType | "ALL") => setTypeFilter(value)}
-              >
+              <Select value={typeFilter} onValueChange={(value: ChallengeType | "ALL") => setTypeFilter(value)}>
                 <SelectTrigger className="w-full lg:w-48 bg-white border-[#e5e5e5] text-[#1a1a1a]">
                   <SelectValue placeholder="Tipo de reto" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-[#e5e5e5]">
-                  <SelectItem value="ALL" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                    Todos los tipos
-                  </SelectItem>
+                  <SelectItem value="ALL" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">Todos los tipos</SelectItem>
                   {Object.entries(challengeTypeInfo).map(([value, info]) => (
                     <SelectItem key={value} value={value} className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
                       <span className="flex items-center gap-2">
@@ -390,24 +350,18 @@ export default function RetosPage() {
                 </SelectContent>
               </Select>
               {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  onClick={clearFilters}
-                  className="text-[#737373] hover:text-[#1a1a1a] hover:bg-white"
-                >
+                <Button variant="ghost" onClick={clearFilters} className="text-[#737373] hover:text-[#1a1a1a] hover:bg-white">
                   Limpiar
                 </Button>
               )}
             </div>
+
             {/* Challenges List */}
             <div className="space-y-3">
               {filteredChallenges.map((challenge) => {
                 const TypeIcon = challengeTypeInfo[challenge.type].icon
                 return (
-                  <div
-                    key={challenge.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-[#e5e5e5] bg-white hover:bg-[#f8f6f3] transition-colors"
-                  >
+                  <div key={challenge.id} className="flex items-center gap-4 p-4 rounded-lg border border-[#e5e5e5] bg-white hover:bg-[#f8f6f3] transition-colors">
                     <div className="w-12 h-12 rounded-xl bg-[#d4854a]/10 flex items-center justify-center flex-shrink-0">
                       <TypeIcon className="w-6 h-6 text-[#d4854a]" />
                     </div>
@@ -417,24 +371,13 @@ export default function RetosPage() {
                         <Badge className={difficultyInfo[challenge.difficulty].color}>
                           {difficultyInfo[challenge.difficulty].label}
                         </Badge>
-                        <Badge
-                          className={
-                            challenge.status === "PUBLISHED"
-                              ? "bg-green-100 text-green-700 border-green-200"
-                              : "bg-[#e5e5e5] text-[#737373] border-[#e5e5e5]"
-                          }
-                        >
+                        <Badge className={challenge.status === "PUBLISHED" ? "bg-green-100 text-green-700 border-green-200" : "bg-[#e5e5e5] text-[#737373] border-[#e5e5e5]"}>
                           {challenge.status === "PUBLISHED" ? "Publicado" : "Borrador"}
                         </Badge>
                       </div>
-                      <p className="text-sm text-[#737373] line-clamp-1 mt-1">
-                        {challenge.description}
-                      </p>
+                      <p className="text-sm text-[#737373] line-clamp-1 mt-1">{challenge.description}</p>
                       <div className="flex items-center gap-4 mt-2 text-xs text-[#a3a3a3]">
-                        <span className="flex items-center gap-1">
-                          <Target className="w-3 h-3" />
-                          Meta: {challenge.target}
-                        </span>
+                        <span className="flex items-center gap-1"><Target className="w-3 h-3" /> Meta: {challenge.target}</span>
                         <span>{challengeTypeInfo[challenge.type].label}</span>
                       </div>
                     </div>
@@ -443,12 +386,7 @@ export default function RetosPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled
-                                className="border-[#e5e5e5] text-[#a3a3a3] cursor-not-allowed"
-                              >
+                              <Button size="sm" variant="outline" disabled className="border-[#e5e5e5] text-[#a3a3a3] cursor-not-allowed">
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             </span>
@@ -458,21 +396,12 @@ export default function RetosPage() {
                           </TooltipContent>
                         </Tooltip>
                       ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditModal(challenge)}
-                          className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => openEditModal(challenge)} className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]">
                           <Pencil className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setDeleteChallenge(challenge)}
-                        className="border-[#e5e5e5] text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                      >
+                      {/* Botón de eliminar habilitado para todos (Borradores y Publicados) */}
+                      <Button size="sm" variant="outline" onClick={() => setChallengeToDelete(challenge)} className="border-[#e5e5e5] text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -494,37 +423,30 @@ export default function RetosPage() {
         <Dialog open={showModal} onOpenChange={setShowModal}>
           <DialogContent className="bg-white border-[#e5e5e5] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-[#1a1a1a]">
-                {editingChallenge ? "Editar reto" : "Nuevo reto"}
-              </DialogTitle>
+              <DialogTitle className="text-[#1a1a1a]">{editingChallenge ? "Editar reto" : "Nuevo reto"}</DialogTitle>
               <DialogDescription className="text-[#737373]">
-                {editingChallenge
-                  ? "Modifica los campos del reto"
-                  : "Crea un nuevo reto de motivación para los usuarios"}
+                {editingChallenge ? "Modifica los campos del reto" : "Crea un nuevo reto de motivación para los usuarios"}
               </DialogDescription>
             </DialogHeader>
+            
             <div className="py-4 space-y-4">
+              {formError && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p>{formError}</p>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <Label className="text-[#1a1a1a]">Título *</Label>
-                <Input
-                  placeholder="Nombre del reto"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3]"
-                />
+                <Input placeholder="Nombre del reto" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a]" />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-[#1a1a1a]">Descripción *</Label>
-                <Textarea
-                  placeholder="Describe el reto y su objetivo..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3] min-h-24"
-                />
+                <Textarea placeholder="Describe el reto y su objetivo..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] min-h-24" />
               </div>
 
-              {/* Challenge Type - Radio Cards Style */}
               <div className="space-y-2">
                 <Label className="text-[#1a1a1a]">Tipo de Reto *</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -536,23 +458,13 @@ export default function RetosPage() {
                         key={value}
                         type="button"
                         onClick={() => setFormData({ ...formData, type: value as ChallengeType })}
-                        className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${
-                          isSelected
-                            ? "border-[#d4854a] bg-[#d4854a]/5"
-                            : "border-[#e5e5e5] hover:border-[#d4854a]/50 bg-white"
-                        }`}
+                        className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-all ${isSelected ? "border-[#d4854a] bg-[#d4854a]/5" : "border-[#e5e5e5] hover:border-[#d4854a]/50 bg-white"}`}
                       >
-                        <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            isSelected ? "bg-[#d4854a]" : "bg-[#f8f6f3]"
-                          }`}
-                        >
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? "bg-[#d4854a]" : "bg-[#f8f6f3]"}`}>
                           <Icon className={`w-5 h-5 ${isSelected ? "text-white" : "text-[#737373]"}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-medium ${isSelected ? "text-[#d4854a]" : "text-[#1a1a1a]"}`}>
-                            {info.label}
-                          </p>
+                          <p className={`font-medium ${isSelected ? "text-[#d4854a]" : "text-[#1a1a1a]"}`}>{info.label}</p>
                           <p className="text-xs text-[#737373] mt-0.5">{info.description}</p>
                         </div>
                       </button>
@@ -564,93 +476,41 @@ export default function RetosPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[#1a1a1a]">Meta / Target *</Label>
-                  <Input
-                    type="number"
-                    placeholder="30"
-                    value={formData.target || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, target: parseInt(e.target.value) || 0 })
-                    }
-                    className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3]"
-                  />
+                  <Input type="number" min="1" placeholder="30" value={formData.target || ""} onChange={(e) => setFormData({ ...formData, target: parseInt(e.target.value) || 0 })} className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a]" />
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-[#1a1a1a]">Dificultad *</Label>
-                  <Select
-                    value={formData.difficulty}
-                    onValueChange={(value: ChallengeDifficulty) =>
-                      setFormData({ ...formData, difficulty: value })
-                    }
-                  >
-                    <SelectTrigger className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a]">
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={formData.difficulty} onValueChange={(value: ChallengeDifficulty) => setFormData({ ...formData, difficulty: value })}>
+                    <SelectTrigger className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-white border-[#e5e5e5]">
-                      <SelectItem value="SUAVE" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                        <span className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-green-600" />
-                          Suave
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="MODERADA" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                        <span className="flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-[#e8a84c]" />
-                          Moderada
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="INTENSA" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                        <span className="flex items-center gap-2">
-                          <Flame className="w-4 h-4 text-red-500" />
-                          Intensa
-                        </span>
-                      </SelectItem>
+                      <SelectItem value="SUAVE"><span className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-green-600" />Suave</span></SelectItem>
+                      <SelectItem value="MODERADA"><span className="flex items-center gap-2"><Zap className="w-4 h-4 text-[#e8a84c]" />Moderada</span></SelectItem>
+                      <SelectItem value="INTENSA"><span className="flex items-center gap-2"><Flame className="w-4 h-4 text-red-500" />Intensa</span></SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-[#1a1a1a]">Estado *</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: ChallengeStatus) =>
-                      setFormData({ ...formData, status: value })
-                    }
-                    disabled={editingChallenge?.status === "PUBLISHED"}
-                  >
-                    <SelectTrigger className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a]">
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={formData.status} onValueChange={(value: ChallengeStatus) => setFormData({ ...formData, status: value })} disabled={editingChallenge?.status === "PUBLISHED"}>
+                    <SelectTrigger className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a]"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-white border-[#e5e5e5]">
-                      <SelectItem value="DRAFT" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                        Borrador
-                      </SelectItem>
-                      <SelectItem value="PUBLISHED" className="text-[#1a1a1a] hover:bg-[#f8f6f3]">
-                        Publicado
-                      </SelectItem>
+                      <SelectItem value="DRAFT">Borrador</SelectItem>
+                      <SelectItem value="PUBLISHED">Publicado</SelectItem>
                     </SelectContent>
                   </Select>
                   {editingChallenge?.status === "PUBLISHED" && (
-                    <p className="text-xs text-[#a3a3a3]">
-                      No se puede cambiar un reto publicado a borrador.
-                    </p>
+                    <p className="text-xs text-[#a3a3a3]">No se puede cambiar un reto publicado a borrador.</p>
                   )}
                 </div>
               </div>
             </div>
+            
             <DialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowModal(false)}
-                className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={!formData.title || !formData.description || formData.target <= 0}
-                className="bg-[#d4854a] hover:bg-[#c07842] text-white"
-              >
+              <Button variant="outline" onClick={() => setShowModal(false)} disabled={isSaving} className="border-[#e5e5e5] text-[#737373]">Cancelar</Button>
+              <Button onClick={handleSave} disabled={isSaving || !formData.title || !formData.description || formData.target <= 0} className="bg-[#d4854a] hover:bg-[#c07842] text-white">
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {editingChallenge ? "Guardar cambios" : "Crear reto"}
               </Button>
             </DialogFooter>
@@ -658,23 +518,18 @@ export default function RetosPage() {
         </Dialog>
 
         {/* Delete Confirmation */}
-        <AlertDialog open={!!deleteChallenge} onOpenChange={() => setDeleteChallenge(null)}>
+        <AlertDialog open={!!challengeToDelete} onOpenChange={() => setChallengeToDelete(null)}>
           <AlertDialogContent className="bg-white border-[#e5e5e5]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-[#1a1a1a]">¿Eliminar reto?</AlertDialogTitle>
               <AlertDialogDescription className="text-[#737373]">
-                Esta acción no se puede deshacer. El reto &quot;{deleteChallenge?.title}&quot; será
-                eliminado permanentemente.
+                Esta acción no se puede deshacer. El reto &quot;{challengeToDelete?.title}&quot; será eliminado permanentemente.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]">
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
+              <AlertDialogCancel disabled={isDeleting} className="border-[#e5e5e5] text-[#737373]">Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700 text-white">
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Eliminar
               </AlertDialogAction>
             </AlertDialogFooter>
