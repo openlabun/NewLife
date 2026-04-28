@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,17 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,27 +28,17 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Separator } from "@/components/ui/separator"
 import {
-  Pencil,
-  Plus,
-  Trash2,
-  Search,
-  HeartHandshake,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Instagram,
-  Facebook,
-  MessageCircle,
-  X,
-  ExternalLink,
-  Copy,
+  Pencil, Plus, Trash2, Search, HeartHandshake, MapPin, Phone,
+  Mail, Globe, Instagram, Facebook, MessageCircle, X, Copy, Loader2, AlertCircle
 } from "lucide-react"
+
+// Importar servicios
+import { getGrupos, createGrupo, updateGrupo, deleteGrupo } from "@/lib/grupos"
 
 type GroupStatus = "ACTIVE" | "INACTIVE"
 
 interface SupportGroup {
-  id: number
+  id: string
   name: string
   shortDescription: string
   longDescription?: string
@@ -72,58 +55,6 @@ interface SupportGroup {
   status: GroupStatus
   createdAt: string
 }
-
-const initialGroups: SupportGroup[] = [
-  {
-    id: 1,
-    name: "AA Central - Ciudad de México",
-    shortDescription: "Grupo de Alcohólicos Anónimos con más de 30 años de experiencia ayudando a personas en recuperación.",
-    longDescription: "Somos un grupo de Alcohólicos Anónimos fundado en 1994 con el objetivo de ayudar a personas que luchan contra la adicción al alcohol. Ofrecemos reuniones diarias, grupos de apoyo, y un ambiente seguro y confidencial para compartir experiencias y recibir orientación. Nuestro equipo está compuesto por personas en recuperación que entienden el proceso y están comprometidas con ayudar a otros en su camino hacia la sobriedad.",
-    address: "Av. Insurgentes Sur 1234, Col. Del Valle, Ciudad de México, CP 03100",
-    locationName: "Centro Comunitario Del Valle",
-    email: "contacto@aacentral.mx",
-    website: "https://aacentral.mx",
-    instagram: "https://instagram.com/aacentral_mx",
-    facebook: "https://facebook.com/AACentralMX",
-    community: "https://t.me/aacentral",
-    logoUrl: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=100&h=100&fit=crop",
-    phones: ["+52 55 1234 5678", "+52 55 8765 4321"],
-    whatsapps: ["+52 55 1234 5678"],
-    status: "ACTIVE",
-    createdAt: "10/01/2024",
-  },
-  {
-    id: 2,
-    name: "Grupo Nueva Esperanza",
-    shortDescription: "Comunidad de apoyo enfocada en la recuperación integral y el acompañamiento familiar.",
-    longDescription: "Nueva Esperanza es una comunidad dedicada a brindar apoyo integral a personas en proceso de recuperación y a sus familias. Creemos que la recuperación es un proceso que involucra a toda la familia, por lo que ofrecemos programas específicos para familiares y seres queridos.",
-    address: "Calle Reforma 567, Centro Histórico, Guadalajara, Jalisco",
-    locationName: "Casa de la Cultura",
-    email: "info@nuevaesperanza.org",
-    instagram: "https://instagram.com/nuevaesperanza_org",
-    logoUrl: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=100&h=100&fit=crop",
-    phones: ["+52 33 9876 5432"],
-    whatsapps: ["+52 33 9876 5432", "+52 33 1122 3344"],
-    status: "ACTIVE",
-    createdAt: "15/01/2024",
-  },
-  {
-    id: 3,
-    name: "Red de Apoyo Monterrey",
-    shortDescription: "Red de grupos de apoyo en el área metropolitana de Monterrey.",
-    longDescription: "Somos una red que conecta diferentes grupos de apoyo en el área metropolitana de Monterrey. Facilitamos el acceso a recursos, información y comunidades de apoyo para personas en recuperación.",
-    address: "Blvd. Díaz Ordaz 890, Col. San Pedro, Monterrey, Nuevo León",
-    locationName: "Centro de Bienestar San Pedro",
-    email: "red@apoyomty.com",
-    website: "https://apoyomty.com",
-    facebook: "https://facebook.com/RedApoyoMTY",
-    community: "https://discord.gg/apoyomty",
-    phones: ["+52 81 5555 6666"],
-    whatsapps: [],
-    status: "INACTIVE",
-    createdAt: "20/01/2024",
-  },
-]
 
 const emptyFormData = {
   name: "",
@@ -143,16 +74,62 @@ const emptyFormData = {
 }
 
 export default function GruposApoyoPage() {
-  const [groups, setGroups] = useState<SupportGroup[]>(initialGroups)
+  const [groups, setGroups] = useState<SupportGroup[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [formError, setFormError] = useState("")
+
   const [showModal, setShowModal] = useState(false)
   const [showDetailDialog, setShowDetailDialog] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<SupportGroup | null>(null)
   const [editingGroup, setEditingGroup] = useState<SupportGroup | null>(null)
-  const [deleteGroup, setDeleteGroup] = useState<SupportGroup | null>(null)
+  const [deleteGroupState, setDeleteGroupState] = useState<SupportGroup | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [formData, setFormData] = useState(emptyFormData)
   const [phoneInput, setPhoneInput] = useState("")
   const [whatsappInput, setWhatsappInput] = useState("")
+
+  // --- INTEGRACIÓN: Cargar Grupos ---
+  const loadGroups = async () => {
+    try {
+      setIsLoadingData(true)
+      const data = await getGrupos()
+      
+      const mapped: SupportGroup[] = data.map((item: any) => {
+        // Truco para separar la descripción larga de la corta si se guardaron juntas
+        const descParts = item.descripcion ? item.descripcion.split('\n\n---LONG---\n\n') : [""]
+        
+        return {
+          id: item.grupo_id || item.id,
+          name: item.nombre,
+          shortDescription: descParts[0],
+          longDescription: descParts[1] || "",
+          address: item.direccion || "",
+          locationName: item.lugar || "",
+          email: item.email || "",
+          website: item.sitio_web || "",
+          instagram: item.instagram || "",
+          facebook: item.facebook || "",
+          community: item.comunidad_url || "",
+          logoUrl: item.logo_url || "",
+          phones: item.telefonos || [],
+          whatsapps: item.whatsapp || [],
+          status: item.estado,
+          createdAt: item.fecha_creacion || new Date().toISOString()
+        }
+      })
+      setGroups(mapped)
+    } catch (error) {
+      console.error("Error al cargar grupos:", error)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  useEffect(() => {
+    loadGroups()
+  }, [])
 
   const filteredGroups = groups.filter(
     (g) =>
@@ -166,6 +143,7 @@ export default function GruposApoyoPage() {
   }
 
   const openCreateModal = () => {
+    setFormError("")
     setEditingGroup(null)
     setFormData(emptyFormData)
     setPhoneInput("")
@@ -174,6 +152,7 @@ export default function GruposApoyoPage() {
   }
 
   const openEditModal = (group: SupportGroup) => {
+    setFormError("")
     setEditingGroup(group)
     setFormData({
       name: group.name,
@@ -197,43 +176,67 @@ export default function GruposApoyoPage() {
     setShowModal(true)
   }
 
-  const handleSave = () => {
-    const newGroup: SupportGroup = {
-      id: editingGroup?.id || Date.now(),
-      name: formData.name,
-      shortDescription: formData.shortDescription,
-      longDescription: formData.longDescription || undefined,
-      address: formData.address,
-      locationName: formData.locationName,
-      email: formData.email,
-      website: formData.website || undefined,
+  // --- INTEGRACIÓN: Crear / Editar Grupo ---
+  const handleSave = async () => {
+    setFormError("")
+    setIsSaving(true)
+
+    // Unir ambas descripciones para el backend si existe la larga
+    const combinedDescription = formData.longDescription 
+      ? `${formData.shortDescription}\n\n---LONG---\n\n${formData.longDescription}`
+      : formData.shortDescription;
+
+    const payload = {
+      nombre: formData.name,
+      descripcion: combinedDescription,
+      direccion: formData.address || undefined,
+      lugar: formData.locationName || undefined,
+      email: formData.email || undefined,
+      sitio_web: formData.website || undefined,
       instagram: formData.instagram || undefined,
       facebook: formData.facebook || undefined,
-      community: formData.community || undefined,
-      logoUrl: formData.logoUrl || undefined,
-      phones: formData.phones,
-      whatsapps: formData.whatsapps,
-      status: formData.status,
-      createdAt: editingGroup?.createdAt || new Date().toLocaleDateString("es-ES"),
+      telefonos: formData.phones,
+      whatsapp: formData.whatsapps,
+      comunidad_url: formData.community || undefined,
+      logo_url: formData.logoUrl || undefined,
+      estado: formData.status
     }
 
-    if (editingGroup) {
-      setGroups(groups.map((g) => (g.id === editingGroup.id ? newGroup : g)))
-    } else {
-      setGroups([newGroup, ...groups])
+    try {
+      if (editingGroup) {
+        await updateGrupo(editingGroup.id, payload)
+      } else {
+        await createGrupo(payload)
+      }
+      
+      await loadGroups()
+      setShowModal(false)
+      setFormData(emptyFormData)
+      setEditingGroup(null)
+    } catch (error: any) {
+      console.error("Error al guardar grupo:", error)
+      setFormError("Hubo un error de conexión al guardar el grupo. Inténtalo de nuevo.")
+    } finally {
+      setIsSaving(false)
     }
-
-    setShowModal(false)
-    setFormData(emptyFormData)
-    setEditingGroup(null)
   }
 
-  const handleDelete = () => {
-    if (deleteGroup) {
-      setGroups(groups.filter((g) => g.id !== deleteGroup.id))
-      setDeleteGroup(null)
-      setShowDetailDialog(false)
-      setSelectedGroup(null)
+  // --- INTEGRACIÓN: Eliminar Grupo ---
+  const handleDelete = async () => {
+    if (deleteGroupState) {
+      setIsDeleting(true)
+      try {
+        await deleteGrupo(deleteGroupState.id)
+        await loadGroups()
+        setDeleteGroupState(null)
+        setShowDetailDialog(false)
+        setSelectedGroup(null)
+      } catch (error) {
+        console.error("Error al eliminar grupo:", error)
+        alert("Hubo un error al eliminar el grupo.")
+      } finally {
+        setIsDeleting(false)
+      }
     }
   }
 
@@ -261,6 +264,14 @@ export default function GruposApoyoPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+  }
+
+  if (isLoadingData) {
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#d4854a] animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -374,11 +385,13 @@ export default function GruposApoyoPage() {
                       <MapPin className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">{group.locationName}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-[#737373]">
-                      <Mail className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">{group.email}</span>
-                    </div>
-                    {group.phones.length > 0 && (
+                    {group.email && (
+                      <div className="flex items-center gap-2 text-sm text-[#737373]">
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{group.email}</span>
+                      </div>
+                    )}
+                    {group.phones && group.phones.length > 0 && (
                       <div className="flex items-center gap-2 text-sm text-[#737373]">
                         <Phone className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">{group.phones[0]}</span>
@@ -411,7 +424,7 @@ export default function GruposApoyoPage() {
                         <MessageCircle className="w-4 h-4 text-[#737373]" />
                       </div>
                     )}
-                    {group.whatsapps.length > 0 && (
+                    {group.whatsapps && group.whatsapps.length > 0 && (
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                         <Phone className="w-4 h-4 text-green-600" />
                       </div>
@@ -475,7 +488,7 @@ export default function GruposApoyoPage() {
               {selectedGroup.longDescription && (
                 <div>
                   <h3 className="text-sm font-semibold text-[#1a1a1a] mb-2">Acerca del grupo</h3>
-                  <p className="text-sm text-[#737373] leading-relaxed">
+                  <p className="text-sm text-[#737373] leading-relaxed whitespace-pre-line">
                     {selectedGroup.longDescription}
                   </p>
                 </div>
@@ -501,23 +514,25 @@ export default function GruposApoyoPage() {
               <div>
                 <h3 className="text-sm font-semibold text-[#1a1a1a] mb-3">Contacto</h3>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-[#f8f6f3]">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-[#d4854a]" />
-                      <span className="text-sm text-[#1a1a1a]">{selectedGroup.email}</span>
+                  {selectedGroup.email && (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-[#f8f6f3]">
+                      <div className="flex items-center gap-3">
+                        <Mail className="w-5 h-5 text-[#d4854a]" />
+                        <span className="text-sm text-[#1a1a1a]">{selectedGroup.email}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(selectedGroup.email)}
+                        className="h-8 w-8 p-0 text-[#737373] hover:text-[#1a1a1a]"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => copyToClipboard(selectedGroup.email)}
-                      className="h-8 w-8 p-0 text-[#737373] hover:text-[#1a1a1a]"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  )}
 
                   {/* Phones */}
-                  {selectedGroup.phones.length > 0 && (
+                  {selectedGroup.phones && selectedGroup.phones.length > 0 && (
                     <div className="space-y-2">
                       {selectedGroup.phones.map((phone, index) => (
                         <div
@@ -542,7 +557,7 @@ export default function GruposApoyoPage() {
                   )}
 
                   {/* WhatsApps */}
-                  {selectedGroup.whatsapps.length > 0 && (
+                  {selectedGroup.whatsapps && selectedGroup.whatsapps.length > 0 && (
                     <div className="space-y-2">
                       {selectedGroup.whatsapps.map((wa, index) => (
                         <div
@@ -621,9 +636,6 @@ export default function GruposApoyoPage() {
                 </div>
               )}
 
-              {/* Created date */}
-              <p className="text-xs text-[#a3a3a3]">Creado: {selectedGroup.createdAt}</p>
-
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t border-[#e5e5e5]">
                 <Button
@@ -634,7 +646,7 @@ export default function GruposApoyoPage() {
                   Editar
                 </Button>
                 <Button
-                  onClick={() => setDeleteGroup(selectedGroup)}
+                  onClick={() => setDeleteGroupState(selectedGroup)}
                   variant="outline"
                   className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2"
                 >
@@ -661,6 +673,12 @@ export default function GruposApoyoPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
+            {formError && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <p>{formError}</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Basic Info */}
               <div className="space-y-2 md:col-span-2">
@@ -694,7 +712,7 @@ export default function GruposApoyoPage() {
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label className="text-[#1a1a1a]">Dirección física *</Label>
+                <Label className="text-[#1a1a1a]">Dirección física</Label>
                 <Input
                   placeholder="Calle, número, colonia, ciudad, CP..."
                   value={formData.address}
@@ -704,7 +722,7 @@ export default function GruposApoyoPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1a1a1a]">Nombre del lugar *</Label>
+                <Label className="text-[#1a1a1a]">Nombre del lugar</Label>
                 <Input
                   placeholder="Ej: Centro Comunitario..."
                   value={formData.locationName}
@@ -714,7 +732,7 @@ export default function GruposApoyoPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1a1a1a]">Email *</Label>
+                <Label className="text-[#1a1a1a]">Email</Label>
                 <Input
                   type="email"
                   placeholder="contacto@grupo.com"
@@ -893,21 +911,17 @@ export default function GruposApoyoPage() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
+              disabled={isSaving}
               className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
-              disabled={
-                !formData.name.trim() ||
-                !formData.shortDescription.trim() ||
-                !formData.address.trim() ||
-                !formData.locationName.trim() ||
-                !formData.email.trim()
-              }
+              disabled={isSaving || !formData.name.trim() || !formData.shortDescription.trim()}
               className="bg-[#d4854a] hover:bg-[#c07842] text-white"
             >
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {editingGroup ? "Guardar cambios" : "Crear grupo"}
             </Button>
           </DialogFooter>
@@ -915,23 +929,25 @@ export default function GruposApoyoPage() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteGroup} onOpenChange={() => setDeleteGroup(null)}>
+      <AlertDialog open={!!deleteGroupState} onOpenChange={() => setDeleteGroupState(null)}>
         <AlertDialogContent className="bg-white border-[#e5e5e5]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[#1a1a1a]">¿Eliminar grupo?</AlertDialogTitle>
             <AlertDialogDescription className="text-[#737373]">
-              Esta acción no se puede deshacer. El grupo &quot;{deleteGroup?.name}&quot; será
+              Esta acción no se puede deshacer. El grupo &quot;{deleteGroupState?.name}&quot; será
               eliminado permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]">
+            <AlertDialogCancel disabled={isDeleting} className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
