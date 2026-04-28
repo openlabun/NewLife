@@ -4,37 +4,20 @@ import { useState, useMemo, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Pencil, Plus, Search, Quote, CalendarIcon, CalendarDays, List,
-  ChevronLeft, ChevronRight, Upload, Loader2, AlertCircle
-} from "lucide-react"
+import { Pencil, Plus, Search, Quote, CalendarIcon, CalendarDays, List, ChevronLeft, ChevronRight, Upload, Loader2, AlertCircle } from "lucide-react"
 import { format, parse, isValid, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from "date-fns"
 import { es } from "date-fns/locale"
 
-import { getFrases, createFrase, updateFrase, FraseBackend } from "@/lib/frases"
+import { getFrases, createFrase, updateFrase, createFrasesBulk, FraseBackend } from "@/lib/frases"
 
 interface DailyQuote {
   id: string | number
@@ -65,7 +48,6 @@ export default function FrasesPage() {
   const [isBulkSaving, setIsBulkSaving] = useState(false)
   const [bulkError, setBulkError] = useState("")
 
-  // --- Helpers de Fecha (Soluciona el problema de zona horaria) ---
   const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return new Date()
     const [year, month, day] = dateStr.split('-')
@@ -198,6 +180,7 @@ export default function FrasesPage() {
     return bulkText.split("\n").map((line) => line.trim()).filter((line) => line.length > 0)
   }, [bulkText])
 
+  // Lógica de importación usando el nuevo Endpoint Bulk de una sola vez
   const handleBulkImport = async () => {
     if (parsedBulkQuotes.length === 0 || !bulkStartDate) return
     setBulkError("")
@@ -205,24 +188,35 @@ export default function FrasesPage() {
 
     const startDate = parseLocalDate(bulkStartDate)
     let currentDate = startDate
+    
+    // Preparar el array gigante para enviarlo de golpe
+    const payload: { dia: string, frase: string }[] = []
 
-    try {
-      for (const quoteText of parsedBulkQuotes) {
-        while (quotesByDate.has(format(currentDate, "yyyy-MM-dd"))) {
-          currentDate = addDays(currentDate, 1)
-        }
-        await createFrase(format(currentDate, "yyyy-MM-dd"), quoteText)
-        quotesByDate.set(format(currentDate, "yyyy-MM-dd"), { id: 0, date: '', quote: '', createdAt: '' })
+    for (const quoteText of parsedBulkQuotes) {
+      while (quotesByDate.has(format(currentDate, "yyyy-MM-dd"))) {
         currentDate = addDays(currentDate, 1)
       }
+      
+      const dayStr = format(currentDate, "yyyy-MM-dd")
+      payload.push({ dia: dayStr, frase: quoteText })
+      
+      // Anotar localmente para que el loop siga buscando el próximo vacío
+      quotesByDate.set(dayStr, { id: 0, date: '', quote: '', createdAt: '' })
+      currentDate = addDays(currentDate, 1)
+    }
 
+    try {
+      // Una sola petición HTTP
+      await createFrasesBulk(payload)
+      
       await loadFrases()
       setShowBulkModal(false)
       setBulkText("")
       setBulkStartDate("")
     } catch (error: any) {
       console.error("Error en la carga masiva:", error)
-      setBulkError("Se produjo un error al guardar algunas frases. Es posible que el lote se haya guardado parcialmente.")
+      setBulkError("Se produjo un error al guardar las frases en la base de datos.")
+      await loadFrases() // Recargar para limpiar el estado sucio del quotesByDate
     } finally {
       setIsBulkSaving(false)
     }
@@ -408,7 +402,7 @@ export default function FrasesPage() {
         </CardContent>
       </Card>
 
-      {/* Modal Single Create/Edit */}
+      {/* Modal Single Create/Edit (CON CALENDARIO AVANZADO) */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -421,19 +415,44 @@ export default function FrasesPage() {
                 <p>{formError}</p>
               </div>
             )}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col">
               <Label>Fecha</Label>
               {lockedDate ? (
-                <div className="p-3 rounded-lg bg-[#f8f6f3] border"><p className="capitalize">{formatFullDate(format(lockedDate, "yyyy-MM-dd"))}</p></div>
+                <div className="p-3 rounded-lg bg-[#f8f6f3] border"><p className="capitalize text-sm font-medium">{formatFullDate(format(lockedDate, "yyyy-MM-dd"))}</p></div>
               ) : (
-                <Input type="date" value={formData.date ? format(formData.date, "yyyy-MM-dd") : ""} onChange={(e) => {
-                  if (e.target.value) setFormData({ ...formData, date: parseLocalDate(e.target.value) })
-                }} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn("w-full justify-start text-left font-normal border-[#e5e5e5]", !formData.date && "text-[#737373]")}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.date ? formatFullDate(format(formData.date, "yyyy-MM-dd")) : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-white border-[#e5e5e5]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.date}
+                      onSelect={(date) => date && setFormData({ ...formData, date })}
+                      disabled={(date) => {
+                        const dateStr = format(date, "yyyy-MM-dd");
+                        if (editingQuote && dateStr === editingQuote.date) return false;
+                        return quotesByDate.has(dateStr);
+                      }}
+                      locale={es}
+                    />
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
             <div className="space-y-2">
               <Label>Frase *</Label>
-              <Textarea value={formData.quote} onChange={(e) => setFormData({ ...formData, quote: e.target.value })} className="min-h-32 font-serif text-lg" />
+              <Textarea 
+                value={formData.quote} 
+                onChange={(e) => setFormData({ ...formData, quote: e.target.value })} 
+                className="min-h-[120px] resize-none font-serif text-lg focus-visible:ring-1 focus-visible:ring-[#d4854a] focus-visible:ring-offset-0" 
+              />
             </div>
           </div>
           <DialogFooter>
@@ -446,25 +465,26 @@ export default function FrasesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Import Modal */}
+      {/* Bulk Import Modal (TAMAÑO FIJO Y SIN BORDE MOCHO) */}
       <Dialog open={showBulkModal} onOpenChange={setShowBulkModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Carga Masiva de Frases</DialogTitle>
-            <DialogDescription>Pega una lista de frases. El sistema rellenará los próximos días vacíos saltándose los días que ya tengan frase.</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 overflow-hidden bg-white border-[#e5e5e5]">
+          <div className="p-6 border-b border-[#e5e5e5]">
+            <DialogHeader>
+              <DialogTitle>Carga Masiva de Frases</DialogTitle>
+              <DialogDescription>Pega una lista de frases. El sistema rellenará los próximos días vacíos saltándose los días que ya tengan frase.</DialogDescription>
+            </DialogHeader>
+          </div>
           
-          <div className="space-y-4 py-4 flex-1 overflow-hidden flex flex-col">
+          <div className="p-6 flex-1 flex flex-col min-h-0 space-y-4">
             {bulkError && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex-shrink-0">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <p>{bulkError}</p>
               </div>
             )}
             
-            <div className="space-y-2">
+            <div className="space-y-2 flex-shrink-0">
               <Label>Asignar a partir de:</Label>
-              {/* Calendario Avanzado para bloquear fechas ocupadas */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -489,25 +509,27 @@ export default function FrasesPage() {
             
             <div className="space-y-2 flex-1 flex flex-col min-h-0">
               <Label>Frases (una por línea)</Label>
-              <Textarea 
-                value={bulkText} 
-                onChange={(e) => setBulkText(e.target.value)} 
-                className="flex-1 h-[40vh] resize-none overflow-y-auto font-serif" 
-                placeholder="Pega aquí tus frases..."
-              />
-              <p className="text-sm text-[#737373] text-right pt-2 font-medium">
+              <div className="flex-1 min-h-0 relative rounded-md border border-[#e5e5e5] focus-within:ring-1 focus-within:ring-[#d4854a] transition-shadow">
+                <textarea 
+                  value={bulkText} 
+                  onChange={(e) => setBulkText(e.target.value)} 
+                  className="w-full h-full p-3 resize-none outline-none font-serif bg-transparent text-[#1a1a1a]"
+                  placeholder="Pega aquí tus frases..."
+                />
+              </div>
+              <p className="text-sm text-[#737373] text-right pt-1 font-medium flex-shrink-0">
                 {parsedBulkQuotes.length} {parsedBulkQuotes.length === 1 ? 'frase detectada' : 'frases detectadas'}
               </p>
             </div>
           </div>
 
-          <DialogFooter className="mt-4">
+          <div className="p-6 border-t border-[#e5e5e5] flex justify-end gap-2 flex-shrink-0">
             <Button variant="outline" onClick={() => setShowBulkModal(false)} disabled={isBulkSaving}>Cancelar</Button>
             <Button onClick={handleBulkImport} disabled={isBulkSaving || parsedBulkQuotes.length === 0 || !bulkStartDate} className="bg-[#d4854a] hover:bg-[#c07842] text-white">
                {isBulkSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
               {isBulkSaving ? "Procesando..." : `Importar ${parsedBulkQuotes.length} frases`}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

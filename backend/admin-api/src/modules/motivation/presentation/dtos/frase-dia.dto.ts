@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFraseDiaDto {
@@ -27,4 +28,16 @@ export class UpdateFraseDiaDto {
   @IsOptional()
   @IsDateString({}, { message: 'La fecha debe tener formato YYYY-MM-DD' })
   dia?: string;
+}
+
+// DTO para la carga masiva
+export class CreateFraseDiaBulkDto {
+  @ApiProperty({
+    type: [CreateFraseDiaDto],
+    description: 'Lista de frases a crear masivamente',
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateFraseDiaDto) // Esto es vital para que valide cada objeto por dentro
+  frases!: CreateFraseDiaDto[];
 }

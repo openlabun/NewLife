@@ -7,7 +7,7 @@ import { GetAllFrasesUseCase } from '../../application/use-cases/get-all-frases.
 import { GetFraseDiaByDateUseCase } from '../../application/use-cases/get-frase-dia-by-date.use-case';
 import { CreateFraseDiaUseCase } from '../../application/use-cases/create-frase-dia.use-case';
 import { UpdateFraseDiaUseCase } from '../../application/use-cases/update-frase-dia.use-case';
-import { CreateFraseDiaDto, UpdateFraseDiaDto } from '../dtos/frase-dia.dto';
+import { CreateFraseDiaDto, UpdateFraseDiaDto, CreateFraseDiaBulkDto } from '../dtos/frase-dia.dto';
 
 @ApiTags('Admin — Frases del Día')
 @ApiBearerAuth()
@@ -41,6 +41,28 @@ export class FraseDiaController {
       frase: dto.frase,
       dia: dto.dia,
     });
+  }
+
+  // Endpoint para Carga Masiva
+  @Post('bulk')
+  @ApiOperation({ summary: 'Programar múltiples frases de forma masiva' })
+  async createBulk(@Body() dto: CreateFraseDiaBulkDto) {
+    let insertadas = 0;
+    
+    for (const item of dto.frases) {
+      try {
+        await this.createFraseDiaUseCase.execute({
+          frase: item.frase,
+          dia: item.dia,
+        });
+        insertadas++;
+      } catch (error) {
+        // Si una frase falla (ej. día duplicado), la saltamos y seguimos con las demás
+        console.warn(`[Bulk Import] Se omitió la frase del día ${item.dia}`);
+      }
+    }
+    
+    return { insertadas, totalProcesadas: dto.frases.length };
   }
 
   @Patch('fecha/:dia')
