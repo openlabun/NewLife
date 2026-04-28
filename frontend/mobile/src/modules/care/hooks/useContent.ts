@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   contentService,
   ContenidoFrontend,
+  CategoriaBackend,
 } from '../services/contentService';
 
 export const useContent = () => {
   const [contenido, setContenido] = useState<ContenidoFrontend[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaBackend[]>([]);
   const [favoritos, setFavoritos] = useState<ContenidoFrontend[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,17 @@ export const useContent = () => {
     }
   }, []);
 
+  // ✅ CARGAR CATEGORÍAS
+  const fetchCategorias = useCallback(async () => {
+    try {
+      const data = await contentService.getCategorias();
+      setCategorias(data);
+    } catch (err: any) {
+      setError(err.message || 'Error obteniendo categorías');
+      console.error('❌ Error fetchCategorias:', err);
+    }
+  }, []);
+
   // ✅ CARGAR FAVORITOS
   const fetchFavoritos = useCallback(async () => {
     try {
@@ -41,10 +54,10 @@ export const useContent = () => {
     async (contenidoId: string) => {
       try {
         setError(null);
-        
+
         // Verificar si está en favoritos
         const isFavorite = contenido.some((c) => c.id === contenidoId && c.liked);
-        
+
         if (isFavorite) {
           // Eliminar de favoritos
           setContenido((prev) =>
@@ -53,7 +66,7 @@ export const useContent = () => {
             )
           );
           setFavoritos((prev) => prev.filter((f) => f.id !== contenidoId));
-          
+
           await contentService.removeFavorito(contenidoId);
         } else {
           // Agregar a favoritos
@@ -62,12 +75,12 @@ export const useContent = () => {
               c.id === contenidoId ? { ...c, liked: true } : c
             )
           );
-          
+
           const item = contenido.find((c) => c.id === contenidoId);
           if (item) {
             setFavoritos((prev) => [...prev, { ...item, liked: true }]);
           }
-          
+
           await contentService.addFavorito(contenidoId);
         }
       } catch (err: any) {
@@ -84,34 +97,60 @@ export const useContent = () => {
   // ✅ CARGAR AL MONTAR
   useEffect(() => {
     fetchContenido();
+    fetchCategorias();
     fetchFavoritos();
-  }, [fetchContenido, fetchFavoritos]);
+  }, [fetchContenido, fetchCategorias, fetchFavoritos]);
 
-  // ✅ AGRUPAR POR CATEGORÍA
+  // ✅ AGRUPAR POR CATEGORÍA (OPTIMIZADO)
   const groupByCategory = useCallback((): Record<string, ContenidoFrontend[]> => {
-    return contenido.reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = [];
+    const grouped: Record<string, ContenidoFrontend[]> = {};
+
+    // Primero agrupar por categoría real
+    contenido.forEach((item) => {
+      if (!grouped[item.category]) {
+        grouped[item.category] = [];
       }
-      acc[item.category].push(item);
-      return acc;
-    }, {} as Record<string, ContenidoFrontend[]>);
+      grouped[item.category].push(item);
+    });
+
+    // Ordenar cada grupo por fecha (más reciente primero)
+    Object.keys(grouped).forEach((category) => {
+      grouped[category].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    });
+
+    return grouped;
   }, [contenido]);
 
-  // ✅ OBTENER MÁS LEÍDO
+  // ✅ OBTENER MÁS LEÍDO (TOP 3)
   const getMostRead = useCallback((): ContenidoFrontend[] => {
-    return contenido.slice(0, 3);
+    return contenido
+      .sort((a, b) => b.vistas - a.vistas) // Ordenar por vistas descendente
+      .slice(0, 3);
   }, [contenido]);
+
+  // ✅ OBTENER ITEMS LIMITADOS POR CATEGORÍA
+  const getItemsByCategory = useCallback(
+    (categoryName: string, limit: number = 3): ContenidoFrontend[] => {
+      const grouped = groupByCategory();
+      return (grouped[categoryName] || []).slice(0, limit);
+    },
+    [groupByCategory]
+  );
 
   return {
     contenido,
+    categorias,
     favoritos,
     loading,
     error,
     fetchContenido,
+    fetchCategorias,
     fetchFavoritos,
     toggleFavorito,
     groupByCategory,
     getMostRead,
+    getItemsByCategory,
   };
 };

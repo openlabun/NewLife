@@ -33,11 +33,12 @@ export class GetPublishedContenidoUseCase {
         imagen_portada: c.imagen_portada,
         texto_contenido: c.texto_contenido,
         video_url: c.video_url,
-        categoria_id: c.categoria_id, // NOTA: Si es null, el frontend lo pinta en "Otros"
+        categoria_id: c.categoria_id,
         autor_nombre: c.autor_nombre,
         autor_profesion: c.autor_profesion,
         autor_foto: c.autor_foto,
         hashtags: hashtags,
+        cantidad_vistas: c.cantidad_vistas || 0, // ✅ NUEVO
         created_at: c.created_at,
         is_favorite: setFavoritos.has(c.contenido_id)
       };

@@ -18,6 +18,7 @@ export interface ContenidoBackend {
   imagen_portada: string;
   video_url: string | null;
   is_favorite: boolean;
+  cantidad_vistas: number;
 }
 
 export interface ContenidoFrontend {
@@ -35,10 +36,29 @@ export interface ContenidoFrontend {
   videoUrl?: string;
   autorFoto?: string;
   createdAt: string;
+  vistas: number;
+}
+
+export interface CategoriaBackend {
+  _id: string;
+  categoria_id: string | null;
+  nombre: string;
+  descripcion: string;
+  created_at: string;
+  cantidad_contenidos: number;
 }
 
 interface ContenidoResponse {
   data: ContenidoBackend[];
+}
+
+interface CategoriasResponse {
+  data: CategoriaBackend[];
+}
+
+interface ContenidoPorCategoriaResponse {
+  categoria: CategoriaBackend;
+  contenido: ContenidoBackend[];
 }
 
 // Función para convertir tipo backend a frontend
@@ -54,32 +74,21 @@ function formatDuration(tipo: string, duracion: number | null): string {
   return duracion ? `${duracion} min de lectura` : 'Artículo';
 }
 
-// Función para mapear categoría desde ID o valor null
-function mapCategory(categoria_id: string | null): string {
-  if (!categoria_id) return 'Otros';
-  
-  const categoryMap: Record<string, string> = {
-    'relaciones': 'Relaciones',
-    'apoyo': 'Apoyo',
-    'motivacion': 'Motivación',
-    'salud': 'Salud',
-    'familia': 'Familia',
-    'trabajo': 'Trabajo',
-    'tipos-drogas': 'Tipos de drogas',
-  };
-
-  return categoryMap[categoria_id.toLowerCase()] || 'Otros';
+// Función para mapear categoría - ahora solo usa el nombre que viene del backend
+function mapCategory(categoria: CategoriaBackend | null): string {
+  if (!categoria) return 'Otros';
+  return categoria.nombre || 'Otros';
 }
 
 // Convertir de backend a frontend
-function convertToFrontend(item: ContenidoBackend): ContenidoFrontend {
+function convertToFrontend(item: ContenidoBackend, categoria?: CategoriaBackend | null): ContenidoFrontend {
   return {
     id: item.contenido_id,
     title: item.titulo,
     type: convertType(item.tipo),
-    category: mapCategory(item.categoria_id),
+    category: categoria ? mapCategory(categoria) : 'Otros',
     duration: formatDuration(item.tipo, item.duracion_minutos),
-    image: item.imagen_portada,
+    image: item.imagen_portada || '',
     liked: item.is_favorite,
     tags: Array.isArray(item.hashtags) ? item.hashtags : [],
     author: item.autor_nombre,
@@ -88,6 +97,7 @@ function convertToFrontend(item: ContenidoBackend): ContenidoFrontend {
     videoUrl: item.video_url || undefined,
     autorFoto: item.autor_foto,
     createdAt: item.created_at,
+    vistas: item.cantidad_vistas || 0,
   };
 }
 
@@ -95,15 +105,25 @@ export const contentService = {
   async getContenido(): Promise<ContenidoFrontend[]> {
     try {
       const response = await api.get<ContenidoResponse>('/care/contenido');
-      
+
       if (response.data?.data && Array.isArray(response.data.data)) {
-        // Convertir y ordenar por fecha (más reciente primero)
-        const converted = response.data.data.map(convertToFrontend);
+        // Obtener categorías para mapear IDs
+        const categorias = await this.getCategorias();
+        const categoriaMap = new Map(
+          categorias.map(c => [c.categoria_id, c])
+        );
+
+        const converted = response.data.data.map((item) => {
+          // Buscar la categoría por ID
+          const categoria = item.categoria_id ? categoriaMap.get(item.categoria_id) : null;
+          return convertToFrontend(item, categoria);
+        });
+
         return converted.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       }
-      
+
       return [];
     } catch (error: any) {
       console.error('❌ Error obteniendo contenido:', error.message);
@@ -111,17 +131,63 @@ export const contentService = {
     }
   },
 
+  async getCategorias(): Promise<CategoriaBackend[]> {
+    try {
+      const response = await api.get<CategoriasResponse>('/care/categorias');
+
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      return [];
+    } catch (error: any) {
+      console.error('❌ Error obteniendo categorías:', error.message);
+      throw error;
+    }
+  },
+
+  async getContenidoPorCategoria(
+    categoriaId: string | null,
+    limit?: number
+  ): Promise<{ categoria: CategoriaBackend; contenido: ContenidoFrontend[] }> {
+    try {
+      const url = categoriaId
+        ? `/care/categorias/${categoriaId}/contenido${limit ? `?limit=${limit}` : ''}`
+        : `/care/categorias/otros/contenido${limit ? `?limit=${limit}` : ''}`;
+
+      const response = await api.get<ContenidoPorCategoriaResponse>(url);
+
+      if (response.data?.contenido && Array.isArray(response.data.contenido)) {
+        const converted = response.data.contenido.map((item) =>
+          convertToFrontend(item, response.data.categoria)
+        );
+
+        return {
+          categoria: response.data.categoria,
+          contenido: converted.sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          ),
+        };
+      }
+
+      return { categoria: response.data?.categoria, contenido: [] };
+    } catch (error: any) {
+      console.error('❌ Error obteniendo contenido por categoría:', error.message);
+      throw error;
+    }
+  },
+
   async getFavoritos(): Promise<ContenidoFrontend[]> {
     try {
       const response = await api.get<ContenidoResponse>('/care/contenido/favoritos');
-      
+
       if (response.data?.data && Array.isArray(response.data.data)) {
-        const converted = response.data.data.map(convertToFrontend);
+        const converted = response.data.data.map((item) => convertToFrontend(item, null));
         return converted.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       }
-      
+
       return [];
     } catch (error: any) {
       console.error('❌ Error obteniendo favoritos:', error.message);

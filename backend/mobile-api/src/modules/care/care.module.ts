@@ -18,6 +18,7 @@ import { GetPublishedContenidoUseCase } from './application/use-cases/get-publis
 import { ManageFavoritosUseCase } from './application/use-cases/manage-favoritos.use-case';
 import { AgendaUseCase } from './application/use-cases/agenda.use-case';
 import { GetFrasesPorFechaUseCase } from '../motivation/application/use-cases/get-frases-por-fecha.use-case';
+import { GetContenidoPorCategoriaUseCase } from './application/use-cases/get-contenido-por-categoria.use-case';
 
 @Module({
   imports: [DatabaseModule, AuthModule, MotivationModule], // ✅ AGREGAR MotivationModule
@@ -36,6 +37,7 @@ import { GetFrasesPorFechaUseCase } from '../motivation/application/use-cases/ge
     ManageFavoritosUseCase,
     AgendaUseCase,
     GetFrasesPorFechaUseCase,
+    GetContenidoPorCategoriaUseCase,  // ✅ NUEVO
   ],
 })
 export class CareModule {}

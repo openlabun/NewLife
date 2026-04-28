@@ -14,23 +14,35 @@ import { colors, fontSizes, spacing, borderRadius } from '../../../../constants/
 import { useContent } from '../../hooks/useContent';
 import ContentCard from './components/ContentCard';
 
+// ✅ Función para eliminar tildes
+function removeDiacritics(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
 export default function ContentScreen({ navigation }: any) {
-  const { contenido, loading, error, toggleFavorito, groupByCategory, getMostRead } = useContent();
+  const {
+    contenido,
+    categorias,
+    loading,
+    error,
+    toggleFavorito,
+    getItemsByCategory,
+  } = useContent();
+
   const [search, setSearch] = useState('');
 
-  // Filtrar contenido por búsqueda
+  // ✅ Filtro mejorado sin tildes
   const filtered = search.trim()
     ? contenido.filter(
         (c) =>
-          c.title.toLowerCase().includes(search.toLowerCase()) ||
-          c.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+          removeDiacritics(c.title).includes(removeDiacritics(search)) ||
+          c.tags.some((t) => removeDiacritics(t).includes(removeDiacritics(search)))
       )
     : null;
 
-  const groupedByCategory = groupByCategory();
-  const mostRead = getMostRead();
-
-  // Estados de carga y error
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -44,12 +56,6 @@ export default function ContentScreen({ navigation }: any) {
       <View style={[styles.container, styles.centerContent]}>
         <Feather name="alert-circle" size={48} color={colors.textMuted} />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => {}}
-        >
-          <Text style={styles.retryButtonText}>Reintentar</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -83,9 +89,10 @@ export default function ContentScreen({ navigation }: any) {
       </View>
 
       {filtered ? (
-        // Resultados de búsqueda
+        // ✅ RESULTADOS DE BÚSQUEDA
         <ScrollView contentContainerStyle={styles.searchResults} showsVerticalScrollIndicator={false}>
           <Text style={styles.searchResultsTitle}>{filtered.length} resultados</Text>
+
           {filtered.length === 0 ? (
             <View style={styles.emptySearch}>
               <Feather name="inbox" size={48} color={colors.textMuted} />
@@ -107,91 +114,61 @@ export default function ContentScreen({ navigation }: any) {
               />
             ))
           )}
+
           <View style={{ height: spacing.xl }} />
         </ScrollView>
       ) : (
-        // Contenido normal
+        // ✅ CONTENIDO NORMAL (SIN "MÁS LEÍDO")
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Más leído */}
-          {mostRead.length > 0 && (
-            <View>
-              <View style={styles.sectionRow}>
-                <Text style={styles.sectionTitle}>Contenido más leído</Text>
-                <TouchableOpacity
-                  style={styles.seeAllButton}
-                  onPress={() => {
-                    // Mostrar una selección de los primeros 10
-                    navigation.navigate('CategoryScreen', {
-                      category: 'Más leído',
-                      items: contenido.slice(0, 10),
-                    });
-                  }}
-                >
-                  <Text style={styles.seeAllText}>Ver todos</Text>
-                  <Feather name="chevron-right" size={14} color={colors.accent} />
-                </TouchableOpacity>
-              </View>
-              <FlatList
-                data={mostRead}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <ContentCard
-                    id={item.id}
-                    title={item.title}
-                    type={item.type}
-                    duration={item.duration}
-                    image={item.image}
-                    liked={item.liked}
-                    onPress={() => navigation.navigate('ArticleScreen', { item })}
-                    onToggleLike={toggleFavorito}
-                  />
-                )}
-              />
-            </View>
-          )}
+          {/* CATEGORÍAS */}
+          {categorias.map((categoria) => {
+            const categoryName = categoria.nombre;
+            const items = getItemsByCategory(categoryName, 3);
 
-          {/* Categorías */}
-          {Object.entries(groupedByCategory).map(([category, items]) => (
-            <View key={category}>
-              <View style={styles.sectionRow}>
-                <Text style={styles.sectionTitle}>{category}</Text>
-                <TouchableOpacity
-                  style={styles.seeAllButton}
-                  onPress={() =>
-                    navigation.navigate('CategoryScreen', {
-                      category,
-                      items,
-                    })
-                  }
-                >
-                  <Text style={styles.seeAllText}>Ver todos</Text>
-                  <Feather name="chevron-right" size={14} color={colors.accent} />
-                </TouchableOpacity>
+            if (items.length === 0) return null;
+
+            return (
+              <View key={categoria.categoria_id || 'otros'}>
+                <View style={styles.sectionRow}>
+                  <Text style={styles.sectionTitle}>{categoryName}</Text>
+
+                  <TouchableOpacity
+                    style={styles.seeAllButton}
+                    onPress={() => {
+                      const allItems = getItemsByCategory(categoryName, 999);
+                      navigation.navigate('CategoryScreen', {
+                        category: categoryName,
+                        items: allItems,
+                      });
+                    }}
+                  >
+                    <Text style={styles.seeAllText}>Ver todos</Text>
+                    <Feather name="chevron-right" size={14} color={colors.accent} />
+                  </TouchableOpacity>
+                </View>
+
+                <FlatList
+                  data={items}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.horizontalList}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <ContentCard
+                      id={item.id}
+                      title={item.title}
+                      type={item.type}
+                      duration={item.duration}
+                      image={item.image}
+                      liked={item.liked}
+                      onPress={() => navigation.navigate('ArticleScreen', { item })}
+                      onToggleLike={toggleFavorito}
+                    />
+                  )}
+                />
               </View>
-              <FlatList
-                data={items}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <ContentCard
-                    id={item.id}
-                    title={item.title}
-                    type={item.type}
-                    duration={item.duration}
-                    image={item.image}
-                    liked={item.liked}
-                    onPress={() => navigation.navigate('ArticleScreen', { item })}
-                    onToggleLike={toggleFavorito}
-                  />
-                )}
-              />
-            </View>
-          ))}
+            );
+          })}
 
           <View style={{ height: spacing.xl }} />
         </ScrollView>
@@ -203,6 +180,7 @@ export default function ContentScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   centerContent: { justifyContent: 'center', alignItems: 'center' },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,8 +189,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
   },
-  headerTitle: { fontSize: fontSizes.lg, fontWeight: '700', color: colors.text },
-  headerSubtitle: { fontSize: fontSizes.sm, color: colors.textMuted },
+
+  headerTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: '700',
+    color: colors.text,
+  },
+
+  headerSubtitle: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+  },
+
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,22 +217,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 3,
   },
-  searchInput: { flex: 1, fontSize: fontSizes.md, color: colors.text },
-  searchResults: { paddingHorizontal: spacing.xl, gap: spacing.md },
+
+  searchInput: {
+    flex: 1,
+    fontSize: fontSizes.md,
+    color: colors.text,
+  },
+
+  searchResults: {
+    paddingHorizontal: spacing.xl,
+    gap: spacing.md,
+  },
+
   searchResultsTitle: {
     fontSize: fontSizes.sm,
     color: colors.textMuted,
     marginBottom: spacing.xs,
   },
+
   emptySearch: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
+
   emptySearchText: {
     fontSize: fontSizes.md,
     color: colors.textMuted,
     marginTop: spacing.md,
   },
+
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -253,17 +254,34 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     marginTop: spacing.sm,
   },
-  sectionTitle: { fontSize: fontSizes.md, fontWeight: '700', color: colors.text },
-  seeAllButton: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  seeAllText: { fontSize: fontSizes.sm, color: colors.accent, fontWeight: '600' },
-  horizontalList: { paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md },
-  errorText: { fontSize: fontSizes.md, color: colors.textMuted, marginTop: spacing.md },
-  retryButton: {
-    backgroundColor: colors.accent,
-    borderRadius: borderRadius.full,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+
+  sectionTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: '700',
+    color: colors.text,
+  },
+
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+
+  seeAllText: {
+    fontSize: fontSizes.sm,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+
+  horizontalList: {
+    paddingHorizontal: spacing.xl,
+    gap: spacing.md,
+    paddingBottom: spacing.md,
+  },
+
+  errorText: {
+    fontSize: fontSizes.md,
+    color: colors.textMuted,
     marginTop: spacing.md,
   },
-  retryButtonText: { color: colors.white, fontSize: fontSizes.sm, fontWeight: '600' },
 });
