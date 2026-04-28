@@ -3,16 +3,16 @@ import api from './axios';
 export interface CreateGrupoPayload {
   nombre: string;
   descripcion: string;
-  direccion?: string;
-  lugar?: string;
-  email?: string;
-  sitio_web?: string;
-  instagram?: string;
-  facebook?: string;
+  direccion?: string | null;
+  lugar?: string | null;
+  email?: string | null;
+  sitio_web?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
   telefonos?: string[];
   whatsapp?: string[];
-  comunidad_url?: string;
-  logo_url?: string;
+  comunidad_url?: string | null;
+  logo_url?: string | null;
   estado: 'ACTIVE' | 'INACTIVE';
 }
 

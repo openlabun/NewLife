@@ -40,8 +40,7 @@ type GroupStatus = "ACTIVE" | "INACTIVE"
 interface SupportGroup {
   id: string
   name: string
-  shortDescription: string
-  longDescription?: string
+  description: string
   address: string
   locationName: string
   email: string
@@ -58,8 +57,7 @@ interface SupportGroup {
 
 const emptyFormData = {
   name: "",
-  shortDescription: "",
-  longDescription: "",
+  description: "",
   address: "",
   locationName: "",
   email: "",
@@ -90,35 +88,28 @@ export default function GruposApoyoPage() {
   const [phoneInput, setPhoneInput] = useState("")
   const [whatsappInput, setWhatsappInput] = useState("")
 
-  // --- INTEGRACIÓN: Cargar Grupos ---
   const loadGroups = async () => {
     try {
       setIsLoadingData(true)
       const data = await getGrupos()
       
-      const mapped: SupportGroup[] = data.map((item: any) => {
-        // Truco para separar la descripción larga de la corta si se guardaron juntas
-        const descParts = item.descripcion ? item.descripcion.split('\n\n---LONG---\n\n') : [""]
-        
-        return {
-          id: item.grupo_id || item.id,
-          name: item.nombre,
-          shortDescription: descParts[0],
-          longDescription: descParts[1] || "",
-          address: item.direccion || "",
-          locationName: item.lugar || "",
-          email: item.email || "",
-          website: item.sitio_web || "",
-          instagram: item.instagram || "",
-          facebook: item.facebook || "",
-          community: item.comunidad_url || "",
-          logoUrl: item.logo_url || "",
-          phones: item.telefonos || [],
-          whatsapps: item.whatsapp || [],
-          status: item.estado,
-          createdAt: item.fecha_creacion || new Date().toISOString()
-        }
-      })
+      const mapped: SupportGroup[] = data.map((item: any) => ({
+        id: item.grupo_id || item.id,
+        name: item.nombre,
+        description: item.descripcion || "",
+        address: item.direccion || "",
+        locationName: item.lugar || "",
+        email: item.email || "",
+        website: item.sitio_web || "",
+        instagram: item.instagram || "",
+        facebook: item.facebook || "",
+        community: item.comunidad_url || "",
+        logoUrl: item.logo_url || "",
+        phones: item.telefonos || [],
+        whatsapps: item.whatsapp || [],
+        status: item.estado,
+        createdAt: item.fecha_creacion || new Date().toISOString()
+      }))
       setGroups(mapped)
     } catch (error) {
       console.error("Error al cargar grupos:", error)
@@ -156,8 +147,7 @@ export default function GruposApoyoPage() {
     setEditingGroup(group)
     setFormData({
       name: group.name,
-      shortDescription: group.shortDescription,
-      longDescription: group.longDescription || "",
+      description: group.description,
       address: group.address,
       locationName: group.locationName,
       email: group.email,
@@ -176,29 +166,23 @@ export default function GruposApoyoPage() {
     setShowModal(true)
   }
 
-  // --- INTEGRACIÓN: Crear / Editar Grupo ---
   const handleSave = async () => {
     setFormError("")
     setIsSaving(true)
 
-    // Unir ambas descripciones para el backend si existe la larga
-    const combinedDescription = formData.longDescription 
-      ? `${formData.shortDescription}\n\n---LONG---\n\n${formData.longDescription}`
-      : formData.shortDescription;
-
     const payload = {
-      nombre: formData.name,
-      descripcion: combinedDescription,
-      direccion: formData.address || undefined,
-      lugar: formData.locationName || undefined,
-      email: formData.email || undefined,
-      sitio_web: formData.website || undefined,
-      instagram: formData.instagram || undefined,
-      facebook: formData.facebook || undefined,
+      nombre: formData.name.trim(),
+      descripcion: formData.description.trim(),
+      direccion: formData.address.trim() || null,
+      lugar: formData.locationName.trim() || null,
+      email: formData.email.trim() || null,
+      sitio_web: formData.website.trim() || null,
+      instagram: formData.instagram.trim() || null,
+      facebook: formData.facebook.trim() || null,
       telefonos: formData.phones,
       whatsapp: formData.whatsapps,
-      comunidad_url: formData.community || undefined,
-      logo_url: formData.logoUrl || undefined,
+      comunidad_url: formData.community.trim() || null,
+      logo_url: formData.logoUrl.trim() || null,
       estado: formData.status
     }
 
@@ -221,7 +205,6 @@ export default function GruposApoyoPage() {
     }
   }
 
-  // --- INTEGRACIÓN: Eliminar Grupo ---
   const handleDelete = async () => {
     if (deleteGroupState) {
       setIsDeleting(true)
@@ -265,6 +248,9 @@ export default function GruposApoyoPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
   }
+
+  // Validación en tiempo real: Si hay dirección, DEBE haber lugar.
+  const addressNeedsLocation = formData.address.trim() !== "" && formData.locationName.trim() === ""
 
   if (isLoadingData) {
     return (
@@ -375,16 +361,20 @@ export default function GruposApoyoPage() {
                         </Badge>
                       </div>
                       <p className="text-sm text-[#737373] line-clamp-2 mt-1">
-                        {group.shortDescription}
+                        {group.description}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-[#737373]">
-                      <MapPin className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">{group.locationName}</span>
-                    </div>
+                    {/* Solo muestra la zona de mapa si existe lugar o dirección */}
+                    {(group.locationName || group.address) && (
+                      <div className="flex items-center gap-2 text-sm text-[#737373]">
+                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{group.locationName || group.address}</span>
+                      </div>
+                    )}
+                    
                     {group.email && (
                       <div className="flex items-center gap-2 text-sm text-[#737373]">
                         <Mail className="w-4 h-4 flex-shrink-0" />
@@ -480,108 +470,106 @@ export default function GruposApoyoPage() {
                       {selectedGroup.status === "ACTIVE" ? "Activo" : "Inactivo"}
                     </Badge>
                   </div>
-                  <p className="text-sm text-[#737373] mt-1">{selectedGroup.shortDescription}</p>
+                  <p className="text-sm text-[#737373] mt-2 whitespace-pre-line">{selectedGroup.description}</p>
                 </div>
               </div>
-
-              {/* Long Description */}
-              {selectedGroup.longDescription && (
-                <div>
-                  <h3 className="text-sm font-semibold text-[#1a1a1a] mb-2">Acerca del grupo</h3>
-                  <p className="text-sm text-[#737373] leading-relaxed whitespace-pre-line">
-                    {selectedGroup.longDescription}
-                  </p>
-                </div>
-              )}
 
               <Separator className="bg-[#e5e5e5]" />
 
-              {/* Location */}
-              <div>
-                <h3 className="text-sm font-semibold text-[#1a1a1a] mb-3">Ubicación</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-[#f8f6f3]">
-                    <MapPin className="w-5 h-5 text-[#d4854a] flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-[#1a1a1a]">{selectedGroup.locationName}</p>
-                      <p className="text-sm text-[#737373]">{selectedGroup.address}</p>
+              {/* Location (Solo si existe lugar o dirección) */}
+              {(selectedGroup.locationName || selectedGroup.address) && (
+                <div>
+                  <h3 className="text-sm font-semibold text-[#1a1a1a] mb-3">Ubicación</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-[#f8f6f3]">
+                      <MapPin className="w-5 h-5 text-[#d4854a] flex-shrink-0 mt-0.5" />
+                      <div>
+                        {selectedGroup.locationName && (
+                          <p className="font-medium text-[#1a1a1a]">{selectedGroup.locationName}</p>
+                        )}
+                        {selectedGroup.address && (
+                          <p className="text-sm text-[#737373]">{selectedGroup.address}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Contact */}
-              <div>
-                <h3 className="text-sm font-semibold text-[#1a1a1a] mb-3">Contacto</h3>
-                <div className="space-y-2">
-                  {selectedGroup.email && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-[#f8f6f3]">
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-[#d4854a]" />
-                        <span className="text-sm text-[#1a1a1a]">{selectedGroup.email}</span>
+              {/* Contact (Solo se muestra si hay email, telefonos o whatsapps) */}
+              {(selectedGroup.email || (selectedGroup.phones && selectedGroup.phones.length > 0) || (selectedGroup.whatsapps && selectedGroup.whatsapps.length > 0)) && (
+                <div>
+                  <h3 className="text-sm font-semibold text-[#1a1a1a] mb-3">Contacto</h3>
+                  <div className="space-y-2">
+                    {selectedGroup.email && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-[#f8f6f3]">
+                        <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-[#d4854a]" />
+                          <span className="text-sm text-[#1a1a1a]">{selectedGroup.email}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(selectedGroup.email)}
+                          className="h-8 w-8 p-0 text-[#737373] hover:text-[#1a1a1a]"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copyToClipboard(selectedGroup.email)}
-                        className="h-8 w-8 p-0 text-[#737373] hover:text-[#1a1a1a]"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Phones */}
-                  {selectedGroup.phones && selectedGroup.phones.length > 0 && (
-                    <div className="space-y-2">
-                      {selectedGroup.phones.map((phone, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-[#f8f6f3]"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Phone className="w-5 h-5 text-[#d4854a]" />
-                            <span className="text-sm text-[#1a1a1a]">{phone}</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => copyToClipboard(phone)}
-                            className="h-8 w-8 p-0 text-[#737373] hover:text-[#1a1a1a]"
+                    {/* Phones */}
+                    {selectedGroup.phones && selectedGroup.phones.length > 0 && (
+                      <div className="space-y-2">
+                        {selectedGroup.phones.map((phone, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 rounded-lg bg-[#f8f6f3]"
                           >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                            <div className="flex items-center gap-3">
+                              <Phone className="w-5 h-5 text-[#d4854a]" />
+                              <span className="text-sm text-[#1a1a1a]">{phone}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copyToClipboard(phone)}
+                              className="h-8 w-8 p-0 text-[#737373] hover:text-[#1a1a1a]"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                  {/* WhatsApps */}
-                  {selectedGroup.whatsapps && selectedGroup.whatsapps.length > 0 && (
-                    <div className="space-y-2">
-                      {selectedGroup.whatsapps.map((wa, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-green-50"
-                        >
-                          <div className="flex items-center gap-3">
-                            <MessageCircle className="w-5 h-5 text-green-600" />
-                            <span className="text-sm text-[#1a1a1a]">{wa}</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => copyToClipboard(wa)}
-                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-100"
+                    {/* WhatsApps */}
+                    {selectedGroup.whatsapps && selectedGroup.whatsapps.length > 0 && (
+                      <div className="space-y-2">
+                        {selectedGroup.whatsapps.map((wa, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 rounded-lg bg-green-50"
                           >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                            <div className="flex items-center gap-3">
+                              <MessageCircle className="w-5 h-5 text-green-600" />
+                              <span className="text-sm text-[#1a1a1a]">{wa}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copyToClipboard(wa)}
+                              className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-100"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Social Links */}
               {(selectedGroup.website || selectedGroup.instagram || selectedGroup.facebook || selectedGroup.community) && (
@@ -692,21 +680,11 @@ export default function GruposApoyoPage() {
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label className="text-[#1a1a1a]">Descripción corta *</Label>
+                <Label className="text-[#1a1a1a]">Descripción *</Label>
                 <Textarea
-                  placeholder="Breve descripción del grupo..."
-                  value={formData.shortDescription}
-                  onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                  className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3] min-h-20"
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label className="text-[#1a1a1a]">Descripción larga (opcional)</Label>
-                <Textarea
-                  placeholder="Descripción detallada del grupo, historia, misión..."
-                  value={formData.longDescription}
-                  onChange={(e) => setFormData({ ...formData, longDescription: e.target.value })}
+                  placeholder="Descripción detallada del grupo, horarios, misión..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3] min-h-32"
                 />
               </div>
@@ -729,6 +707,9 @@ export default function GruposApoyoPage() {
                   onChange={(e) => setFormData({ ...formData, locationName: e.target.value })}
                   className="bg-[#f8f6f3] border-[#e5e5e5] text-[#1a1a1a] placeholder:text-[#a3a3a3]"
                 />
+                {addressNeedsLocation && (
+                  <p className="text-xs text-red-500 mt-1">El nombre del lugar es obligatorio si indicas una dirección.</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -918,7 +899,7 @@ export default function GruposApoyoPage() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || !formData.name.trim() || !formData.shortDescription.trim()}
+              disabled={isSaving || !formData.name.trim() || !formData.description.trim() || addressNeedsLocation}
               className="bg-[#d4854a] hover:bg-[#c07842] text-white"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
