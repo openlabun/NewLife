@@ -1,163 +1,110 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+﻿import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import SubLevelScreen, {
     MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
 } from '../SubLevelScreen';
-import { colors, fontSizes, spacing, borderRadius } from '../../../../../constants/theme';
+import { useLevelProgress } from '../../../../../hooks/useLevelProgress';
 
-const MASCOT = require('../../../../../assets/images/mascotacorazon.png');
+const MASCOT = require('../../../../../assets/images/mascotalibro.png');
 
-type Step = 'intro' | 'complete' | 'frase1' | 'dificultad' | 'frase2' | 'open' | 'frase3' | 'accion' | 'reflexion';
-const STEPS: Step[] = ['intro', 'complete', 'frase1', 'dificultad', 'frase2', 'open', 'frase3', 'accion', 'reflexion'];
+const CURRENT_LEVEL = 1;
+const CURRENT_SUBLEVEL = 3;
+
+type Step = 'intro' | 'q1' | 'frase1' | 'q2' | 'frase2' | 'reflexion';
+const STEPS: Step[] = ['intro', 'q1', 'frase1', 'q2', 'frase2', 'reflexion'];
 
 export default function Nivel1Modulo3({ navigation }: any) {
     const [stepIndex, setStepIndex] = useState(0);
-    const [completion, setCompletion] = useState('');
-    const [dificultad, setDificultad] = useState<string | null>(null);
-    const [openAnswer, setOpenAnswer] = useState('');
-    const [reflexion, setReflexion] = useState('');
+    const [q1, setQ1] = useState<string | null>(null);
+    const [q2, setQ2] = useState('');
+    const [advancing, setAdvancing] = useState(false);
+
+    const { progress, advance } = useLevelProgress();
+
     const step = STEPS[stepIndex];
     const isLast = stepIndex === STEPS.length - 1;
 
-    const handleContinue = () => {
-        if (isLast) navigation.navigate('LevelComplete', {
-            levelNumber: 1,
-            message: 'El cambio empieza al admitir que ya no tenía control.',
-        });
-        else setStepIndex(stepIndex + 1);
+    const handleContinue = async () => {
+        if (isLast) {
+            setAdvancing(true);
+            try {
+                const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
+                console.log('âœ… MÃ³dulo completado. Nuevo progreso:', newProgress);
+
+                Alert.alert(
+                    'Â¡Felicidades!',
+                    `Has completado el MÃ³dulo ${CURRENT_SUBLEVEL}. ${
+                        newProgress.subnivel > CURRENT_SUBLEVEL
+                            ? 'Siguiente mÃ³dulo desbloqueado.'
+                            : 'Completa los anteriores para continuar.'
+                    }`,
+                    [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
+                );
+            } catch (error) {
+                console.error('âŒ Error guardando progreso:', error);
+                Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
+            } finally {
+                setAdvancing(false);
+            }
+        } else {
+            setStepIndex(stepIndex + 1);
+        }
     };
 
     const handleBack = () => {
-        if (stepIndex === 0) navigation.goBack();
-        else setStepIndex(stepIndex - 1);
+        if (stepIndex === 0) {
+            navigation.navigate('Path');
+        } else {
+            setStepIndex(stepIndex - 1);
+        }
     };
-
-    const { TextInput } = require('react-native');
 
     return (
         <SubLevelScreen
             currentStep={stepIndex}
             totalSteps={STEPS.length - 1}
-            moduleNumber={3}
+            moduleNumber={CURRENT_SUBLEVEL}
             mascot={MASCOT}
             onBack={handleBack}
             onContinue={handleContinue}
-            continueLabel={isLast ? 'Finalizar nivel' : 'Continuar'}
+            continueLabel={isLast ? 'Completar mÃ³dulo' : 'Continuar'}
             showIntro={step === 'intro'}
-            introTitle="Rendirme a la verdad"
-            introDescription="Hay un punto en el que dejar de resistirte se vuelve necesario. Rendirte no es perder, es aceptar que esto te supera tal como lo has estado manejando."
+            introTitle="Paso 1, MÃ³dulo 3"
+            introDescription="ContinÃºa tu camino en los 12 pasos de recuperaciÃ³n."
         >
-            {step === 'complete' && (
+            {step === 'q1' && (
                 <>
-                    <MascotBubble text="Completa esta frase:" />
-                    <View style={styles.completionWrapper}>
-                        <Text style={styles.completionPrefix}>"Hoy reconozco que..."</Text>
-                        <TextInput
-                            style={styles.completionInput}
-                            placeholder="Escribe aquí..."
-                            placeholderTextColor={colors.border}
-                            value={completion}
-                            onChangeText={setCompletion}
-                            multiline
-                            textAlignVertical="top"
-                        />
-                    </View>
+                    <MascotBubble text="Â¿CÃ³mo te sientes en este momento?" />
+                    <MultipleChoice
+                        options={['Bien', 'Neutral', 'DifÃ­cil', 'Reflexivo']}
+                        selected={q1}
+                        onSelect={setQ1}
+                    />
                 </>
             )}
 
             {step === 'frase1' && (
-                <ReflectivePhrase text="El primer paso no es vencer, es rendirse a la verdad." />
+                <ReflectivePhrase text="Cada paso te acerca mÃ¡s a tu recuperaciÃ³n." />
             )}
 
-            {step === 'dificultad' && (
+            {step === 'q2' && (
                 <>
-                    <MascotBubble text="¿Qué tan difícil es aceptar esto?" />
-                    <MultipleChoice
-                        options={['Muy difícil', 'Difícil', 'Neutral', 'Aliviador']}
-                        selected={dificultad}
-                        onSelect={setDificultad}
+                    <MascotBubble text="Â¿QuÃ© aprendiste en este mÃ³dulo?" />
+                    <OpenQuestion
+                        placeholder="Escribe aquÃ­..."
+                        value={q2}
+                        onChange={setQ2}
                     />
                 </>
             )}
 
             {step === 'frase2' && (
-                <ReflectivePhrase text="Aceptar lo que pasa no te debilita, te posiciona para cambiar." />
-            )}
-
-            {step === 'open' && (
-                <>
-                    <MascotBubble text="¿Qué cambia en ti al admitirlo?" />
-                    <OpenQuestion
-                        placeholder="Escribe aquí..."
-                        value={openAnswer}
-                        onChange={setOpenAnswer}
-                    />
-                </>
-            )}
-
-            {step === 'frase3' && (
-                <ReflectivePhrase text="Dejar de negarlo es empezar a avanzar." />
-            )}
-
-            {step === 'accion' && (
-                <>
-                    <MascotBubble text="¿Estás listo para dar este paso?" />
-                    <TouchableOpacity style={styles.acceptButton} onPress={handleContinue}>
-                        <Text style={styles.acceptButtonText}>Acepto la realidad</Text>
-                    </TouchableOpacity>
-                </>
+                <ReflectivePhrase text="Tu compromiso con ti mismo es el mÃ¡s importante." />
             )}
 
             {step === 'reflexion' && (
-                <>
-                    <MascotBubble text="¿Qué significa para ti dar este primer paso?" />
-                    <OpenQuestion
-                        placeholder="Escribe aquí..."
-                        value={reflexion}
-                        onChange={setReflexion}
-                    />
-                </>
+                <ReflectivePhrase text="Sigue adelante, cada paso cuenta." />
             )}
         </SubLevelScreen>
     );
 }
-
-const styles = StyleSheet.create({
-    completionWrapper: {
-        marginVertical: spacing.sm,
-    },
-    completionPrefix: {
-        fontSize: fontSizes.md,
-        fontWeight: '600',
-        color: colors.text,
-        marginBottom: spacing.sm,
-    },
-    completionInput: {
-        backgroundColor: colors.white,
-        borderRadius: borderRadius.md,
-        padding: spacing.md,
-        fontSize: fontSizes.md,
-        color: colors.text,
-        height: 100,
-        borderWidth: 1,
-        borderColor: colors.border,
-        textAlignVertical: 'top',
-    },
-    acceptButton: {
-        backgroundColor: colors.accent,
-        borderRadius: borderRadius.full,
-        paddingVertical: spacing.md,
-        alignItems: 'center',
-        marginTop: spacing.lg,
-        elevation: 3,
-        shadowColor: colors.accent,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-    },
-    acceptButtonText: {
-        color: colors.white,
-        fontSize: fontSizes.lg,
-        fontWeight: '700',
-    },
-});

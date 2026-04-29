@@ -7,9 +7,9 @@ import Svg, { Path } from 'react-native-svg';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  Suave: '#4CAF50',
-  Moderada: '#FFC107',
-  Intensa: '#FF6B6B',
+  SUAVE: '#4CAF50',
+  MODERADA: '#FFC107',
+  INTENSA: '#FF6B6B',
 };
 
 // ── CheckIcon ────
@@ -78,8 +78,14 @@ const ProgressDot = ({
 // ── ChallengeDetailScreen ───
 export default function ChallengeDetailScreen({ navigation, route }: any) {
   const { challenge } = route.params;
-  const isCompleted = challenge.status === 'completed';
-  const percent = Math.round((challenge.progress / challenge.total) * 100);
+
+  const isCompleted = challenge.estado === 'COMPLETED';
+  const percent = challenge.target > 0
+    ? Math.round(((challenge.progreso_actual || 0) / challenge.target) * 100)
+    : 0;
+
+  const displayDifficulty = challenge.dificultad.charAt(0).toUpperCase()
+    + challenge.dificultad.slice(1).toLowerCase();
 
   return (
     <View style={styles.container}>
@@ -88,7 +94,7 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
           <Feather name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>{challenge.title}</Text>
+          <Text style={styles.headerTitle}>{challenge.titulo}</Text>
           <Text style={styles.headerSubtitle}>
             {isCompleted ? 'Reto completado' : 'Reto activo'}
           </Text>
@@ -96,15 +102,15 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.description}>{challenge.description}</Text>
+        <Text style={styles.description}>{challenge.descripcion}</Text>
 
         {/* ── Progreso ── */}
         <View style={styles.progressContainer}>
           {/* Texto */}
           <View style={styles.progressHeader}>
-            <Text style={styles.progressNumber}>{challenge.progress}</Text>
+            <Text style={styles.progressNumber}>{challenge.progreso_actual || 0}</Text>
             <Text style={styles.progressText}> de </Text>
-            <Text style={styles.progressNumber}>{challenge.total}</Text>
+            <Text style={styles.progressNumber}>{challenge.target}</Text>
             <Text style={styles.progressText}> cumplidos</Text>
           </View>
 
@@ -113,22 +119,24 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
             <View
               style={[
                 styles.progressBarFill,
-                { width: `${(challenge.progress / challenge.total) * 100}%` },
+                { width: `${percent}%` },
               ]}
             />
           </View>
 
           {/* Dots animados */}
-          <View style={styles.dotsRow}>
-            {Array.from({ length: challenge.total }).map((_, i) => (
-              <ProgressDot
-                key={i}
-                index={i}
-                isActive={i < challenge.progress}
-                isCompleted={isCompleted && i < challenge.progress}
-              />
-            ))}
-          </View>
+          {challenge.target <= 30 && (
+            <View style={styles.dotsRow}>
+              {Array.from({ length: challenge.target }).map((_, i) => (
+                <ProgressDot
+                  key={i}
+                  index={i}
+                  isActive={i < (challenge.progreso_actual || 0)}
+                  isCompleted={isCompleted && i < (challenge.progreso_actual || 0)}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
         {/* ── Medalla ── */}
@@ -137,7 +145,7 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
             🏅
           </Text>
           <Text style={[styles.medalTitle, !isCompleted && styles.medalTitleGray]}>
-            {challenge.title}
+            {challenge.titulo}
           </Text>
         </View>
 
@@ -146,10 +154,10 @@ export default function ChallengeDetailScreen({ navigation, route }: any) {
           <View
             style={[
               styles.difficultyDot,
-              { backgroundColor: DIFFICULTY_COLORS[challenge.difficulty] },
+              { backgroundColor: DIFFICULTY_COLORS[challenge.dificultad] || '#999' },
             ]}
           />
-          <Text style={styles.difficultyText}>Dificultad: {challenge.difficulty}</Text>
+          <Text style={styles.difficultyText}>Dificultad: {displayDifficulty}</Text>
         </View>
 
         <View style={{ height: spacing.xl }} />
@@ -187,7 +195,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: fontSizes.md,
-    color: colors.textLight,
+    color: colors.textLight || colors.text,
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 15,
     fontWeight: '500',
-    color:     colors.text,
+    color: colors.text,
   },
   progressBarBg: {
     width: '100%',
@@ -307,6 +315,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    marginBottom: spacing.lg,
   },
   difficultyDot: {
     width: 10,

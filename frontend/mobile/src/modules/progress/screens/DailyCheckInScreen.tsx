@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions,
+    View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, TextInput, Dimensions, Alert,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
+import { saveDailyCheckin, DailyCheckinData } from '../../../services/progressService';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - spacing.xl * 2;
@@ -70,9 +71,27 @@ function BlobCard({ children, badge }: { children: React.ReactNode; badge: strin
     );
 }
 
-function Step1({ onNo, onYes }: { onNo: () => void; onYes: () => void }) {
-    const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
-    const [consumed, setConsumed] = useState<boolean | null>(null);
+interface FormData {
+    emocion: string;
+    consumo: boolean | null;
+    ubicacion: string;
+    social: string;
+    reflexion: string;
+    gratitud: string;
+}
+
+function Step1({
+    onNo,
+    onYes,
+    formData,
+    setFormData,
+}: {
+    onNo: () => void;
+    onYes: () => void;
+    formData: FormData;
+    setFormData: (data: FormData) => void;
+}) {
+    const [selectedEmotion, setSelectedEmotion] = useState<string>(formData.emocion);
 
     return (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -82,7 +101,10 @@ function Step1({ onNo, onYes }: { onNo: () => void; onYes: () => void }) {
                     <TouchableOpacity
                         key={e.id}
                         style={[styles.optionRow, selectedEmotion === e.id && styles.optionRowSelected]}
-                        onPress={() => setSelectedEmotion(e.id)}
+                        onPress={() => {
+                            setSelectedEmotion(e.id);
+                            setFormData({ ...formData, emocion: e.label });
+                        }}
                     >
                         <Text style={styles.optionEmoji}>{e.emoji}</Text>
                         <Text style={[styles.optionLabel, selectedEmotion === e.id && styles.optionLabelSelected]}>
@@ -96,24 +118,24 @@ function Step1({ onNo, onYes }: { onNo: () => void; onYes: () => void }) {
                 <Text style={styles.cardQuestion}>¿Consumiste alcohol hoy?</Text>
                 <View style={styles.yesNoRow}>
                     <TouchableOpacity
-                        style={[styles.yesNoButton, consumed === true && styles.yesNoSelected]}
-                        onPress={() => setConsumed(true)}
+                        style={[styles.yesNoButton, formData.consumo === true && styles.yesNoSelected]}
+                        onPress={() => setFormData({ ...formData, consumo: true })}
                     >
-                        <Text style={[styles.yesNoText, consumed === true && styles.yesNoTextSelected]}>Sí</Text>
+                        <Text style={[styles.yesNoText, formData.consumo === true && styles.yesNoTextSelected]}>Sí</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.yesNoButton, consumed === false && styles.yesNoSelected]}
-                        onPress={() => setConsumed(false)}
+                        style={[styles.yesNoButton, formData.consumo === false && styles.yesNoSelected]}
+                        onPress={() => setFormData({ ...formData, consumo: false })}
                     >
-                        <Text style={[styles.yesNoText, consumed === false && styles.yesNoTextSelected]}>No</Text>
+                        <Text style={[styles.yesNoText, formData.consumo === false && styles.yesNoTextSelected]}>No</Text>
                     </TouchableOpacity>
                 </View>
             </BlobCard>
 
             <TouchableOpacity
-                style={[styles.mainButton, consumed === null && styles.mainButtonDisabled]}
-                disabled={consumed === null}
-                onPress={() => consumed ? onYes() : onNo()}
+                style={[styles.mainButton, formData.consumo === null && styles.mainButtonDisabled]}
+                disabled={formData.consumo === null}
+                onPress={() => (formData.consumo ? onYes() : onNo())}
             >
                 <Text style={styles.mainButtonText}>Continuar</Text>
             </TouchableOpacity>
@@ -121,10 +143,17 @@ function Step1({ onNo, onYes }: { onNo: () => void; onYes: () => void }) {
     );
 }
 
-function Step2({ onContinue }: { onContinue: () => void }) {
-    const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-    const [selectedSocial, setSelectedSocial] = useState<string | null>(null);
-    const [reflection, setReflection] = useState('');
+function Step2({
+    onContinue,
+    formData,
+    setFormData,
+}: {
+    onContinue: () => void;
+    formData: FormData;
+    setFormData: (data: FormData) => void;
+}) {
+    const [selectedLocation, setSelectedLocation] = useState<string>(formData.ubicacion);
+    const [selectedSocial, setSelectedSocial] = useState<string>(formData.social);
 
     return (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -134,7 +163,10 @@ function Step2({ onContinue }: { onContinue: () => void }) {
                     <TouchableOpacity
                         key={l.id}
                         style={[styles.optionRow, selectedLocation === l.id && styles.optionRowSelected]}
-                        onPress={() => setSelectedLocation(l.id)}
+                        onPress={() => {
+                            setSelectedLocation(l.id);
+                            setFormData({ ...formData, ubicacion: l.label });
+                        }}
                     >
                         <Text style={styles.optionEmoji}>{l.emoji}</Text>
                         <Text style={[styles.optionLabel, selectedLocation === l.id && styles.optionLabelSelected]}>
@@ -150,7 +182,10 @@ function Step2({ onContinue }: { onContinue: () => void }) {
                     <TouchableOpacity
                         key={s.id}
                         style={[styles.optionRow, selectedSocial === s.id && styles.optionRowSelected]}
-                        onPress={() => setSelectedSocial(s.id)}
+                        onPress={() => {
+                            setSelectedSocial(s.id);
+                            setFormData({ ...formData, social: s.label });
+                        }}
                     >
                         <Text style={styles.optionEmoji}>{s.emoji}</Text>
                         <Text style={[styles.optionLabel, selectedSocial === s.id && styles.optionLabelSelected]}>
@@ -166,8 +201,8 @@ function Step2({ onContinue }: { onContinue: () => void }) {
                     style={styles.textArea}
                     placeholder="Escribir aquí..."
                     placeholderTextColor={colors.border}
-                    value={reflection}
-                    onChangeText={setReflection}
+                    value={formData.reflexion}
+                    onChangeText={(text) => setFormData({ ...formData, reflexion: text })}
                     multiline
                     textAlignVertical="top"
                 />
@@ -180,8 +215,55 @@ function Step2({ onContinue }: { onContinue: () => void }) {
     );
 }
 
-function Step3({ onFinish }: { onFinish: () => void }) {
-    const [gratitude, setGratitude] = useState('');
+function Step3({
+    onFinish,
+    formData,
+}: {
+    onFinish: () => void;
+    formData: FormData;
+}) {
+    const [gratitude, setGratitude] = useState(formData.gratitud);
+    const [loading, setLoading] = useState(false);
+
+    const handleFinish = async () => {
+        if (!gratitude.trim()) {
+            Alert.alert('Validación', 'Por favor escribe algo de gratitud');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const checkinPayload = {
+            emocion: formData.emocion,
+            consumo: formData.consumo || false,
+            gratitud: gratitude,
+            // Solo agregar estos si consumo = true
+            ...(formData.consumo && {
+                ubicacion: formData.ubicacion,
+                social: formData.social,
+                reflexion: formData.reflexion,
+            }),
+            };
+
+            console.log('📤 Preparando envío de daily-checkin:', JSON.stringify(checkinPayload, null, 2));
+
+            await saveDailyCheckin(checkinPayload);
+
+            console.log('✅ Registro diario guardado exitosamente');
+            Alert.alert('Éxito', 'Tu registro diario ha sido guardado', [
+            {
+                text: 'OK',
+                onPress: onFinish,
+            },
+            ]);
+        } catch (error: any) {
+            console.error('❌ Error al guardar:', error);
+            Alert.alert('Error', 'No se pudo guardar el registro. Intenta de nuevo.');
+        } finally {
+            setLoading(false);
+        }
+    };
+    
 
     return (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -195,11 +277,18 @@ function Step3({ onFinish }: { onFinish: () => void }) {
                     onChangeText={setGratitude}
                     multiline
                     textAlignVertical="top"
+                    editable={!loading}
                 />
             </BlobCard>
 
-            <TouchableOpacity style={styles.mainButton} onPress={onFinish}>
-                <Text style={styles.mainButtonText}>Finalizar</Text>
+            <TouchableOpacity
+                style={[styles.mainButton, loading && styles.mainButtonDisabled]}
+                onPress={handleFinish}
+                disabled={loading}
+            >
+                <Text style={styles.mainButtonText}>
+                    {loading ? 'Guardando...' : 'Finalizar'}
+                </Text>
             </TouchableOpacity>
         </ScrollView>
     );
@@ -207,12 +296,19 @@ function Step3({ onFinish }: { onFinish: () => void }) {
 
 export default function DailyCheckInScreen({ navigation }: any) {
     const [step, setStep] = useState(1);
-    const [consumedAlcohol, setConsumedAlcohol] = useState<boolean | null>(null);
+    const [formData, setFormData] = useState<FormData>({
+        emocion: '',
+        consumo: null,
+        ubicacion: '',
+        social: '',
+        reflexion: '',
+        gratitud: '',
+    });
 
     const handleBack = () => {
         if (step === 1) {
             navigation.goBack();
-        } else if (step === 3 && consumedAlcohol === false) {
+        } else if (step === 3 && formData.consumo === false) {
             setStep(1);
         } else {
             setStep(step - 1);
@@ -232,16 +328,34 @@ export default function DailyCheckInScreen({ navigation }: any) {
 
             {step === 1 && (
                 <Step1
-                    onNo={() => { setConsumedAlcohol(false); setStep(3); }}
-                    onYes={() => { setConsumedAlcohol(true); setStep(2); }}
+                    onNo={() => {
+                        setFormData({ ...formData, consumo: false });
+                        setStep(3);
+                    }}
+                    onYes={() => {
+                        setFormData({ ...formData, consumo: true });
+                        setStep(2);
+                    }}
+                    formData={formData}
+                    setFormData={setFormData}
                 />
             )}
-            {step === 2 && <Step2 onContinue={() => setStep(3)} />}
-            {step === 3 && <Step3 onFinish={() => navigation.replace('CheckInSuccess')} />}
+            {step === 2 && (
+                <Step2
+                    onContinue={() => setStep(3)}
+                    formData={formData}
+                    setFormData={setFormData}
+                />
+            )}
+            {step === 3 && (
+                <Step3
+                    onFinish={() => navigation.navigate('Home', { initialTab: 'Progress' })}
+                    formData={formData}
+                />
+            )}
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,

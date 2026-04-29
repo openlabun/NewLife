@@ -6,9 +6,9 @@ import {
 import Icon from 'react-native-vector-icons/Feather';
 import { colors, fontSizes, spacing, borderRadius } from '../../../constants/theme';
 import { registerUser } from '../../../services/authService';
-import { isGuestMode, clearGuestData } from '../../../services/guestService';
+import { isGuestMode, clearGuestData, hasGuestCompletedProfile } from '../../../services/guestService';
 import { migrateGuestToUser } from '../../../services/authService';
-
+import { hasCompletedOnboardingProfile } from '../../../services/onboarding-storage';
 const INPUT_HEIGHT = 52;
 
 export default function RegisterScreen({ navigation }: any) {
@@ -36,8 +36,9 @@ export default function RegisterScreen({ navigation }: any) {
     try {
       setLoading(true);
 
-      // Verificar si viene de modo invitado antes de registrar
+      // ✅ Verificar si viene de modo invitado y ya completó Story
       const wasGuest = await isGuestMode();
+      const guestCompletedProfile = wasGuest ? await hasGuestCompletedProfile() : false;
 
       // Registrar usuario
       await registerUser(nombre, email, password);
@@ -46,15 +47,22 @@ export default function RegisterScreen({ navigation }: any) {
       if (wasGuest) {
         try {
           await migrateGuestToUser();
+          await clearGuestData();
           console.log('✅ Datos de invitado migrados correctamente');
-        } catch {
-          // Si falla la migración, los datos locales siguen en AsyncStorage
-          // El usuario puede intentar migrar después
+        } catch (err) {
           console.log('⚠️ Migración pendiente, datos locales preservados');
         }
       }
 
-      navigation.navigate('Story');
+      // ✅ Decidir a dónde ir
+      if (guestCompletedProfile) {
+        // Guest ya hizo Story → ir directo a Home
+        navigation.replace('Home');
+      } else {
+        // Usuario nuevo → hacer Story
+        navigation.navigate('Story');
+      }
+
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al registrarse. Intenta de nuevo.');
     } finally {
@@ -69,7 +77,7 @@ export default function RegisterScreen({ navigation }: any) {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.replace('Welcome')}>
           <Icon name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
 

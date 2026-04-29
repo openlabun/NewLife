@@ -1,0 +1,241 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useAgenda } from '../../hooks/useAgenda';
+import { AgendaEventFrontend } from '../../services/agendaService';
+import EventForm from './components/EventForm';
+
+const COLORS = {
+  primary: '#D38A58',
+  white: '#FFFFFF',
+  darkGray: '#404040',
+  background: '#FAFAFA',
+  red: '#FF6B6B',
+};
+
+type AgendaEvent = {
+  id: string;
+  title: string;
+  date: Date | string;
+  timeFrom: string;
+  timeTo: string;
+  category: string;
+  reminder: boolean;
+  reminderMinutes: number;
+  repeat: string;
+};
+
+// Función para convertir tiempo a minutos
+function timeToMinutes(timeStr: string): number {
+  const [timePart, period] = timeStr.split(' ');
+  let [hours, minutes] = timePart.split(':').map(Number);
+
+  if (period === 'pm' && hours !== 12) hours += 12;
+  if (period === 'am' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
+export default function AddEventScreen({ navigation, route }: any) {
+  const { createAgenda, updateAgenda } = useAgenda();
+  const refetch = route.params?.refetch;
+  const [isSaving, setIsSaving] = useState(false);
+
+  const existing = route.params?.event as AgendaEvent | undefined;
+  const defaultDateStr = route.params?.defaultDate as string | undefined;
+  const defaultDate: Date = defaultDateStr ? new Date(defaultDateStr) : new Date();
+
+  const existingDate = existing?.date ? new Date(existing.date as string) : defaultDate;
+
+  const [title, setTitle] = useState(existing?.title || '');
+  const [selectedDate, setSelectedDate] = useState<Date>(existingDate);
+  const [currentMonth, setCurrentMonth] = useState(selectedDate.getMonth());
+  const [currentYear, setCurrentYear] = useState(selectedDate.getFullYear());
+  const [timeFrom, setTimeFrom] = useState(existing?.timeFrom || '8:00 am');
+  const [timeTo, setTimeTo] = useState(existing?.timeTo || '9:00 am');
+  const [category, setCategory] = useState(existing?.category || 'Reunion');
+  const [reminder, setReminder] = useState(existing?.reminder || false);
+  const [reminderMinutes, setReminderMinutes] = useState(existing?.reminderMinutes || 30);
+  const [repeat, setRepeat] = useState(existing?.repeat || 'none');
+
+  const validateTimes = (): boolean => {
+    const fromMinutes = timeToMinutes(timeFrom);
+    const toMinutes = timeToMinutes(timeTo);
+
+    if (fromMinutes >= toMinutes) {
+      Alert.alert('Error de validación', 'La hora de inicio debe ser menor que la hora de fin');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'El título del evento es obligatorio');
+      return;
+    }
+
+    if (!validateTimes()) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const eventData: AgendaEventFrontend = {
+        id: existing?.id || '',
+        title,
+        date: selectedDate,
+        timeFrom,
+        timeTo,
+        category,
+        reminder,
+        reminderMinutes,
+        repeat,
+      };
+
+      if (existing) {
+        await updateAgenda(existing.id, eventData);
+        Alert.alert('Éxito', 'Evento actualizado correctamente');
+      } else {
+        await createAgenda(eventData);
+        Alert.alert('Éxito', 'Evento creado correctamente');
+      }
+
+      if (refetch) {
+        await refetch();
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo guardar el evento. Intenta nuevamente.');
+      console.error('Error al guardar evento:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const prevMonth = () => {
+    if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
+    else setCurrentMonth(currentMonth - 1);
+  };
+
+  const nextMonth = () => {
+    if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
+    else setCurrentMonth(currentMonth + 1);
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.headerBtn}
+          disabled={isSaving}
+        >
+          <Feather name="x" size={20} color={COLORS.darkGray} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{existing ? 'Editar evento' : 'Nuevo evento'}</Text>
+        <TouchableOpacity
+          style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
+          onPress={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Feather name="check" size={20} color={COLORS.primary} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Form */}
+      <EventForm
+        title={title}
+        onTitleChange={setTitle}
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+        currentMonth={currentMonth}
+        currentYear={currentYear}
+        onPrevMonth={prevMonth}
+        onNextMonth={nextMonth}
+        timeFrom={timeFrom}
+        onTimeFromChange={setTimeFrom}
+        timeTo={timeTo}
+        onTimeToChange={setTimeTo}
+        category={category}
+        onCategorySelect={setCategory}
+        repeat={repeat}
+        onRepeatSelect={setRepeat}
+        reminder={reminder}
+        onReminderToggle={setReminder}
+        reminderMinutes={reminderMinutes}
+        onReminderMinutesSelect={setReminderMinutes}
+      />
+
+      {/* Boton guardar */}
+      <TouchableOpacity
+        style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+        onPress={handleSave}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <ActivityIndicator size="small" color={COLORS.white} />
+        ) : (
+          <Text style={styles.saveButtonText}>Guardar evento</Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: COLORS.white,
+  },
+  headerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkGray },
+  saveBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: `${COLORS.primary}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnDisabled: { opacity: 0.5 },
+  saveButton: {
+    position: 'absolute',
+    bottom: 32,
+    left: 20,
+    right: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  saveButtonDisabled: { opacity: 0.6 },
+  saveButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '600' },
+});

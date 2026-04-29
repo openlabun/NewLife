@@ -1,6 +1,4 @@
-// backend/admin-api/src/modules/admin/admin.module.ts
-
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -20,6 +18,7 @@ import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { ChangeUserRoleUseCase } from './application/use-cases/change-user-role.use-case';
 import { ChangeUserStatusUseCase } from './application/use-cases/change-user-status.use-case';
 import { CreateAdminUseCase } from './application/use-cases/create-admin.use-case';
+import { DeleteAdminUseCase } from './application/use-cases/delete-admin.use-case';
 
 // Application — Communities
 import { GetCommunitiesUseCase } from './application/use-cases/get-communities.use-case';
@@ -43,6 +42,18 @@ import { ADMIN_AUTH_PORT } from './domain/ports/admin-auth.port';
 import { ADMIN_USER_REPOSITORY } from './domain/ports/admin-user.repository.port';
 import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
 
+// Motivation module
+import { MotivationModule } from '../motivation/motivation.module';
+
+// Ban Requests
+import { RobleBanRequestRepository } from './infrastructure/adapters/roble-ban-request.repository';
+import { GetBanRequestsUseCase } from './application/use-cases/get-ban-requests.use-case';
+import { ResolveBanRequestUseCase } from './application/use-cases/resolve-ban-request.use-case';
+import { AdminBanRequestsController } from './presentation/controllers/admin-ban-requests.controller';
+import { BAN_REQUEST_REPOSITORY } from './domain/ports/ban-request.repository.port';
+
+
+
 @Module({
   imports: [
     ConfigModule,
@@ -56,11 +67,13 @@ import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
         },
       }),
     }),
+    forwardRef(() => MotivationModule),
   ],
   controllers: [
     AdminAuthController,
     AdminUsersController,
     AdminCommunitiesController,
+    AdminBanRequestsController,
   ],
   providers: [
     // Infrastructure
@@ -90,6 +103,7 @@ import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
     ChangeUserRoleUseCase,
     ChangeUserStatusUseCase,
     CreateAdminUseCase,
+    DeleteAdminUseCase,
 
     // Application — Communities
     GetCommunitiesUseCase,
@@ -104,6 +118,12 @@ import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
     // Guards
     AdminJwtGuard,
     RolesGuard,
+
+    // Ban Requests
+    RobleBanRequestRepository,
+    { provide: BAN_REQUEST_REPOSITORY, useClass: RobleBanRequestRepository },
+    GetBanRequestsUseCase,
+    ResolveBanRequestUseCase,
   ],
   exports: [
     AdminJwtGuard,
@@ -113,4 +133,4 @@ import { COMMUNITY_REPOSITORY } from './domain/ports/community.repository.port';
     TokenBlacklistService,
   ],
 })
-export class AdminModule {}
+export class AdminModule { }

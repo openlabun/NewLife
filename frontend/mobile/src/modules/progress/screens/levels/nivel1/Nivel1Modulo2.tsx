@@ -1,100 +1,109 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import SubLevelScreen, {
     MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
 } from '../SubLevelScreen';
+import { useLevelProgress } from '../../../../../hooks/useLevelProgress';
 
-const MASCOT = require('../../../../../assets/images/mascotaestrella.png');
+const MASCOT = require('../../../../../assets/images/mascotalibro.png');
 
-type Step = 'intro' | 'areas' | 'frase1' | 'open1' | 'frase2' | 'reaccion' | 'frase3';
-const STEPS: Step[] = ['intro', 'areas', 'frase1', 'open1', 'frase2', 'reaccion', 'frase3'];
+const CURRENT_LEVEL = 1;
+const CURRENT_SUBLEVEL = 2;
+
+type Step = 'intro' | 'q1' | 'frase1' | 'q2' | 'frase2' | 'reflexion';
+const STEPS: Step[] = ['intro', 'q1', 'frase1', 'q2', 'frase2', 'reflexion'];
 
 export default function Nivel1Modulo2({ navigation }: any) {
     const [stepIndex, setStepIndex] = useState(0);
-    const [areas, setAreas] = useState<string[]>([]);
-    const [openAnswer, setOpenAnswer] = useState('');
-    const [reaccion, setReaccion] = useState<string | null>(null);
+    const [q1, setQ1] = useState<string | null>(null);
+    const [q2, setQ2] = useState('');
+    const [advancing, setAdvancing] = useState(false);
+
+    const { progress, advance } = useLevelProgress();
 
     const step = STEPS[stepIndex];
     const isLast = stepIndex === STEPS.length - 1;
 
-    const handleContinue = () => {
-        if (isLast) navigation.navigate('Path');
-        else setStepIndex(stepIndex + 1);
+    const handleContinue = async () => {
+        if (isLast) {
+            setAdvancing(true);
+            try {
+                const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
+                console.log('âœ… MÃ³dulo completado. Nuevo progreso:', newProgress);
+
+                Alert.alert(
+                    'Â¡Felicidades!',
+                    `Has completado el MÃ³dulo ${CURRENT_SUBLEVEL}. ${
+                        newProgress.subnivel > CURRENT_SUBLEVEL
+                            ? 'Siguiente mÃ³dulo desbloqueado.'
+                            : 'Completa los anteriores para continuar.'
+                    }`,
+                    [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
+                );
+            } catch (error) {
+                console.error('âŒ Error guardando progreso:', error);
+                Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
+            } finally {
+                setAdvancing(false);
+            }
+        } else {
+            setStepIndex(stepIndex + 1);
+        }
     };
 
     const handleBack = () => {
-        if (stepIndex === 0) navigation.goBack();
-        else setStepIndex(stepIndex - 1);
-    };
-
-    const toggleArea = (val: string) => {
-        setAreas((prev) =>
-            prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
-        );
+        if (stepIndex === 0) {
+            navigation.navigate('Path');
+        } else {
+            setStepIndex(stepIndex - 1);
+        }
     };
 
     return (
         <SubLevelScreen
             currentStep={stepIndex}
             totalSteps={STEPS.length - 1}
-            moduleNumber={2}
+            moduleNumber={CURRENT_SUBLEVEL}
             mascot={MASCOT}
             onBack={handleBack}
             onContinue={handleContinue}
-            continueLabel={isLast ? 'Siguiente módulo' : 'Continuar'}
+            continueLabel={isLast ? 'Completar mÃ³dulo' : 'Continuar'}
             showIntro={step === 'intro'}
-            introTitle="Las consecuencias"
-            introDescription="Nada de esto ocurre sin impacto. Poco a poco, las decisiones y hábitos dejan huellas en distintas áreas de tu vida. Reconocerlas no es para culparte, es para entender el alcance real."
+            introTitle="Paso 1, MÃ³dulo 2"
+            introDescription="ContinÃºa tu camino en los 12 pasos de recuperaciÃ³n."
         >
-            {step === 'areas' && (
+            {step === 'q1' && (
                 <>
-                    <MascotBubble text="¿Dónde has notado consecuencias?" />
+                    <MascotBubble text="Â¿CÃ³mo te sientes en este momento?" />
                     <MultipleChoice
-                        options={[
-                            'Personal (emociones, salud)',
-                            'Relaciones',
-                            'Estudios / trabajo',
-                            'Rutina diaria',
-                        ]}
-                        selected={areas}
-                        onSelect={toggleArea}
-                        multiple
+                        options={['Bien', 'Neutral', 'DifÃ­cil', 'Reflexivo']}
+                        selected={q1}
+                        onSelect={setQ1}
                     />
                 </>
             )}
 
             {step === 'frase1' && (
-                <ReflectivePhrase text="Lo que haces tiene efectos, incluso cuando no quieres verlos." />
+                <ReflectivePhrase text="Cada paso te acerca mÃ¡s a tu recuperaciÃ³n." />
             )}
 
-            {step === 'open1' && (
+            {step === 'q2' && (
                 <>
-                    <MascotBubble text="Describe una consecuencia que te haya marcado." />
+                    <MascotBubble text="Â¿QuÃ© aprendiste en este mÃ³dulo?" />
                     <OpenQuestion
-                        placeholder="Escribe aquí..."
-                        value={openAnswer}
-                        onChange={setOpenAnswer}
+                        placeholder="Escribe aquÃ­..."
+                        value={q2}
+                        onChange={setQ2}
                     />
                 </>
             )}
 
             {step === 'frase2' && (
-                <ReflectivePhrase text="Reconocer lo que perdiste es el inicio de tu recuperación." />
+                <ReflectivePhrase text="Tu compromiso con ti mismo es el mÃ¡s importante." />
             )}
 
-            {step === 'reaccion' && (
-                <>
-                    <MascotBubble text="¿Cómo sueles reaccionar ante estas consecuencias?" />
-                    <MultipleChoice
-                        options={['Las ignoro', 'Las justifico', 'Me siento culpable', 'Intento cambiarlas']}
-                        selected={reaccion}
-                        onSelect={setReaccion}
-                    />
-                </>
-            )}
-
-            {step === 'frase3' && (
-                <ReflectivePhrase text="Las consecuencias no son castigos, son señales." />
+            {step === 'reflexion' && (
+                <ReflectivePhrase text="Sigue adelante, cada paso cuenta." />
             )}
         </SubLevelScreen>
     );

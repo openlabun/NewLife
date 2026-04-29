@@ -1,96 +1,110 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import SubLevelScreen, {
-  MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
+    MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
 } from '../SubLevelScreen';
+import { useLevelProgress } from '../../../../../hooks/useLevelProgress';
 
 const MASCOT = require('../../../../../assets/images/mascotalibro.png');
 
-type Step = 'intro' | 'lista' | 'frase1' | 'open1' | 'frase2' | 'q1' | 'frase3';
-const STEPS: Step[] = ['intro', 'lista', 'frase1', 'open1', 'frase2', 'q1', 'frase3'];
+const CURRENT_LEVEL = 8;
+const CURRENT_SUBLEVEL = 1;
+
+type Step = 'intro' | 'q1' | 'frase1' | 'q2' | 'frase2' | 'reflexion';
+const STEPS: Step[] = ['intro', 'q1', 'frase1', 'q2', 'frase2', 'reflexion'];
 
 export default function Nivel8Modulo1({ navigation }: any) {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [lista, setLista] = useState<string[]>([]);
-  const [open1, setOpen1] = useState('');
-  const [q1, setQ1] = useState<string | null>(null);
+    const [stepIndex, setStepIndex] = useState(0);
+    const [q1, setQ1] = useState<string | null>(null);
+    const [q2, setQ2] = useState('');
+    const [advancing, setAdvancing] = useState(false);
 
-  const step = STEPS[stepIndex];
-  const isLast = stepIndex === STEPS.length - 1;
+    const { progress, advance } = useLevelProgress();
 
-  const handleContinue = () => {
-    if (isLast) navigation.navigate('Path');
-    else setStepIndex(stepIndex + 1);
-  };
+    const step = STEPS[stepIndex];
+    const isLast = stepIndex === STEPS.length - 1;
 
-  const handleBack = () => {
-    if (stepIndex === 0) navigation.goBack();
-    else setStepIndex(stepIndex - 1);
-  };
+    const handleContinue = async () => {
+        if (isLast) {
+            setAdvancing(true);
+            try {
+                const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
+                console.log('âœ… MÃ³dulo completado. Nuevo progreso:', newProgress);
 
-  const toggle = (val: string) => {
-    setLista((prev) =>
-      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+                Alert.alert(
+                    'Â¡Felicidades!',
+                    `Has completado el MÃ³dulo ${CURRENT_SUBLEVEL}. ${
+                        newProgress.subnivel > CURRENT_SUBLEVEL
+                            ? 'Siguiente mÃ³dulo desbloqueado.'
+                            : 'Completa los anteriores para continuar.'
+                    }`,
+                    [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
+                );
+            } catch (error) {
+                console.error('âŒ Error guardando progreso:', error);
+                Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
+            } finally {
+                setAdvancing(false);
+            }
+        } else {
+            setStepIndex(stepIndex + 1);
+        }
+    };
+
+    const handleBack = () => {
+        if (stepIndex === 0) {
+            navigation.navigate('Path');
+        } else {
+            setStepIndex(stepIndex - 1);
+        }
+    };
+
+    return (
+        <SubLevelScreen
+            currentStep={stepIndex}
+            totalSteps={STEPS.length - 1}
+            moduleNumber={CURRENT_SUBLEVEL}
+            mascot={MASCOT}
+            onBack={handleBack}
+            onContinue={handleContinue}
+            continueLabel={isLast ? 'Completar mÃ³dulo' : 'Continuar'}
+            showIntro={step === 'intro'}
+            introTitle="Paso 8, MÃ³dulo 1"
+            introDescription="ContinÃºa tu camino en los 12 pasos de recuperaciÃ³n."
+        >
+            {step === 'q1' && (
+                <>
+                    <MascotBubble text="Â¿CÃ³mo te sientes en este momento?" />
+                    <MultipleChoice
+                        options={['Bien', 'Neutral', 'DifÃ­cil', 'Reflexivo']}
+                        selected={q1}
+                        onSelect={setQ1}
+                    />
+                </>
+            )}
+
+            {step === 'frase1' && (
+                <ReflectivePhrase text="Cada paso te acerca mÃ¡s a tu recuperaciÃ³n." />
+            )}
+
+            {step === 'q2' && (
+                <>
+                    <MascotBubble text="Â¿QuÃ© aprendiste en este mÃ³dulo?" />
+                    <OpenQuestion
+                        placeholder="Escribe aquÃ­..."
+                        value={q2}
+                        onChange={setQ2}
+                    />
+                </>
+            )}
+
+            {step === 'frase2' && (
+                <ReflectivePhrase text="Tu compromiso con ti mismo es el mÃ¡s importante." />
+            )}
+
+            {step === 'reflexion' && (
+                <ReflectivePhrase text="Sigue adelante, cada paso cuenta." />
+            )}
+        </SubLevelScreen>
     );
-  };
-
-  return (
-    <SubLevelScreen
-      currentStep={stepIndex}
-      totalSteps={STEPS.length - 1}
-      moduleNumber={1}
-      mascot={MASCOT}
-      onBack={handleBack}
-      onContinue={handleContinue}
-      continueLabel={isLast ? 'Finalizar módulo' : 'Continuar'}
-      showIntro={step === 'intro'}
-      introTitle="Reconocer el impacto"
-      introDescription="Aceptar que nuestras acciones han afectado a otros puede ser incómodo, incluso doloroso. Pero ignorarlo no lo desaparece. Este es el primer paso para mirar más allá de ti mismo/a."
-    >
-      {step === 'lista' && (
-        <>
-          <MascotBubble text="¿Dónde has notado que tu situación ha tenido impacto?" />
-          <MultipleChoice
-            options={['Familia', 'Pareja', 'Amigos', 'Trabajo / estudios', 'Yo mismo/a']}
-            selected={lista}
-            onSelect={toggle}
-            multiple
-          />
-        </>
-      )}
-
-      {step === 'frase1' && (
-        <ReflectivePhrase text="Reconocer el impacto no es para castigarte, es para hacerte consciente." />
-      )}
-
-      {step === 'open1' && (
-        <>
-          <MascotBubble text="¿De qué forma crees que pudieron haber sido afectados?" />
-          <OpenQuestion
-            placeholder="Escribe aquí..."
-            value={open1}
-            onChange={setOpen1}
-          />
-        </>
-      )}
-
-      {step === 'frase2' && (
-        <ReflectivePhrase text="Lo que haces no solo te afecta a ti, también deja huella en otros." />
-      )}
-
-      {step === 'q1' && (
-        <>
-          <MascotBubble text="¿Cómo te hace sentir reconocer esto?" />
-          <MultipleChoice
-            options={['Culpa', 'Tristeza', 'Evitación', 'Confusión']}
-            selected={q1}
-            onSelect={setQ1}
-          />
-        </>
-      )}
-
-      {step === 'frase3' && (
-        <ReflectivePhrase text="Mirar esto puede doler, pero también es lo que permite cambiar." />
-      )}
-    </SubLevelScreen>
-  );
 }

@@ -9,12 +9,10 @@ const pageTitles: Record<string, string> = {
   "/admin/usuarios": "Gestión de Usuarios",
   "/admin/comunidades": "Comunidades",
   "/admin/solicitudes-baneo": "Solicitudes de Baneo",
-  "/admin/contenido": "Contenido Educativo",
 }
 
 const pageActions: Record<string, { label: string; onClick?: () => void }> = {
   "/admin/comunidades": { label: "Nueva comunidad" },
-  "/admin/contenido": { label: "Nuevo contenido" },
 }
 
 interface AdminTopbarProps {

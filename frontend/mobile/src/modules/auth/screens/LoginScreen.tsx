@@ -76,7 +76,7 @@ export default function LoginScreen({ navigation }: any) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.replace('Welcome')}>
         <Icon name="chevron-left" size={24} color={colors.text} />
       </TouchableOpacity>
 

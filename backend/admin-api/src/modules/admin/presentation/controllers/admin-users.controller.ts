@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,6 +35,7 @@ import {
   ChangeStatusDto,
   CreateAdminDto,
 } from '../dtos/admin-users.dto';
+import { DeleteAdminUseCase } from '../../application/use-cases/delete-admin.use-case';
 
 @ApiTags('Admin — Usuarios')
 @ApiBearerAuth()
@@ -45,7 +47,8 @@ export class AdminUsersController {
     private readonly changeRoleUseCase: ChangeUserRoleUseCase,
     private readonly changeStatusUseCase: ChangeUserStatusUseCase,
     private readonly createAdminUseCase: CreateAdminUseCase,
-  ) {}
+    private readonly DeleteAdminUseCase: DeleteAdminUseCase,
+  ) { }
 
   // ── GET /api/web/admin/users ─────────────────────────────────────────────
   @Get()
@@ -54,7 +57,7 @@ export class AdminUsersController {
   @ApiOkResponse({ description: 'Listado de usuarios.' })
   async getUsers(@Query() query: GetUsersQueryDto) {
     return this.getUsersUseCase.execute({
-      rol:    query.rol,
+      rol: query.rol,
       estado: query.estado,
     });
   }
@@ -97,8 +100,8 @@ export class AdminUsersController {
     @Body() dto: ChangeStatusDto,
   ) {
     return this.changeStatusUseCase.execute({
-      userId:  id,
-      estado:  dto.estado,
+      userId: id,
+      estado: dto.estado,
       suspension: (dto.dias || dto.hasta)
         ? { dias: dto.dias, hasta: dto.hasta }
         : undefined,
@@ -115,9 +118,19 @@ export class AdminUsersController {
   @ApiForbiddenResponse({ description: 'Solo el SUPERADMIN puede crear admins.' })
   async createAdmin(@Body() dto: CreateAdminDto) {
     return this.createAdminUseCase.execute({
-      email:    dto.email,
+      email: dto.email,
       password: dto.password,
-      nombre:   dto.nombre,
+      nombre: dto.nombre,
     });
+  }
+  
+  // ── DELETE /api/web/admin/users/:id ─────────────────────────────────────
+  @Delete(':id')
+  @Roles(UserRole.SUPERADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Eliminar un administrador (solo SUPERADMIN)' })
+  async deleteAdmin(@Param('id') id: string) {
+    await this.DeleteAdminUseCase.execute(id)
+    return { message: 'Administrador eliminado exitosamente.' }
   }
 }

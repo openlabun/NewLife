@@ -1,27 +1,51 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import SubLevelScreen, {
     MascotBubble, MultipleChoice, OpenQuestion, ReflectivePhrase,
 } from '../SubLevelScreen';
-import { colors } from '../../../../../constants/theme';
+import { useLevelProgress } from '../../../../../hooks/useLevelProgress';
 
 const MASCOT = require('../../../../../assets/images/mascotalibro.png');
 
-type Step = 'intro' | 'q1' | 'frase1' | 'checklist' | 'frase2' | 'open' | 'frase3';
+const CURRENT_LEVEL = 1;
+const CURRENT_SUBLEVEL = 1;
 
-const STEPS: Step[] = ['intro', 'q1', 'frase1', 'checklist', 'frase2', 'open', 'frase3'];
+type Step = 'intro' | 'q1' | 'frase1' | 'q2' | 'frase2' | 'reflexion';
+const STEPS: Step[] = ['intro', 'q1', 'frase1', 'q2', 'frase2', 'reflexion'];
 
 export default function Nivel1Modulo1({ navigation }: any) {
     const [stepIndex, setStepIndex] = useState(0);
     const [q1, setQ1] = useState<string | null>(null);
-    const [checklist, setChecklist] = useState<string[]>([]);
-    const [openAnswer, setOpenAnswer] = useState('');
+    const [q2, setQ2] = useState('');
+    const [advancing, setAdvancing] = useState(false);
+
+    const { progress, advance } = useLevelProgress();
 
     const step = STEPS[stepIndex];
     const isLast = stepIndex === STEPS.length - 1;
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (isLast) {
-            navigation.navigate('Path');
+            setAdvancing(true);
+            try {
+                const newProgress = await advance(CURRENT_LEVEL, CURRENT_SUBLEVEL);
+                console.log('✅ Módulo completado. Nuevo progreso:', newProgress);
+
+                Alert.alert(
+                    '¡Felicidades!',
+                    `Has completado el Módulo ${CURRENT_SUBLEVEL}. ${
+                        newProgress.subnivel > CURRENT_SUBLEVEL
+                            ? 'Siguiente módulo desbloqueado.'
+                            : 'Completa los anteriores para continuar.'
+                    }`,
+                    [{ text: 'OK', onPress: () => navigation.navigate('Path') }]
+                );
+            } catch (error) {
+                console.error('❌ Error guardando progreso:', error);
+                Alert.alert('Error', 'No se pudo guardar tu progreso. Intenta de nuevo.');
+            } finally {
+                setAdvancing(false);
+            }
         } else {
             setStepIndex(stepIndex + 1);
         }
@@ -29,41 +53,30 @@ export default function Nivel1Modulo1({ navigation }: any) {
 
     const handleBack = () => {
         if (stepIndex === 0) {
-            navigation.goBack();
+            navigation.navigate('Path');
         } else {
             setStepIndex(stepIndex - 1);
         }
-    };
-
-    const toggleChecklist = (val: string) => {
-        setChecklist((prev) =>
-            prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
-        );
     };
 
     return (
         <SubLevelScreen
             currentStep={stepIndex}
             totalSteps={STEPS.length - 1}
-            moduleNumber={1}
+            moduleNumber={CURRENT_SUBLEVEL}
             mascot={MASCOT}
             onBack={handleBack}
             onContinue={handleContinue}
-            continueLabel={isLast ? 'Siguiente módulo' : 'Continuar'}
+            continueLabel={isLast ? 'Completar módulo' : 'Continuar'}
             showIntro={step === 'intro'}
-            introTitle="Negación y realidad"
-            introDescription="Es fácil convencerse de que todo está bajo control o que 'no es tan grave'. La negación no siempre es obvia; a veces se disfraza de excusas, comparaciones o silencios."
+            introTitle="Paso 1, Módulo 1"
+            introDescription="Continúa tu camino en los 12 pasos de recuperación."
         >
             {step === 'q1' && (
                 <>
-                    <MascotBubble text="¿Cómo has visto tu situación hasta ahora?" />
+                    <MascotBubble text="¿Cómo te sientes en este momento?" />
                     <MultipleChoice
-                        options={[
-                            '"No es tan grave"',
-                            '"Puedo controlarlo"',
-                            '"Otros están peor"',
-                            '"Prefiero no pensar en eso"',
-                        ]}
+                        options={['Bien', 'Neutral', 'Difícil', 'Reflexivo']}
                         selected={q1}
                         onSelect={setQ1}
                     />
@@ -71,43 +84,26 @@ export default function Nivel1Modulo1({ navigation }: any) {
             )}
 
             {step === 'frase1' && (
-                <ReflectivePhrase text="La negación no elimina el problema, solo lo aplaza." />
+                <ReflectivePhrase text="Cada paso te acerca más a tu recuperación." />
             )}
 
-            {step === 'checklist' && (
+            {step === 'q2' && (
                 <>
-                    <MascotBubble text="Selecciona los pensamientos que has tenido:" />
-                    <MultipleChoice
-                        options={[
-                            '"Puedo dejarlo cuando quiera"',
-                            '"Esto no me está afectando tanto"',
-                            '"No es el momento de cambiar"',
-                            '"No es para tanto"',
-                        ]}
-                        selected={checklist}
-                        onSelect={toggleChecklist}
-                        multiple
+                    <MascotBubble text="¿Qué aprendiste en este módulo?" />
+                    <OpenQuestion
+                        placeholder="Escribe aquí..."
+                        value={q2}
+                        onChange={setQ2}
                     />
                 </>
             )}
 
             {step === 'frase2' && (
-                <ReflectivePhrase text="Minimizar te calma por un momento, pero te aleja de la realidad." />
+                <ReflectivePhrase text="Tu compromiso contigo mismo es el más importante." />
             )}
 
-            {step === 'open' && (
-                <>
-                    <MascotBubble text="¿En qué momentos has evitado aceptar lo que realmente pasa?" />
-                    <OpenQuestion
-                        placeholder="Escribe aquí..."
-                        value={openAnswer}
-                        onChange={setOpenAnswer}
-                    />
-                </>
-            )}
-
-            {step === 'frase3' && (
-                <ReflectivePhrase text="Ver lo que pasa puede doler, pero no verlo cuesta más con el tiempo." />
+            {step === 'reflexion' && (
+                <ReflectivePhrase text="Sigue adelante, cada paso cuenta." />
             )}
         </SubLevelScreen>
     );
