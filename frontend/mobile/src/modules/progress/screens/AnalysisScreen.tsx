@@ -19,13 +19,14 @@ import { styles } from './analysis/styles/analysisStyles';
 import { shortenVinculoLabel, shortenZonaLabel } from './analysis/utils/labelMappers';
 import { useEmotionStats } from './analysis/hooks/useEmotionStats';
 import { useConsumptionByDay } from './analysis/hooks/useConsumptionByDay';
+import CalendarScreen from './analysis/calendar/CalendarScreen';
 
 export default function AnalysisScreen({ navigation }: any) {
   const { summary, riskCharts, loading, error } = useAnalysisData();
   const { emotionStats, loading: emotionLoading } = useEmotionStats();
   const { consumptionByDay, loading: consumptionLoading } = useConsumptionByDay();
 
-  if (loading || emotionLoading || consumptionLoading) {    
+  if (loading || emotionLoading || consumptionLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -108,10 +109,11 @@ export default function AnalysisScreen({ navigation }: any) {
         </View>
       )}
 
+      {/* ✅ CALENDARIO MODULAR */}
+      <CalendarScreen />
+
       {/* SI NO HAY EMOCIONES: MOSTRAR MENSAJE VACÍO */}
-      {!hasEmotions && (
-        <EmptyStateEmotions />
-      )}
+      {!hasEmotions && <EmptyStateEmotions />}
 
       {/* SI HAY EMOCIONES: MOSTRAR TODO */}
       {hasEmotions && (
@@ -120,14 +122,10 @@ export default function AnalysisScreen({ navigation }: any) {
           <EmotionBarChart data={emotionStats} />
 
           {/* Vínculos de Riesgo - SOLO SI HAY CONSUMO */}
-          {hasConsumption && (
-            <HorizontalBarChart data={risksLinksData} />
-          )}
+          {hasConsumption && <HorizontalBarChart data={risksLinksData} />}
 
           {/* Consumo por Día - SOLO SI HAY CONSUMO */}
-          {hasConsumption && (
-            <ConsumptionByDayChart data={consumptionByDay} />
-          )}
+          {hasConsumption && <ConsumptionByDayChart data={consumptionByDay} />}
 
           {/* Zonas de Mayor Riesgo - SOLO SI HAY CONSUMO */}
           {hasConsumption && (

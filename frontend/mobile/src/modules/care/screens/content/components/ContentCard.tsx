@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -26,6 +26,8 @@ interface ContentCardProps {
   wide?: boolean;
 }
 
+const DEFAULT_IMAGE = require('../../../../../assets/images/contenido1.png');
+
 export default function ContentCard({
   id,
   title,
@@ -37,6 +39,12 @@ export default function ContentCard({
   onToggleLike,
   wide = false,
 }: ContentCardProps) {
+  const [imageError, setImageError] = useState(false);
+
+  // Determinar si usar URL o imagen por defecto
+  const hasValidUrl = image && image.trim() && image !== 'default';
+  const imageSource = imageError || !hasValidUrl ? DEFAULT_IMAGE : { uri: image };
+
   const handleShare = async () => {
     try {
       await Share.share({
@@ -51,14 +59,24 @@ export default function ContentCard({
     onToggleLike(id);
   };
 
+  const handleImageError = () => {
+    console.warn(`⚠️ Error cargando imagen para: ${title}`);
+    setImageError(true);
+  };
+
   return (
     <TouchableOpacity
       style={[styles.card, wide && styles.cardWide]}
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Imagen */}
-      <Image source={{ uri: image }} style={styles.cardImage} resizeMode="cover" />
+      {/* Imagen con fallback */}
+      <Image
+        source={imageSource}
+        style={styles.cardImage}
+        resizeMode="cover"
+        onError={handleImageError}
+      />
 
       {/* Play button para videos */}
       {type === 'video' && (
@@ -112,6 +130,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 160,
+    backgroundColor: '#E0E0E0', // Color de fondo mientras carga
   },
   playButton: {
     position: 'absolute',
@@ -134,6 +153,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.white,
     lineHeight: 18,
+    minHeight: 36,     // 👈 fuerza espacio de 2 líneas
   },
   cardMeta: {
     fontSize: fontSizes.xs,
