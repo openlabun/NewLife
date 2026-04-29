@@ -4,11 +4,17 @@ export class ContenidoEducativo {
   titulo!: string;
   tipo!: 'ARTICULO' | 'VIDEO';
   duracion_minutos!: number;
-  imagen_portada!: string;
+  
+  // CAMBIO: Ahora es opcional
+  imagen_portada?: string; 
+  
   texto_contenido!: string;
   video_url?: string;
   categoria_id?: string;
-  autor_nombre!: string;
+  
+  // CAMBIO: Ahora es opcional
+  autor_nombre?: string; 
+  
   autor_profesion?: string;
   autor_foto?: string;
   hashtags?: string[];

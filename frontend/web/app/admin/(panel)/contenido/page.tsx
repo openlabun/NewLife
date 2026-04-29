@@ -1,62 +1,32 @@
 "use client"
 
-import { useState, useRef } from "react"
-
+import { useState, useRef, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
-
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
-  Pencil,
-  Plus,
-  Trash2,
-  Video,
-  X,
-  ChevronRight,
-  Settings,
-  Clock,
-  User,
-  ArrowLeft,
-  Play,
-  ExternalLink,
+  Pencil, Plus, Trash2, Video, X, ChevronRight, Settings,
+  Clock, User, ArrowLeft, Play, ExternalLink, Loader2, AlertCircle
 } from "lucide-react"
+
+// Importar servicios del Backend
+import { 
+  getCategorias, createCategoria, updateCategoria, deleteCategoria,
+  getContenidos, createContenido, updateContenido, deleteContenido
+} from "@/lib/contenido"
 
 type ContentType = "ARTICULO" | "VIDEO"
 type ContentStatus = "DRAFT" | "PUBLISHED"
@@ -68,131 +38,25 @@ interface Author {
 }
 
 interface Category {
-  id: number
+  id: string
   name: string
   description?: string
 }
 
 interface EducationalContent {
-  id: number
+  id: string
   title: string
   type: ContentType
   videoUrl?: string
   durationMinutes: number
   coverImage: string
   content: string
-  categoryId: number | null
+  categoryId: string | null
   author: Author
   hashtags: string[]
   status: ContentStatus
   lastEdited: string
 }
-
-const initialCategories: Category[] = [
-  { id: 1, name: "Salud Mental", description: "Artículos y videos sobre bienestar psicológico" },
-  { id: 2, name: "Nutrición", description: "Contenido sobre alimentación saludable" },
-  { id: 3, name: "Bienestar", description: "Tips de bienestar general y mindfulness" },
-  { id: 4, name: "Familia", description: "Recursos para la dinámica familiar" },
-  { id: 5, name: "Relaciones", description: "Guías para relaciones interpersonales" },
-  { id: 6, name: "Desarrollo Personal", description: "Contenido de crecimiento personal" },
-]
-
-const initialContent: EducationalContent[] = [
-  {
-    id: 1,
-    title: "Guía para el manejo del estrés",
-    type: "ARTICULO",
-    durationMinutes: 8,
-    coverImage: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=300&fit=crop",
-    content: "El estrés es una respuesta natural del cuerpo ante situaciones desafiantes. En este artículo exploraremos técnicas efectivas para manejar el estrés en tu vida diaria, incluyendo ejercicios de respiración, meditación y cambios en el estilo de vida que pueden hacer una gran diferencia.",
-    categoryId: 1,
-    author: { name: "Dr. Carlos Mendoza", profession: "Psicólogo clínico", photoUrl: "" },
-    hashtags: ["estrés", "salud mental", "bienestar"],
-    status: "PUBLISHED",
-    lastEdited: "18/03/2024",
-  },
-  {
-    id: 2,
-    title: "Alimentación consciente: primeros pasos",
-    type: "VIDEO",
-    videoUrl: "https://youtube.com/watch?v=example",
-    durationMinutes: 15,
-    coverImage: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&h=300&fit=crop",
-    content: "La alimentación consciente es una práctica que nos invita a prestar atención plena a lo que comemos, cómo lo comemos y por qué lo comemos.",
-    categoryId: 2,
-    author: { name: "Laura Martínez", profession: "Nutricionista" },
-    hashtags: ["nutrición", "mindful eating", "salud"],
-    status: "PUBLISHED",
-    lastEdited: "15/03/2024",
-  },
-  {
-    id: 3,
-    title: "Técnicas de meditación para principiantes",
-    type: "VIDEO",
-    videoUrl: "https://youtube.com/watch?v=meditation",
-    durationMinutes: 20,
-    coverImage: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=300&fit=crop",
-    content: "La meditación es una práctica milenaria que nos ayuda a encontrar paz interior y claridad mental.",
-    categoryId: 3,
-    author: { name: "Ana García", profession: "Instructora de yoga" },
-    hashtags: ["meditación", "mindfulness", "paz interior"],
-    status: "PUBLISHED",
-    lastEdited: "12/03/2024",
-  },
-  {
-    id: 4,
-    title: "Comunicación efectiva en familia",
-    type: "ARTICULO",
-    durationMinutes: 12,
-    coverImage: "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=400&h=300&fit=crop",
-    content: "La comunicación es la base de cualquier relación saludable. Aprende técnicas para mejorar el diálogo familiar.",
-    categoryId: 4,
-    author: { name: "Roberto Sánchez", profession: "Terapeuta familiar" },
-    hashtags: ["familia", "comunicación", "relaciones"],
-    status: "DRAFT",
-    lastEdited: "10/03/2024",
-  },
-  {
-    id: 5,
-    title: "Ejercicios de respiración",
-    type: "VIDEO",
-    videoUrl: "https://youtube.com/watch?v=breathing",
-    durationMinutes: 10,
-    coverImage: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=300&fit=crop",
-    content: "Los ejercicios de respiración son herramientas poderosas para manejar la ansiedad y el estrés.",
-    categoryId: 3,
-    author: { name: "María López" },
-    hashtags: ["respiración", "ansiedad", "relajación"],
-    status: "PUBLISHED",
-    lastEdited: "08/03/2024",
-  },
-  {
-    id: 6,
-    title: "Cómo establecer límites saludables",
-    type: "ARTICULO",
-    durationMinutes: 15,
-    coverImage: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=300&fit=crop",
-    content: "Establecer límites es esencial para mantener relaciones saludables y proteger tu bienestar emocional.",
-    categoryId: null,
-    author: { name: "Patricia Herrera", profession: "Coach de vida" },
-    hashtags: ["límites", "autocuidado", "relaciones"],
-    status: "DRAFT",
-    lastEdited: "05/03/2024",
-  },
-  {
-    id: 7,
-    title: "Superando la ansiedad social",
-    type: "ARTICULO",
-    durationMinutes: 10,
-    coverImage: "https://images.unsplash.com/photo-1516302752625-fcc3c50ae61f?w=400&h=300&fit=crop",
-    content: "La ansiedad social puede ser limitante, pero con las estrategias correctas es posible superarla.",
-    categoryId: 1,
-    author: { name: "Dr. Carlos Mendoza", profession: "Psicólogo clínico" },
-    hashtags: ["ansiedad", "social", "superación"],
-    status: "PUBLISHED",
-    lastEdited: "01/03/2024",
-  },
-]
 
 const emptyFormData = {
   title: "",
@@ -201,7 +65,7 @@ const emptyFormData = {
   durationMinutes: 0,
   coverImage: "",
   content: "",
-  categoryId: null as number | null,
+  categoryId: null as string | null,
   authorName: "",
   authorProfession: "",
   authorPhotoUrl: "",
@@ -215,38 +79,97 @@ const emptyCategoryFormData = {
 }
 
 export default function ContenidoPage() {
-  const [contents, setContents] = useState<EducationalContent[]>(initialContent)
-  const [categories, setCategories] = useState<Category[]>(initialCategories)
+  const [contents, setContents] = useState<EducationalContent[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  
   const [showModal, setShowModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showDetailSheet, setShowDetailSheet] = useState(false)
+  
   const [selectedContent, setSelectedContent] = useState<EducationalContent | null>(null)
   const [editingContent, setEditingContent] = useState<EducationalContent | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
-  const [deleteContent, setDeleteContent] = useState<EducationalContent | null>(null)
-  const [deleteCategory, setDeleteCategory] = useState<Category | null>(null)
+  const [deleteContentState, setDeleteContentState] = useState<EducationalContent | null>(null)
+  const [deleteCategoryState, setDeleteCategoryState] = useState<Category | null>(null)
+  
   const [tagInput, setTagInput] = useState("")
   const [formData, setFormData] = useState(emptyFormData)
   const [categoryFormData, setCategoryFormData] = useState(emptyCategoryFormData)
+  
+  const [errorMsg, setErrorMsg] = useState("")
   const [categoryError, setCategoryError] = useState("")
-  const [preselectedCategoryId, setPreselectedCategoryId] = useState<number | null>(null)
-  const [viewAllCategoryId, setViewAllCategoryId] = useState<number | null>(null)
+  
+  const [preselectedCategoryId, setPreselectedCategoryId] = useState<string | null>(null)
+  const [viewAllCategoryId, setViewAllCategoryId] = useState<string | null>(null)
   const [draggedContent, setDraggedContent] = useState<EducationalContent | null>(null)
-  const [dragOverCategoryId, setDragOverCategoryId] = useState<number | null>(null)
+  const [dragOverCategoryId, setDragOverCategoryId] = useState<string | null>(null)
 
-  // Group contents by category
-  const getContentsByCategory = (categoryId: number | null) => {
+  const [isSaving, setIsSaving] = useState(false)
+
+  // --- CARGA DE DATOS ---
+  const loadData = async () => {
+    try {
+      setIsLoadingData(true)
+      const [categoriasData, contenidosData] = await Promise.all([
+        getCategorias(),
+        getContenidos()
+      ])
+
+      const mappedCategories: Category[] = categoriasData.map((c: any) => ({
+        id: c.categoria_id || c.id,
+        name: c.nombre,
+        description: c.descripcion || ""
+      }))
+
+      const mappedContents: EducationalContent[] = contenidosData.map((c: any) => ({
+        id: c.contenido_id || c.id,
+        title: c.titulo,
+        type: c.tipo,
+        videoUrl: c.video_url || "",
+        durationMinutes: c.duracion_minutos,
+        // Protegemos con un string vacío si viene null
+        coverImage: c.imagen_portada || "",
+        content: c.texto_contenido || "",
+        categoryId: c.categoria_id || null,
+        author: {
+          // Protegemos con string vacío si viene null
+          name: c.autor_nombre || "",
+          profession: c.autor_profesion || "",
+          photoUrl: c.autor_foto || ""
+        },
+        hashtags: c.hashtags || [],
+        status: c.estado,
+        lastEdited: c.fecha_creacion || new Date().toISOString()
+      }))
+
+      setCategories(mappedCategories)
+      setContents(mappedContents)
+    } catch (error) {
+      console.error("Error al cargar datos:", error)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const getContentsByCategory = (categoryId: string | null) => {
     return contents.filter((c) => c.categoryId === categoryId)
   }
 
-  const getCategoryName = (categoryId: number | null) => {
+  const getCategoryName = (categoryId: string | null) => {
     if (categoryId === null) return "Otros"
     const category = categories.find((c) => c.id === categoryId)
     return category ? category.name : "Otros"
   }
 
-  const openCreateModal = (categoryId?: number | null) => {
+  const openCreateModal = (categoryId?: string | null) => {
+    setErrorMsg("")
     setEditingContent(null)
     setFormData({
       ...emptyFormData,
@@ -258,6 +181,7 @@ export default function ContenidoPage() {
   }
 
   const openEditModal = (content: EducationalContent) => {
+    setErrorMsg("")
     setEditingContent(content)
     setFormData({
       title: content.title,
@@ -283,44 +207,58 @@ export default function ContenidoPage() {
     setShowDetailSheet(true)
   }
 
-  const handleSave = () => {
-    const newContent: EducationalContent = {
-      id: editingContent?.id || Date.now(),
-      title: formData.title,
-      type: formData.type,
-      videoUrl: formData.type === "VIDEO" ? formData.videoUrl : undefined,
-      durationMinutes: formData.durationMinutes,
-      coverImage: formData.coverImage,
-      content: formData.content,
-      categoryId: formData.categoryId,
-      author: {
-        name: formData.authorName,
-        profession: formData.authorProfession || undefined,
-        photoUrl: formData.authorPhotoUrl || undefined,
-      },
+  // --- INTEGRACIÓN: Crear / Editar Contenido ---
+  const handleSave = async () => {
+    setErrorMsg("")
+    setIsSaving(true)
+
+    const payload = {
+      titulo: formData.title.trim(),
+      tipo: formData.type,
+      duracion_minutos: formData.durationMinutes,
+      // Si están vacíos los pasamos a null
+      imagen_portada: formData.coverImage.trim() || null,
+      texto_contenido: formData.content.trim(),
+      video_url: formData.type === 'VIDEO' ? (formData.videoUrl.trim() || null) : null,
+      categoria_id: formData.categoryId || null,
+      autor_nombre: formData.authorName.trim() || null,
+      autor_profesion: formData.authorProfession.trim() || null,
+      autor_foto: formData.authorPhotoUrl.trim() || null,
       hashtags: formData.hashtags,
-      status: formData.status,
-      lastEdited: new Date().toLocaleDateString("es-ES"),
+      estado: formData.status
     }
 
-    if (editingContent) {
-      setContents(contents.map((c) => (c.id === editingContent.id ? newContent : c)))
-    } else {
-      setContents([newContent, ...contents])
+    try {
+      if (editingContent) {
+        await updateContenido(editingContent.id, payload)
+      } else {
+        await createContenido(payload)
+      }
+      await loadData()
+      setShowModal(false)
+      setFormData(emptyFormData)
+      setEditingContent(null)
+      setPreselectedCategoryId(null)
+    } catch (error) {
+      console.error("Error guardando contenido:", error)
+      setErrorMsg("Ocurrió un error al guardar el contenido.")
+    } finally {
+      setIsSaving(false)
     }
-
-    setShowModal(false)
-    setFormData(emptyFormData)
-    setEditingContent(null)
-    setPreselectedCategoryId(null)
   }
 
-  const handleDelete = () => {
-    if (deleteContent) {
-      setContents(contents.filter((c) => c.id !== deleteContent.id))
-      setDeleteContent(null)
-      setShowDetailSheet(false)
-      setSelectedContent(null)
+  const handleDelete = async () => {
+    if (deleteContentState) {
+      try {
+        await deleteContenido(deleteContentState.id)
+        await loadData()
+        setDeleteContentState(null)
+        setShowDetailSheet(false)
+        setSelectedContent(null)
+      } catch (error) {
+        console.error("Error eliminando contenido:", error)
+        alert("Error al eliminar el contenido")
+      }
     }
   }
 
@@ -341,7 +279,7 @@ export default function ContenidoPage() {
     })
   }
 
-  // Category management - opens modal showing category list
+  // --- INTEGRACIÓN: Gestión de Categorías ---
   const openCategoryCreateModal = () => {
     setEditingCategory(null)
     setIsCreatingCategory(false)
@@ -349,7 +287,6 @@ export default function ContenidoPage() {
     setShowCategoryModal(true)
   }
 
-  // Start creating a new category (shows form)
   const startCreateCategory = () => {
     setEditingCategory(null)
     setIsCreatingCategory(true)
@@ -366,94 +303,105 @@ export default function ContenidoPage() {
     setShowCategoryModal(true)
   }
 
-  const handleSaveCategory = () => {
-    // Validate reserved name
+  const handleSaveCategory = async () => {
     if (categoryFormData.name.trim().toLowerCase() === "otros") {
       setCategoryError("Este es un nombre reservado por el sistema")
       return
     }
     setCategoryError("")
 
-    const newCategory: Category = {
-      id: editingCategory?.id || Date.now(),
-      name: categoryFormData.name,
-      description: categoryFormData.description || undefined,
+    const payload = {
+      nombre: categoryFormData.name.trim(),
+      descripcion: categoryFormData.description.trim() || null
     }
 
-    if (editingCategory) {
-      setCategories(categories.map((c) => (c.id === editingCategory.id ? newCategory : c)))
-    } else {
-      setCategories([...categories, newCategory])
-    }
-
-    setShowCategoryModal(false)
-    setCategoryFormData(emptyCategoryFormData)
-    setEditingCategory(null)
-    setIsCreatingCategory(false)
-  }
-
-  const handleDeleteCategory = () => {
-    if (deleteCategory) {
-      // Move contents from deleted category to "Otros" (null)
-      setContents(
-        contents.map((c) =>
-          c.categoryId === deleteCategory.id ? { ...c, categoryId: null } : c
-        )
-      )
-      setCategories(categories.filter((c) => c.id !== deleteCategory.id))
-      setDeleteCategory(null)
+    try {
+      if (editingCategory) {
+        await updateCategoria(editingCategory.id, payload)
+      } else {
+        await createCategoria(payload)
+      }
+      await loadData()
+      
+      setCategoryFormData(emptyCategoryFormData)
+      setEditingCategory(null)
+      setIsCreatingCategory(false)
+    } catch (error) {
+      console.error("Error guardando categoría:", error)
+      setCategoryError("Error de conexión al guardar categoría.")
     }
   }
 
-  // Drag and Drop handlers
+  const handleDeleteCategory = async () => {
+    if (deleteCategoryState) {
+      try {
+        await deleteCategoria(deleteCategoryState.id)
+        await loadData() 
+        setDeleteCategoryState(null)
+      } catch (error) {
+        console.error("Error eliminando categoría:", error)
+        alert("Error al eliminar la categoría")
+      }
+    }
+  }
+
+  // --- Drag and Drop ---
   const handleDragStart = (e: React.DragEvent, content: EducationalContent) => {
     setDraggedContent(content)
     e.dataTransfer.effectAllowed = "move"
   }
 
-  const handleDragOver = (e: React.DragEvent, categoryId: number | null) => {
+  const handleDragOver = (e: React.DragEvent, categoryId: string | null) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
     setDragOverCategoryId(categoryId)
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
-    // Only reset if we're leaving the category area completely
     const relatedTarget = e.relatedTarget as HTMLElement
     if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
       setDragOverCategoryId(null)
     }
   }
 
-  const handleDrop = (e: React.DragEvent, categoryId: number | null) => {
+  const handleDrop = async (e: React.DragEvent, categoryId: string | null) => {
     e.preventDefault()
     if (draggedContent && draggedContent.categoryId !== categoryId) {
-      setContents(
-        contents.map((c) =>
-          c.id === draggedContent.id ? { ...c, categoryId } : c
-        )
-      )
+      setContents(contents.map((c) => c.id === draggedContent.id ? { ...c, categoryId } : c))
+      try {
+        await updateContenido(draggedContent.id, { categoria_id: categoryId })
+      } catch (error) {
+        console.error("Error moviendo contenido:", error)
+        await loadData() 
+      }
     }
     setDraggedContent(null)
     setDragOverCategoryId(null)
   }
 
   const handleDragEnd = () => {
-    // Reset state when drag ends (dropped outside valid target)
     setDraggedContent(null)
     setDragOverCategoryId(null)
   }
 
-  // "Others" category with null categoryId
   const allCategoriesWithOthers = [
     ...categories,
-    { id: null as unknown as number, name: "Otros", description: "Contenido sin categoría asignada" },
+    { id: null as unknown as string, name: "Otros", description: "Contenido sin categoría asignada" },
   ]
+
+  if (isLoadingData) {
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#d4854a] animate-spin" />
+      </div>
+    )
+  }
 
   // View All mode
   if (viewAllCategoryId !== null) {
-    const categoryContents = getContentsByCategory(viewAllCategoryId === 0 ? null : viewAllCategoryId)
-    const categoryName = getCategoryName(viewAllCategoryId === 0 ? null : viewAllCategoryId)
+    const categoryIdValue = viewAllCategoryId === "otros_view" ? null : viewAllCategoryId
+    const categoryContents = getContentsByCategory(categoryIdValue)
+    const categoryName = getCategoryName(categoryIdValue)
 
     return (
       <div className="space-y-6">
@@ -479,7 +427,7 @@ export default function ContenidoPage() {
             </nav>
           </div>
           <Button
-            onClick={() => openCreateModal(viewAllCategoryId === 0 ? null : viewAllCategoryId)}
+            onClick={() => openCreateModal(categoryIdValue)}
             className="bg-[#d4854a] hover:bg-[#c07842] text-white gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -497,17 +445,16 @@ export default function ContenidoPage() {
               onDragEnd={handleDragEnd}
             />
           ))}
-          <AddContentCard onClick={() => openCreateModal(viewAllCategoryId === 0 ? null : viewAllCategoryId)} categoryName={categoryName} />
+          <AddContentCard onClick={() => openCreateModal(categoryIdValue)} categoryName={categoryName} />
         </div>
 
-        {/* Detail Sheet, Modals, AlertDialogs would be repeated here - simplified for brevity */}
         <ContentDetailSheet
           content={selectedContent}
           open={showDetailSheet}
           onOpenChange={setShowDetailSheet}
           getCategoryName={getCategoryName}
           onEdit={() => selectedContent && openEditModal(selectedContent)}
-          onDelete={() => selectedContent && setDeleteContent(selectedContent)}
+          onDelete={() => selectedContent && setDeleteContentState(selectedContent)}
         />
 
         <ContentFormModal
@@ -522,11 +469,13 @@ export default function ContenidoPage() {
           addTag={addTag}
           removeTag={removeTag}
           onSave={handleSave}
+          isSaving={isSaving}
+          errorMsg={errorMsg}
         />
 
         <DeleteContentDialog
-          content={deleteContent}
-          onOpenChange={() => setDeleteContent(null)}
+          content={deleteContentState}
+          onOpenChange={() => setDeleteContentState(null)}
           onDelete={handleDelete}
         />
       </div>
@@ -570,6 +519,7 @@ export default function ContenidoPage() {
           const categoryId = category.id === null ? null : category.id
           const categoryContents = getContentsByCategory(categoryId)
           const isDragOver = dragOverCategoryId === categoryId
+          const viewValue = categoryId === null ? "otros_view" : categoryId
 
           return (
             <div
@@ -588,7 +538,7 @@ export default function ContenidoPage() {
                 </div>
                 <Button
                   variant="ghost"
-                  onClick={() => setViewAllCategoryId(categoryId ?? 0)}
+                  onClick={() => setViewAllCategoryId(viewValue)}
                   className="text-[#d4854a] hover:text-[#c07842] hover:bg-[#d4854a]/10 gap-1"
                 >
                   Ver todo
@@ -624,7 +574,7 @@ export default function ContenidoPage() {
         onOpenChange={setShowDetailSheet}
         getCategoryName={getCategoryName}
         onEdit={() => selectedContent && openEditModal(selectedContent)}
-        onDelete={() => selectedContent && setDeleteContent(selectedContent)}
+        onDelete={() => selectedContent && setDeleteContentState(selectedContent)}
       />
 
       {/* Content Form Modal */}
@@ -640,6 +590,8 @@ export default function ContenidoPage() {
         addTag={addTag}
         removeTag={removeTag}
         onSave={handleSave}
+        isSaving={isSaving}
+        errorMsg={errorMsg}
       />
 
       {/* Category Management Dialog */}
@@ -753,7 +705,7 @@ export default function ContenidoPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => setDeleteCategory(category)}
+                                onClick={() => setDeleteCategoryState(category)}
                                 className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -773,20 +725,20 @@ export default function ContenidoPage() {
 
       {/* Delete Content Dialog */}
       <DeleteContentDialog
-        content={deleteContent}
-        onOpenChange={() => setDeleteContent(null)}
+        content={deleteContentState}
+        onOpenChange={() => setDeleteContentState(null)}
         onDelete={handleDelete}
       />
 
       {/* Delete Category Dialog */}
-      <AlertDialog open={!!deleteCategory} onOpenChange={() => setDeleteCategory(null)}>
+      <AlertDialog open={!!deleteCategoryState} onOpenChange={() => setDeleteCategoryState(null)}>
         <AlertDialogContent className="bg-white border-[#e5e5e5]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[#1a1a1a]">¿Eliminar categoría?</AlertDialogTitle>
             <AlertDialogDescription className="text-[#737373]">
-              {deleteCategory && getContentsByCategory(deleteCategory.id).length > 0 ? (
+              {deleteCategoryState && getContentsByCategory(deleteCategoryState.id).length > 0 ? (
                 <>
-                  Esta categoría tiene <strong>{getContentsByCategory(deleteCategory.id).length} contenidos</strong>. 
+                  Esta categoría tiene <strong>{getContentsByCategory(deleteCategoryState.id).length} contenidos</strong>. 
                   Si la eliminas, no se borrarán, pero se moverán a la categoría por defecto &quot;Otros&quot;.
                 </>
               ) : (
@@ -811,7 +763,10 @@ export default function ContenidoPage() {
   )
 }
 
-// Content Card Component
+// ------------------------------------------
+// SUBCPONENTES
+// ------------------------------------------
+
 function ContentCard({
   content,
   onView,
@@ -835,13 +790,15 @@ function ContentCard({
         isDragging ? "opacity-50 scale-95" : ""
       }`}
     >
-      <div className="relative aspect-video rounded-lg overflow-hidden mb-2">
-        <img
-          src={content.coverImage}
-          alt={content.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          crossOrigin="anonymous"
-        />
+      <div className="relative aspect-video rounded-lg overflow-hidden mb-2 border border-[#e5e5e5] bg-[#f8f6f3]">
+        {content.coverImage ? (
+          <img
+            src={content.coverImage}
+            alt={content.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            crossOrigin="anonymous"
+          />
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         {content.type === "VIDEO" && (
           <div className="absolute top-2 left-2 bg-black/70 rounded-full p-1.5">
@@ -864,14 +821,13 @@ function ContentCard({
           </div>
         </div>
       </div>
-      <h3 className="text-sm font-medium text-[#1a1a1a] line-clamp-2 group-hover:text-[#d4854a] transition-colors">
+      <h3 className="text-sm font-medium text-[#1a1a1a] line-clamp-2 group-hover:text-[#d4854a] transition-colors whitespace-normal">
         {content.title}
       </h3>
     </div>
   )
 }
 
-// Add Content Card Component
 function AddContentCard({ onClick, categoryName }: { onClick: () => void; categoryName: string }) {
   return (
     <button
@@ -888,7 +844,6 @@ function AddContentCard({ onClick, categoryName }: { onClick: () => void; catego
   )
 }
 
-// Content Detail Dialog Component
 function ContentDetailSheet({
   content,
   open,
@@ -900,7 +855,7 @@ function ContentDetailSheet({
   content: EducationalContent | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  getCategoryName: (id: number | null) => string
+  getCategoryName: (id: string | null) => string
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -914,14 +869,15 @@ function ContentDetailSheet({
           <DialogDescription>Detalles del contenido educativo</DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
-          {/* Cover Image / Video Preview */}
-          <div className="relative aspect-video rounded-lg overflow-hidden">
-            <img
-              src={content.coverImage}
-              alt={content.title}
-              className="w-full h-full object-cover"
-              crossOrigin="anonymous"
-            />
+          <div className="relative aspect-video rounded-lg overflow-hidden border border-[#e5e5e5] bg-[#f8f6f3]">
+            {content.coverImage ? (
+              <img
+                src={content.coverImage}
+                alt={content.title}
+                className="w-full h-full object-cover"
+                crossOrigin="anonymous"
+              />
+            ) : null}
             {content.type === "VIDEO" && (
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
@@ -931,7 +887,6 @@ function ContentDetailSheet({
             )}
           </div>
 
-          {/* Badges */}
           <div className="flex flex-wrap gap-2">
             <Badge className="bg-[#d4854a]/20 text-[#c07842] border-[#d4854a]/30">
               {getCategoryName(content.categoryId)}
@@ -950,10 +905,8 @@ function ContentDetailSheet({
             </Badge>
           </div>
 
-          {/* Title */}
           <h2 className="text-xl font-bold text-[#1a1a1a]">{content.title}</h2>
 
-          {/* Meta Info */}
           <div className="flex items-center gap-4 text-sm text-[#737373]">
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -961,11 +914,10 @@ function ContentDetailSheet({
             </div>
             <div className="flex items-center gap-1">
               <User className="w-4 h-4" />
-              {content.author.name}
+              {content.author.name || "Autor Anónimo"}
             </div>
           </div>
 
-          {/* Video URL */}
           {content.type === "VIDEO" && content.videoUrl && (
             <a
               href={content.videoUrl}
@@ -978,23 +930,25 @@ function ContentDetailSheet({
             </a>
           )}
 
-          {/* Content/Description */}
           <div>
             <h3 className="text-sm font-semibold text-[#1a1a1a] mb-2">
               {content.type === "VIDEO" ? "Descripción" : "Contenido"}
             </h3>
-            <p className="text-sm text-[#737373] leading-relaxed">{content.content}</p>
+            <p className="text-sm text-[#737373] leading-relaxed whitespace-pre-wrap">{content.content}</p>
           </div>
 
-          {/* Author Info */}
           <div className="p-4 rounded-lg bg-[#f8f6f3]">
             <h3 className="text-sm font-semibold text-[#1a1a1a] mb-2">Autor</h3>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#d4854a] flex items-center justify-center text-white font-semibold">
-                {content.author.name.charAt(0)}
-              </div>
+              {content.author.photoUrl ? (
+                <img src={content.author.photoUrl} alt={content.author.name || "Autor"} className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#d4854a] flex items-center justify-center text-white font-semibold">
+                  {(content.author.name || "?").charAt(0).toUpperCase()}
+                </div>
+              )}
               <div>
-                <p className="text-sm font-medium text-[#1a1a1a]">{content.author.name}</p>
+                <p className="text-sm font-medium text-[#1a1a1a]">{content.author.name || "Autor Anónimo"}</p>
                 {content.author.profession && (
                   <p className="text-xs text-[#737373]">{content.author.profession}</p>
                 )}
@@ -1002,7 +956,6 @@ function ContentDetailSheet({
             </div>
           </div>
 
-          {/* Hashtags */}
           {content.hashtags.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-[#1a1a1a] mb-2">Hashtags</h3>
@@ -1019,10 +972,8 @@ function ContentDetailSheet({
             </div>
           )}
 
-          {/* Last Edited */}
           <p className="text-xs text-[#a3a3a3]">Última edición: {content.lastEdited}</p>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-4 border-t border-[#e5e5e5]">
             <Button
               onClick={onEdit}
@@ -1046,7 +997,6 @@ function ContentDetailSheet({
   )
 }
 
-// Content Form Modal Component
 function ContentFormModal({
   open,
   onOpenChange,
@@ -1059,6 +1009,8 @@ function ContentFormModal({
   addTag,
   removeTag,
   onSave,
+  isSaving,
+  errorMsg,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -1071,6 +1023,8 @@ function ContentFormModal({
   addTag: () => void
   removeTag: (tag: string) => void
   onSave: () => void
+  isSaving: boolean
+  errorMsg: string
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1086,8 +1040,13 @@ function ContentFormModal({
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
+          {errorMsg && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p>{errorMsg}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Title */}
             <div className="space-y-2 md:col-span-2">
               <Label className="text-[#1a1a1a]">Título *</Label>
               <Input
@@ -1098,7 +1057,6 @@ function ContentFormModal({
               />
             </div>
 
-            {/* Type */}
             <div className="space-y-2">
               <Label className="text-[#1a1a1a]">Tipo *</Label>
               <Select
@@ -1121,7 +1079,6 @@ function ContentFormModal({
               </Select>
             </div>
 
-            {/* Duration */}
             <div className="space-y-2">
               <Label className="text-[#1a1a1a]">Duración (minutos) *</Label>
               <Input
@@ -1135,7 +1092,6 @@ function ContentFormModal({
               />
             </div>
 
-            {/* Video URL (conditional) */}
             {formData.type === "VIDEO" && (
               <div className="space-y-2 md:col-span-2">
                 <Label className="text-[#1a1a1a]">URL del Video</Label>
@@ -1149,10 +1105,9 @@ function ContentFormModal({
               </div>
             )}
 
-            {/* Cover Image / Thumbnail */}
             <div className="space-y-2 md:col-span-2">
               <Label className="text-[#1a1a1a]">
-                {formData.type === "VIDEO" ? "Miniatura (URL)" : "Imagen de Portada (URL)"} *
+                {formData.type === "VIDEO" ? "Miniatura (URL)" : "Imagen de Portada (URL)"}
               </Label>
               <Input
                 type="url"
@@ -1163,7 +1118,6 @@ function ContentFormModal({
               />
             </div>
 
-            {/* Content/Description */}
             <div className="space-y-2 md:col-span-2">
               <Label className="text-[#1a1a1a]">
                 {formData.type === "VIDEO" ? "Descripción" : "Texto / Contenido"} *
@@ -1176,7 +1130,6 @@ function ContentFormModal({
               />
             </div>
 
-            {/* Category */}
             <div className="space-y-2">
               <Label className="text-[#1a1a1a]">Categoría</Label>
               <Select
@@ -1184,7 +1137,7 @@ function ContentFormModal({
                 onValueChange={(value) =>
                   setFormData({
                     ...formData,
-                    categoryId: value === "null" ? null : parseInt(value),
+                    categoryId: value === "null" ? null : value,
                   })
                 }
               >
@@ -1198,7 +1151,7 @@ function ContentFormModal({
                   {categories.map((category) => (
                     <SelectItem
                       key={category.id}
-                      value={category.id.toString()}
+                      value={category.id}
                       className="text-[#1a1a1a] hover:bg-[#f8f6f3]"
                     >
                       {category.name}
@@ -1208,7 +1161,6 @@ function ContentFormModal({
               </Select>
             </div>
 
-            {/* Status */}
             <div className="space-y-2">
               <Label className="text-[#1a1a1a]">Estado *</Label>
               <Select
@@ -1231,12 +1183,11 @@ function ContentFormModal({
               </Select>
             </div>
 
-            {/* Author Section */}
             <div className="md:col-span-2 p-4 rounded-lg bg-[#f8f6f3] space-y-4">
               <h3 className="font-semibold text-[#1a1a1a]">Información del Autor</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[#1a1a1a]">Nombre *</Label>
+                  <Label className="text-[#1a1a1a]">Nombre</Label>
                   <Input
                     placeholder="Nombre del autor"
                     value={formData.authorName}
@@ -1254,7 +1205,7 @@ function ContentFormModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#1a1a1a]">Foto (URL)</Label>
+                  <Label className="text-[#1a1a1a]">Foto URL</Label>
                   <Input
                     type="url"
                     placeholder="https://..."
@@ -1266,7 +1217,6 @@ function ContentFormModal({
               </div>
             </div>
 
-            {/* Hashtags */}
             <div className="space-y-2 md:col-span-2">
               <Label className="text-[#1a1a1a]">Hashtags</Label>
               <div className="flex gap-2">
@@ -1312,15 +1262,18 @@ function ContentFormModal({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={isSaving}
             className="border-[#e5e5e5] text-[#737373] hover:bg-[#f8f6f3] hover:text-[#1a1a1a]"
           >
             Cancelar
           </Button>
+          {/* Quitamos autorName y coverImage de la validación estricta ya que son opcionales */}
           <Button
             onClick={onSave}
-            disabled={!formData.title.trim() || !formData.content.trim() || !formData.authorName.trim()}
+            disabled={isSaving || !formData.title.trim() || !formData.content.trim()}
             className="bg-[#d4854a] hover:bg-[#c07842] text-white"
           >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             {editingContent ? "Guardar cambios" : "Crear contenido"}
           </Button>
         </DialogFooter>
@@ -1329,7 +1282,6 @@ function ContentFormModal({
   )
 }
 
-// Delete Content Dialog Component
 function DeleteContentDialog({
   content,
   onOpenChange,
