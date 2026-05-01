@@ -30,6 +30,9 @@ import { ReplyDailyForumUseCase } from '../../application/use-cases/reply-daily-
 import { LikeForumReplyUseCase } from '../../application/use-cases/like-forum-reply.use-case';
 import { CommentForumReplyUseCase } from '../../application/use-cases/comment-forum-reply.use-case';
 import { GetAllForumsUseCase } from '../../application/use-cases/get-all-forums.use-case';
+import { LikeCommentUseCase } from '../../application/use-cases/like-comment.use-case';
+import { ReplyToCommentUseCase } from '../../application/use-cases/reply-to-comment.use-case';
+import { LikeCommentReplyUseCase } from '../../application/use-cases/like-comment-reply.use-case';
 
 @ApiTags('Comunidades')
 @ApiBearerAuth()
@@ -58,6 +61,9 @@ export class CommunitiesController {
     private readonly modRemoveMemberUseCase: ModRemoveMemberUseCase,
     private readonly modAddMemberUseCase: ModAddMemberUseCase,
     private readonly getAllForumsUseCase: GetAllForumsUseCase,
+    private readonly likeCommentUseCase: LikeCommentUseCase,
+    private readonly replyToCommentUseCase: ReplyToCommentUseCase,
+    private readonly likeCommentReplyUseCase: LikeCommentReplyUseCase,
   ) { }
 
   // ── Comunidades ────────────────────────────────────────────────────────────
@@ -137,6 +143,45 @@ export class CommunitiesController {
     @Request() req: any,
   ) {
     return this.deleteCommentUseCase.execute(id, postId, commentId, req.user.uid);
+  }
+
+  // ── Likes y respuestas de comentarios ─────────────────────────────────────
+
+  @Post(':id/posts/:postId/comments/:commentId/likes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Like/unlike a un comentario (toggle)' })
+  async likeComment(
+    @Param('id') id: string,
+    @Param('postId') postId: string,
+    @Param('commentId') commentId: string,
+    @Request() req: any,
+  ) {
+    return this.likeCommentUseCase.execute(id, postId, commentId, req.user.uid);
+  }
+
+  @Post(':id/posts/:postId/comments/:commentId/replies')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Responder a un comentario' })
+  async replyToComment(
+    @Param('id') id: string,
+    @Param('postId') postId: string,
+    @Param('commentId') commentId: string,
+    @Body() dto: CreateCommentDto,
+    @Request() req: any,
+  ) {
+    return this.replyToCommentUseCase.execute(id, postId, commentId, req.user.uid, dto.contenido);
+  }
+
+  @Post(':id/posts/:postId/comments/:commentId/replies/:replyId/likes')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Like/unlike a una respuesta de comentario (toggle)' })
+  async likeCommentReply(
+    @Param('id') id: string,
+    @Param('commentId') commentId: string,
+    @Param('replyId') replyId: string,
+    @Request() req: any,
+  ) {
+    return this.likeCommentReplyUseCase.execute(id, replyId, req.user.uid);
   }
 
   // ── Reacciones ─────────────────────────────────────────────────────────────

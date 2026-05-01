@@ -61,11 +61,11 @@ function PostCard({
             size={18}
             color={post.mis_reacciones?.includes('LIKE') ? colors.primary : colors.textMuted}
           />
-          <Text style={styles.postActionText}>{post.total_reacciones}</Text>
+          <Text style={styles.postActionText}>{post.total_reacciones ?? 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
           <Feather name="message-circle" size={18} color={colors.textMuted} />
-          <Text style={styles.postActionText}>{post.total_comentarios}</Text>
+          <Text style={styles.postActionText}>{post.total_comentarios ?? 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.postAction, { marginLeft: 'auto' }]}>
           <Feather name="share" size={18} color={colors.textMuted} />
@@ -99,7 +99,7 @@ export default function SocialScreen({ navigation }: any) {
         Promise.all(
           comms.map((c: any) =>
             getPosts(c.id)
-              .then((posts: Post[]) => posts.map(p => ({ ...p, comunidad_nombre: c.nombre })))
+              .then((posts: Post[]) => posts.map(p => ({ ...p, comunidad_nombre: c.nombre, comunidad_id: p.comunidad_id ?? c.id })))
               .catch(() => [])
           )
         ),

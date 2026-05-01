@@ -99,6 +99,7 @@ import CreatePostCommunityScreen from '../modules/social/screens/CreatePostCommu
 import DailyForumScreen from '../modules/social/screens/DailyForumScreen';
 import DailyForumDetailScreen from '../modules/social/screens/DailyForumDetailScreen';
 import DailyForumCommunityPickerScreen from '../modules/social/screens/DailyForumCommunityPickerScreen';
+import PostDetailScreen from '../modules/social/screens/PostDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -208,6 +209,7 @@ export default function AppNavigator({ initialRoute = 'Splash1' }: AppNavigatorP
           <Stack.Screen name="CommunityChat" component={CommunityChatScreen} />
           <Stack.Screen name="CreatePostCommunity" component={CreatePostCommunityScreen} />
           <Stack.Screen name="DailyForumCommunityPicker" component={DailyForumCommunityPickerScreen} />
+          <Stack.Screen name="PostDetail" component={PostDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingProvider>

@@ -56,6 +56,36 @@ export const deleteComment = async (communityId: string, postId: string, comment
   return res.data;
 };
 
+export const likeComment = async (communityId: string, postId: string, commentId: string) => {
+  const res = await api.post(`/communities/${communityId}/posts/${postId}/comments/${commentId}/likes`);
+  return res.data;
+};
+
+export const replyToComment = async (
+  communityId: string,
+  postId: string,
+  commentId: string,
+  contenido: string,
+) => {
+  const res = await api.post(
+    `/communities/${communityId}/posts/${postId}/comments/${commentId}/replies`,
+    { contenido },
+  );
+  return res.data;
+};
+
+export const likeCommentReply = async (
+  communityId: string,
+  postId: string,
+  commentId: string,
+  replyId: string,
+) => {
+  const res = await api.post(
+    `/communities/${communityId}/posts/${postId}/comments/${commentId}/replies/${replyId}/likes`,
+  );
+  return res.data;
+};
+
 // ── Reacciones ────────────────────────────────────────────────────────────────
 
 export const reactToPost = async (communityId: string, postId: string, tipo: string) => {

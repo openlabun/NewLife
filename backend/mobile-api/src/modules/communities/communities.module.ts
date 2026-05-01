@@ -24,6 +24,9 @@ import { ReplyDailyForumUseCase } from './application/use-cases/reply-daily-foru
 import { LikeForumReplyUseCase } from './application/use-cases/like-forum-reply.use-case';
 import { CommentForumReplyUseCase } from './application/use-cases/comment-forum-reply.use-case';
 import { GetAllForumsUseCase } from './application/use-cases/get-all-forums.use-case';
+import { LikeCommentUseCase } from './application/use-cases/like-comment.use-case';
+import { ReplyToCommentUseCase } from './application/use-cases/reply-to-comment.use-case';
+import { LikeCommentReplyUseCase } from './application/use-cases/like-comment-reply.use-case';
 
 @Module({
   imports: [AuthModule, DatabaseModule],
@@ -51,6 +54,9 @@ import { GetAllForumsUseCase } from './application/use-cases/get-all-forums.use-
     LikeForumReplyUseCase,
     CommentForumReplyUseCase,
     GetAllForumsUseCase,
+    LikeCommentUseCase,
+    ReplyToCommentUseCase,
+    LikeCommentReplyUseCase,
   ],
   exports: [ResolveUserIdHelper]
 })

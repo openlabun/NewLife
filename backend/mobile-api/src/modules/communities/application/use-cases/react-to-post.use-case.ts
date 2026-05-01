@@ -39,17 +39,24 @@ export class ReactToPostUseCase {
 
     if (existing) {
       await this.dbService.delete('reacciones', '_id', existing._id, masterToken);
-      return { message: 'Reacción eliminada.', accion: 'removed', tipo };
+    } else {
+      await this.dbService.insert('reacciones', [{
+        post_id: postId,
+        usuario_id: robleId,
+        comunidad_id: comunidadId,
+        tipo,
+        created_at: new Date().toISOString(),
+      }], masterToken);
     }
 
-    await this.dbService.insert('reacciones', [{
-      post_id: postId,
-      usuario_id: robleId,
-      comunidad_id: comunidadId,
-      tipo,
-      created_at: new Date().toISOString(),
-    }], masterToken);
+    const totalRes = await this.dbService.find('reacciones', { post_id: postId }, masterToken);
+    const total = (Array.isArray(totalRes) ? totalRes : (totalRes.rows || [])).length;
 
-    return { message: 'Reacción agregada.', accion: 'added', tipo };
+    return {
+      message: existing ? 'Reacción eliminada.' : 'Reacción agregada.',
+      accion: existing ? 'removed' : 'added',
+      tipo,
+      total,
+    };
   }
 }

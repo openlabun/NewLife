@@ -233,7 +233,7 @@ export default function SocialProfileScreen({ navigation, route }: any) {
             <PostCard
               key={post.id || post._id}
               post={{ ...post, autor_nombre: name }}
-              onPress={() => navigation.navigate('PostDetail', { post })}
+              onPress={() => navigation.navigate('PostDetail', { post, community: null })}
             />
           ))
         )}
